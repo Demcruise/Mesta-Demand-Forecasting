@@ -1,7 +1,7 @@
 import type { Alert, AuditEvent, ListQuery, Role, ServiceHealth } from "@/types/domain";
 import { audit, baselineRun, getDb, nextId, runResult, type WorkspaceSettings } from "@/lib/mock/db";
 import { actorName, findUser, USERS } from "@/lib/mock/directory";
-import { ROLE_LABELS } from "@/lib/permissions";
+import { can, ROLE_LABELS } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
 import { aggregateInterval } from "@/lib/mock/series";
 import { DAY_MS, HOUR_MS, iso, MINUTE_MS } from "@/lib/mock/time";
@@ -176,27 +176,33 @@ const auditSpec: ListSpec<AuditEvent> = {
   },
 };
 
-export function listAudit(ctx: ApiContext, query: ListQuery & { from?: string; to?: string }) {
-  return read(() => {
-    const db = getDb(ctx.workspaceId);
-    if (ctx.role !== "manager" && ctx.role !== "analyst" && ctx.role !== "admin") {
-      throw new ApiError("The audit log is restricted.", "permission", "Managers, analysts and administrators can view it.");
-    }
-    const from = query.from ? new Date(query.from).setHours(0, 0, 0, 0) : null;
-    const to = query.to ? new Date(query.to).setHours(23, 59, 59, 999) : null;
-    const events = db.audit.filter((e) => {
-      const t = new Date(e.timestamp).getTime();
-      return (from === null || t >= from) && (to === null || t <= to);
-    });
-    return applyList(events, { sort: "timestamp", dir: "desc", ...query }, auditSpec);
+type AuditQuery = ListQuery & { from?: string; to?: string };
+
+function inRange(events: AuditEvent[], query: AuditQuery) {
+  const from = query.from ? new Date(query.from).setHours(0, 0, 0, 0) : null;
+  const to = query.to ? new Date(query.to).setHours(23, 59, 59, 999) : null;
+  return events.filter((e) => {
+    const t = new Date(e.timestamp).getTime();
+    return (from === null || t >= from) && (to === null || t <= to);
   });
 }
 
-export function exportAudit(ctx: ApiContext, query: ListQuery) {
+export function listAudit(ctx: ApiContext, query: AuditQuery) {
+  return read(() => {
+    const db = getDb(ctx.workspaceId);
+    if (!can(ctx.role, "audit.view")) {
+      throw new ApiError("The audit log is restricted.", "permission", "Managers, analysts and administrators can view it.");
+    }
+    return applyList(inRange(db.audit, query), { sort: "timestamp", dir: "desc", ...query }, auditSpec);
+  });
+}
+
+/** Export respects the active filters and date range (EXPORT-001). */
+export function exportAudit(ctx: ApiContext, query: AuditQuery) {
   return write(ctx, "audit.view", () => {
     const db = getDb(ctx.workspaceId);
-    if (!db.settings.audit.exportEnabled) throw new ApiError("Audit export is disabled for this workspace.", "permission");
-    return applyAll(db.audit, { sort: "timestamp", dir: "desc", ...query }, auditSpec);
+    if (!db.settings.audit.exportEnabled) throw new ApiError("Audit export is disabled for this workspace.", "permission", "An administrator can enable it in Settings › Audit and retention.");
+    return applyAll(inRange(db.audit, query), { sort: "timestamp", dir: "desc", ...query }, auditSpec);
   });
 }
 

@@ -4,6 +4,16 @@ import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const PAGES = [
+  ["monitoring", "MonitoringView", "@/features/monitoring/monitoring-view", "Monitoring", ""],
+  ["administration/audit", "AuditView", "@/features/governance/audit-view", "Audit log", ""],
+  ["administration/users", "UsersView", "@/features/governance/users-view", "Users & roles", ""],
+  ["forecasting/lineage", "LineageView", "@/features/governance/lineage-view", "Decision lineage", ""],
+  ["planning", "PlanView", "@/features/planning/plan-view", "Plan workspace", ""],
+  ["planning/exceptions", "ExceptionsView", "@/features/exceptions/exceptions-view", "Exceptions", ""],
+  ["planning/approvals", "ApprovalsView", "@/features/approvals/approvals-view", "Approvals", ""],
+  ["scenarios", "ScenariosView", "@/features/scenarios/scenarios-view", "Scenarios", ""],
+  ["scenarios/new", "NewScenarioView", "@/features/scenarios/new-scenario-view", "Create scenario", ""],
+  ["scenarios/compare", "CompareView", "@/features/scenarios/compare-view", "Scenario comparison", ""],
   ["models", "RegistryView", "@/features/models/registry-view", "Model registry", ""],
   ["models/performance", "PerformanceView", "@/features/models/performance-view", "Model performance", ""],
   ["models/backtesting", "BacktestingView", "@/features/models/backtesting-view", "Backtesting", ""],

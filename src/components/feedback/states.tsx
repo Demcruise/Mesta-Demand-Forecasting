@@ -70,7 +70,9 @@ export function ErrorState({
   const notFound = error instanceof ApiError && error.code === "not_found";
   const unavailable = error instanceof ApiError && error.code === "unavailable";
   const Icon = notFound ? SearchX : unavailable ? WifiOff : AlertOctagon;
-  const why = error instanceof ApiError ? [error.message, error.detail].filter(Boolean).join(" ") : error instanceof Error ? error.message : "An unexpected error occurred.";
+  // Raw exception text is not shown to users; it is only surfaced in development.
+  const why = error instanceof ApiError ? [error.message, error.detail].filter(Boolean).join(" ") : "An unexpected error occurred while showing this content.";
+  const devDetail = !(error instanceof ApiError) && error instanceof Error && process.env.NODE_ENV === "development" ? error.message : null;
   return (
     <div role="alert" className={cn("flex flex-col items-center justify-center text-center", compact ? "px-4 py-8" : "px-6 py-14", className)}>
       <span className={cn("mb-3 flex size-10 items-center justify-center rounded-lg border", notFound ? "border-border bg-subtle text-fg-tertiary" : "border-critical/25 bg-critical-subtle text-critical-fg")}>
@@ -78,7 +80,8 @@ export function ErrorState({
       </span>
       <p className="card-title">{what}</p>
       <p className="mt-1 max-w-md body-sm text-fg-secondary">{why}</p>
-      {!notFound && !unavailable && <p className="mt-1 max-w-md caption">Check your connection and retry. If it keeps failing, contact your workspace administrator.</p>}
+      {!notFound && !unavailable && <p className="mt-1 max-w-md caption">Retry. If it keeps failing, contact your workspace administrator.</p>}
+      {devDetail && <p className="mt-2 max-w-md mono-id text-fg-tertiary">{devDetail}</p>}
       {(onRetry || recovery) && (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           {onRetry && !notFound && (
