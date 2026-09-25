@@ -10,6 +10,7 @@ import { useSession } from "@/lib/session-context";
 import { actorName } from "@/lib/mock/directory";
 import { assumptionEffect, DRIVER_LABELS } from "@/lib/mock/scenarios";
 import { formatDate, formatDateTime, formatDeltaNumber, formatDeltaPercent, formatNumber } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { track } from "@/lib/telemetry";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, Textarea } from "@/components/ui/field";
@@ -163,7 +164,7 @@ export function ScenarioDetailView({ scenarioId }: { scenarioId: string }) {
               <ChartDataTable
                 caption="Acuan dan skenario harian"
                 columns={[{ key: "d", label: "Tanggal" }, { key: "b", label: "Acuan", numeric: true }, { key: "s", label: "Skenario", numeric: true }, { key: "x", label: "Perubahan", numeric: true }]}
-                rows={r.points.map((p) => ({ d: formatDate(p.date), b: formatNumber(p.baseline), s: formatNumber(p.scenario), x: formatDeltaPercent(p.baseline ? (p.scenario - p.baseline) / p.baseline : 0) }))}
+                rows={r.points.map((p) => ({ d: formatDate(p.date), b: formatNumber(p.baseline), s: formatNumber(p.scenario), x: <SignedPercent percent={p.baseline ? (p.scenario - p.baseline) / p.baseline : 0} /> }))}
               />
             }
           />
@@ -200,7 +201,7 @@ export function ScenarioDetailView({ scenarioId }: { scenarioId: string }) {
                 base: `${a.baselineValue}${a.unit === "pp" ? "%" : a.unit}`,
                 value: `${a.value}${a.unit === "pp" ? "%" : a.unit}`,
                 delta: `${a.value - a.baselineValue >= 0 ? "+" : "−"}${Math.abs(a.value - a.baselineValue)}${a.unit === "pp" ? " pp" : a.unit}`,
-                effect: formatDeltaPercent(assumptionEffect(a)),
+                effect: <SignedPercent percent={assumptionEffect(a)} />,
                 why: <span className="whitespace-normal text-fg-secondary">{a.rationale}</span>,
               }))}
             />

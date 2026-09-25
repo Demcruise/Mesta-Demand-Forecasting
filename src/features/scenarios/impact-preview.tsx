@@ -2,6 +2,7 @@
 
 import type { ScenarioResult } from "@/types/domain";
 import { formatDeltaNumber, formatDeltaPercent, formatNumber } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { ChartDataTable } from "@/components/charts/chart-frame";
 import { PairedBars } from "@/components/charts/small-charts";
 import { LegendItem } from "@/components/charts/chart-frame";
@@ -16,7 +17,7 @@ export function ImpactPreview({ result, compact }: { result: ScenarioResult; com
         items={[
           { label: "Permintaan acuan", value: <span className="numeric-md">{formatNumber(result.baselineUnits)}</span> },
           { label: "Permintaan skenario", value: <span className="numeric-md">{formatNumber(result.scenarioUnits)}</span> },
-          { label: "Perubahan", value: <span className="numeric-md">{formatDeltaPercent(result.deltaPercent)}</span>, hint: `${formatDeltaNumber(result.deltaUnits)} unit` },
+          { label: "Perubahan", value: <SignedPercent percent={result.deltaPercent} className="numeric-md" />, hint: `${formatDeltaNumber(result.deltaUnits)} unit` },
           { label: "Rentang skenario (80%)", value: <span className="tabular">{formatNumber(result.lowerBound)} – {formatNumber(result.upperBound)}</span>, hint: "Perkiraan; menskalakan rentang acuan" },
         ]}
       />
@@ -30,7 +31,7 @@ export function ImpactPreview({ result, compact }: { result: ScenarioResult; com
             { key: "s", label: "Skenario", numeric: true },
             { key: "d", label: "Perubahan", numeric: true },
           ]}
-          rows={result.byCategory.map((c) => ({ c: c.category, b: formatNumber(c.baseline), s: formatNumber(c.scenario), d: formatDeltaPercent(c.baseline ? (c.scenario - c.baseline) / c.baseline : 0) }))}
+          rows={result.byCategory.map((c) => ({ c: c.category, b: formatNumber(c.baseline), s: formatNumber(c.scenario), d: <SignedPercent percent={c.baseline ? (c.scenario - c.baseline) / c.baseline : 0} /> }))}
         />
       ) : (
         <div>

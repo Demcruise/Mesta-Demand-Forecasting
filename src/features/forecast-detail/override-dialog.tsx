@@ -6,6 +6,7 @@ import { applyOverride, previewOverride } from "@/lib/api/forecasting";
 import { useApiMutation } from "@/hooks/use-api";
 import { useSession } from "@/lib/session-context";
 import { formatDeltaNumber, formatDeltaPercent, formatNumber, pluralize } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -142,7 +143,7 @@ export function OverrideDialog({
               </div>
               <div>
                 <p className="caption">Perubahan</p>
-                <p className="numeric-md">{valid ? `${formatDeltaPercent(preview?.pct ?? 0)} (${formatDeltaNumber(preview?.delta ?? 0)})` : "—"}</p>
+                <p className="numeric-md">{valid ? <><SignedPercent percent={preview?.pct ?? 0} /> ({formatDeltaNumber(preview?.delta ?? 0)})</> : "—"}</p>
               </div>
             </div>
             <Field

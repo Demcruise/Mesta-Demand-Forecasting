@@ -9,7 +9,8 @@ import type { ForecastModel, StatusKey } from "@/types/domain";
 import { listModels } from "@/lib/api/models";
 import { useApiQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
-import { formatDate, formatDateRange, formatDeltaPercent, formatPercent } from "@/lib/format";
+import { formatDate, formatDateRange, formatPercent } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { buttonVariants } from "@/components/ui/button";
 import { PageContainer, PageHeader } from "@/components/page/page";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
@@ -43,7 +44,7 @@ export function RegistryView() {
       { id: "period", header: "Periode pelatihan", meta: { width: "200px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateRange(row.original.trainingStart, row.original.trainingEnd)}</span> },
       { id: "horizon", header: "Rentang maksimum", meta: { width: "110px", numeric: true, hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => `${row.original.horizonDays} h · ${row.original.frequency === "daily" ? "harian" : "mingguan"}` },
       { id: "wape", header: "WAPE", meta: { width: "90px", numeric: true, sortKey: "wape", description: METRIC_DEFINITIONS.wape.definition } satisfies ColumnMeta, cell: ({ row }) => <span className="font-semibold">{formatPercent(row.original.metrics.wape)}</span> },
-      { id: "bias", header: "Bias", meta: { width: "90px", numeric: true, sortKey: "bias", description: METRIC_DEFINITIONS.bias.definition } satisfies ColumnMeta, cell: ({ row }) => formatDeltaPercent(row.original.metrics.bias) },
+      { id: "bias", header: "Bias", meta: { width: "90px", numeric: true, sortKey: "bias", description: METRIC_DEFINITIONS.bias.definition } satisfies ColumnMeta, cell: ({ row }) => <SignedPercent percent={row.original.metrics.bias} /> },
       { id: "coverage", header: "Cakupan", meta: { width: "100px", numeric: true, hideBelow: "lg", description: METRIC_DEFINITIONS.coverage.definition } satisfies ColumnMeta, cell: ({ row }) => formatPercent(row.original.metrics.coverage80, 0) },
       { id: "owner", header: "Penanggung jawab", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.owner} /> },
     ],

@@ -6,9 +6,23 @@ import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/overlay";
 
 /**
- * ForecastDelta: signed change with icon + sign + text. Direction is not "good" or
- * "bad" in demand forecasting, so increases and decreases share a neutral treatment;
- * only changes beyond the review threshold are emphasised.
+ * Colour for a signed value. Sign is the only thing that decides it: increases are
+ * green, decreases red, and an exact zero stays neutral because it is neither.
+ */
+export function deltaToneClass(percent: number | null | undefined) {
+  if (percent == null || Number.isNaN(percent) || Math.abs(percent) < 0.0005) return "text-fg-tertiary";
+  return percent > 0 ? "text-success-fg" : "text-critical-fg";
+}
+
+/** Signed percentage rendered as a value (no icon), coloured by sign. */
+export function SignedPercent({ percent, className }: { percent: number | null | undefined; className?: string }) {
+  return <span className={cn("tabular", deltaToneClass(percent), className)}>{formatDeltaPercent(percent ?? 0)}</span>;
+}
+
+/**
+ * ForecastDelta: signed change with icon + sign + text. Increases are green and
+ * decreases red; the review threshold is noted for assistive tech rather than
+ * signalled with a third colour.
  */
 export function ForecastDelta({
   percent,
@@ -35,10 +49,11 @@ export function ForecastDelta({
       className={cn(
         "inline-flex items-center justify-end gap-0.5 whitespace-nowrap font-semibold tabular",
         size === "sm" ? "text-xs" : "text-sm",
-        emphasised ? "text-warning-fg" : "text-fg-secondary",
+        deltaToneClass(percent),
         className,
       )}
-      aria-label={`${flat ? "No change" : percent > 0 ? "Increase" : "Decrease"} of ${formatDeltaPercent(percent)}${emphasised ? ", above review threshold" : ""}`}
+      title={emphasised ? "Di atas batas tinjauan 15%" : undefined}
+      aria-label={`${flat ? "Tanpa perubahan" : percent > 0 ? "Naik" : "Turun"} ${formatDeltaPercent(percent)}${emphasised ? ", di atas batas tinjauan" : ""}`}
     >
       <Icon className={size === "sm" ? "size-3.5" : "size-4"} aria-hidden />
       {formatDeltaPercent(percent)}

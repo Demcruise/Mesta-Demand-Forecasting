@@ -9,6 +9,7 @@ import { useApiMutation, useApiQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
 import { useSession } from "@/lib/session-context";
 import { formatDateRange, formatDeltaPercent, formatNumber, formatPercent, formatRelative } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -61,7 +62,7 @@ export function BacktestingView() {
       { id: "window", header: "Periode", meta: { width: "200px", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateRange(row.original.windowStart, row.original.windowEnd)} · {row.original.frequency === "daily" ? "harian" : "mingguan"}</span> },
       { id: "status", header: "Status", meta: { width: "130px" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
       { id: "wape", header: "WAPE", meta: { width: "90px", numeric: true } satisfies ColumnMeta, cell: ({ row }) => (row.original.metrics ? formatPercent(row.original.metrics.wape) : "—") },
-      { id: "bias", header: "Bias", meta: { width: "90px", numeric: true, hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => (row.original.metrics ? formatDeltaPercent(row.original.metrics.bias) : "—") },
+      { id: "bias", header: "Bias", meta: { width: "90px", numeric: true, hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => (row.original.metrics ? <SignedPercent percent={row.original.metrics.bias} /> : "—") },
       { id: "coverage", header: "Cakupan", meta: { width: "100px", numeric: true, hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => (row.original.metrics ? formatPercent(row.original.metrics.coverage80, 0) : "—") },
       { id: "by", header: "Dijalankan oleh", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.createdBy} secondary={formatRelative(row.original.createdAt)} /> },
     ],
@@ -181,7 +182,7 @@ export function BacktestingView() {
                     { key: "w", label: "WAPE", numeric: true },
                     { key: "b", label: "Bias", numeric: true },
                   ]}
-                  rows={[...selected.segments].sort((a, b) => b.wape - a.wape).map((s) => ({ s: s.segment, v: formatPercent(s.volumeShare, 0), w: formatPercent(s.wape), b: formatDeltaPercent(s.bias) }))}
+                  rows={[...selected.segments].sort((a, b) => b.wape - a.wape).map((s) => ({ s: s.segment, v: formatPercent(s.volumeShare, 0), w: formatPercent(s.wape), b: <SignedPercent percent={s.bias} /> }))}
                 />
               </div>
             </Panel>

@@ -15,7 +15,7 @@ import { formatCompact, formatDate, formatDateTime, formatDeltaNumber, formatDel
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/telemetry";
 import { PageContainer, PageHeader, PageSection, Panel } from "@/components/page/page";
-import { ForecastDelta, MetricCard, MetricStrip } from "@/components/forecasting/metrics";
+import { deltaToneClass, ForecastDelta, MetricCard, MetricStrip, SignedPercent } from "@/components/forecasting/metrics";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
 import { ChartDataTable, ChartFrame, LegendItem } from "@/components/charts/chart-frame";
 import { ProductIdentity, scopeLabel } from "@/components/entities/identity";
@@ -201,7 +201,7 @@ export function ForecastInsightsView() {
               <ChartDataTable
                 caption="Perubahan perkiraan per kategori"
                 columns={[{ key: "c", label: "Kategori" }, { key: "f", label: "Perkiraan", numeric: true }, { key: "p", label: "Sebelumnya", numeric: true }, { key: "d", label: "Perubahan", numeric: true }, { key: "dp", label: "Perubahan %", numeric: true }]}
-                rows={changeByCategory.map((c) => ({ c: c.label, f: formatNumber(c.forecast), p: formatNumber(c.previous), d: formatDeltaNumber(c.delta), dp: formatDeltaPercent(c.deltaPercent) }))}
+                rows={changeByCategory.map((c) => ({ c: c.label, f: formatNumber(c.forecast), p: formatNumber(c.previous), d: <SignedPercent percent={c.deltaPercent} />, dp: formatDeltaPercent(c.deltaPercent) }))}
               />
             }
           />
@@ -312,7 +312,7 @@ export function ForecastInsightsView() {
                       <tr key={s.segment} className="border-b border-border-subtle last:border-b-0">
                         <th scope="row" className="px-4 py-2 text-left font-medium text-fg">{s.segment}</th>
                         <td className="px-4 py-2 text-right tabular text-fg">{formatPercent(s.wape)}</td>
-                        <td className={cn("px-4 py-2 text-right tabular", Math.abs(s.bias) > 0.05 ? "font-semibold text-warning-fg" : "text-fg-secondary")}>{formatDeltaPercent(s.bias)}</td>
+                        <td className={cn("px-4 py-2 text-right tabular", deltaToneClass(s.bias))}>{formatDeltaPercent(s.bias)}</td>
                         <td className="px-4 py-2 text-right tabular text-fg-secondary">{formatPercent(s.volumeShare)}</td>
                       </tr>
                     ))}

@@ -12,6 +12,7 @@ import { useSession } from "@/lib/session-context";
 import { CATEGORIES } from "@/lib/mock/catalog";
 import { actorName } from "@/lib/mock/directory";
 import { formatDateRange, formatDateTime, formatDeltaNumber, formatDeltaPercent, formatNumber, pluralize } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -96,7 +97,7 @@ export function PlanView() {
         meta: { width: "110px", numeric: true, sortKey: "delta", hideBelow: "md" } satisfies ColumnMeta,
         cell: ({ row }) => {
           const d = row.original.proposed - row.original.forecast;
-          return d === 0 ? <span className="text-fg-tertiary">—</span> : <span className="tabular">{formatDeltaPercent(d / Math.max(1, row.original.forecast))}</span>;
+          return d === 0 ? <span className="text-fg-tertiary">—</span> : <SignedPercent percent={d / Math.max(1, row.original.forecast)} />;
         },
       },
       {

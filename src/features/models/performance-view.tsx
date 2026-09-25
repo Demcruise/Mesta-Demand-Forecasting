@@ -6,6 +6,7 @@ import { getModelPerformance, listModelOptions } from "@/lib/api/models";
 import { useApiQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
 import { formatDate, formatDateRange, formatDeltaPercent, formatPercent } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { Segmented } from "@/components/ui/controls";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { PageContainer, PageHeader, Panel } from "@/components/page/page";
@@ -99,7 +100,7 @@ export function PerformanceView() {
                 columns={[{ key: "week", label: "Minggu" }, ...series.map((s) => ({ key: s.key, label: s.label, numeric: true }))]}
                 rows={q.data.series.map((r) => ({
                   week: formatDate(r.week as string),
-                  ...Object.fromEntries(series.map((s) => [s.key, metric === "wape" ? formatPercent(r[s.key] as number) : formatDeltaPercent(r[s.key] as number)])),
+                  ...Object.fromEntries(series.map((s) => [s.key, metric === "wape" ? formatPercent(r[s.key] as number) : <SignedPercent key={s.key} percent={r[s.key] as number} />])),
                 }))}
               />
             }
@@ -158,7 +159,7 @@ export function PerformanceView() {
                       const s = q.data.backtests[m.id]?.segments.find((x) => x.segment === seg.segment);
                       return [
                         [`${m.id}:wape`, s ? formatPercent(s.wape) : "—"],
-                        [`${m.id}:bias`, s ? formatDeltaPercent(s.bias) : "—"],
+                        [`${m.id}:bias`, s ? <SignedPercent key="b" percent={s.bias} /> : "—"],
                       ];
                     }),
                   ),

@@ -10,6 +10,7 @@ import { useListState } from "@/hooks/use-list-state";
 import { useSession } from "@/lib/session-context";
 import { assumptionEffect, DRIVER_LABELS } from "@/lib/mock/scenarios";
 import { formatDate, formatDateTime, formatDeltaNumber, formatDeltaPercent, formatNumber } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { track } from "@/lib/telemetry";
 import { buttonVariants } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -156,7 +157,7 @@ export function CompareView() {
                     return [
                       [`${s.id}:v`, formatNumber(v)],
                       [`${s.id}:d`, formatDeltaNumber(v - r.baseline)],
-                      [`${s.id}:p`, formatDeltaPercent(r.baseline ? (v - r.baseline) / r.baseline : 0)],
+                      [`${s.id}:p`, <SignedPercent key="p" percent={r.baseline ? (v - r.baseline) / r.baseline : 0} />],
                     ];
                   }),
                 ),

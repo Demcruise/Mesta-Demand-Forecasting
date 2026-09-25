@@ -7,7 +7,8 @@ import type { ModelMetrics } from "@/types/domain";
 import { archiveModel, getModel, requestDefaultModel } from "@/lib/api/models";
 import { useApiMutation, useApiQuery } from "@/hooks/use-api";
 import { useSession } from "@/lib/session-context";
-import { formatDate, formatDateRange, formatDateTime, formatDecimal, formatDeltaPercent, formatNumber, formatPercent } from "@/lib/format";
+import { formatDate, formatDateRange, formatDateTime, formatDecimal, formatNumber, formatPercent } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, Textarea } from "@/components/ui/field";
 import { Dialog, DialogContent } from "@/components/ui/overlay";
@@ -26,7 +27,7 @@ export function metricValue(m: ModelMetrics, key: MetricKey) {
     case "wape":
       return formatPercent(m.wape);
     case "bias":
-      return formatDeltaPercent(m.bias);
+      return <SignedPercent percent={m.bias} />;
     case "mae":
       return formatDecimal(m.mae);
     case "rmse":

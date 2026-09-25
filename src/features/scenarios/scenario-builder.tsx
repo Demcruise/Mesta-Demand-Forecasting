@@ -11,6 +11,7 @@ import { CATEGORIES, REGIONS } from "@/lib/mock/catalog";
 import { ALL_CATEGORIES_SCOPE, assumptionEffect, DRIVER_HELP, DRIVER_LABELS, DRIVER_UNITS, REGION_SCOPE_PREFIX } from "@/lib/mock/scenarios";
 import { errorMessage } from "@/lib/api/client";
 import { formatDateTime, formatDeltaPercent, formatNumber, pluralize } from "@/lib/format";
+import { deltaToneClass } from "@/components/forecasting/metrics";
 import { track } from "@/lib/telemetry";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -180,7 +181,7 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
                     </Field>
                     <div className="flex flex-col gap-1.5">
                       <span className="label">Efek permintaan</span>
-                      <span className={cn("flex h-[var(--control-h-md)] items-center rounded-md border border-border bg-subtle px-3 text-sm font-semibold tabular", effect === 0 ? "text-fg-tertiary" : "text-fg")}>{formatDeltaPercent(effect)}</span>
+                      <span className={cn("flex h-[var(--control-h-md)] items-center rounded-md border border-border bg-subtle px-3 text-sm font-semibold tabular", deltaToneClass(effect))}>{formatDeltaPercent(effect)}</span>
                     </div>
                   </div>
                   {rowErr?.value && <p id={`${a.id}-val-error`} className="mt-1.5 text-xs font-medium text-critical-fg" role="alert">{rowErr.value}</p>}

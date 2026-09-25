@@ -9,6 +9,7 @@ import { useApiQuery } from "@/hooks/use-api";
 import { useSession } from "@/lib/session-context";
 import { actorName } from "@/lib/mock/directory";
 import { formatDate, formatDateRange, formatDateTime, formatDeltaNumber, formatDeltaPercent, formatNumber, formatPercent } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DescriptionList, MetaItem, PageContainer, PageHeader, PageSection, Panel } from "@/components/page/page";
@@ -109,8 +110,8 @@ export function ForecastDetailView({ productId }: { productId: string }) {
             unit={d.product.unit}
             context={`rata-rata ${formatNumber(Math.round(s.forecastValue / s.horizonDays))} per hari`}
           />
-          <MetricCard label="Perubahan vs proses sebelumnya" value={formatDeltaPercent(s.deltaPercent)} delta={<ForecastDelta percent={s.deltaPercent} size="sm" />} context={`${formatDeltaNumber(s.delta)} ${d.product.unit} (sebelumnya ${formatNumber(s.previousForecast)})`} />
-          <MetricCard label="Perubahan vs aktual terakhir" value={formatDeltaPercent(vsActual)} context={`Permintaan aktual ${s.horizonDays} hari sebelumnya: ${formatNumber(s.actualLastPeriod)}`} />
+          <MetricCard label="Perubahan vs proses sebelumnya" value={<SignedPercent percent={s.deltaPercent} />} delta={<ForecastDelta percent={s.deltaPercent} size="sm" />} context={`${formatDeltaNumber(s.delta)} ${d.product.unit} (sebelumnya ${formatNumber(s.previousForecast)})`} />
+          <MetricCard label="Perubahan vs aktual terakhir" value={<SignedPercent percent={vsActual} />} context={`Permintaan aktual ${s.horizonDays} hari sebelumnya: ${formatNumber(s.actualLastPeriod)}`} />
           <MetricCard
             label="Perubahan manual"
             value={d.row?.overrideUnits != null ? formatNumber(d.row.overrideUnits) : "Tidak ada"}
@@ -253,7 +254,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
                 <li key={o.id} className="rounded-md border border-border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="body-sm font-semibold">
-                      {formatNumber(o.originalUnits)} → {formatNumber(o.newUnits)} unit ({formatDeltaPercent((o.newUnits - o.originalUnits) / o.originalUnits)})
+                      {formatNumber(o.originalUnits)} → {formatNumber(o.newUnits)} unit (<SignedPercent percent={(o.newUnits - o.originalUnits) / o.originalUnits} />)
                     </span>
                     <StatusBadge status={o.status === "applied" ? "approved" : o.status === "pending_approval" ? "pending" : "rejected"} label={o.status === "applied" ? "Diterapkan" : o.status === "pending_approval" ? "Menunggu persetujuan" : "Ditolak"} size="sm" />
                   </div>

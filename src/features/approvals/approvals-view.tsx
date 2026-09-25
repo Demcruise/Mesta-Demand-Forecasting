@@ -12,6 +12,7 @@ import { useSession } from "@/lib/session-context";
 import { actorName } from "@/lib/mock/directory";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { formatDateTime, formatDeltaNumber, formatDeltaPercent, formatNumber, formatRelative, pluralize } from "@/lib/format";
+import { SignedPercent } from "@/components/forecasting/metrics";
 import { track } from "@/lib/telemetry";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ function Impact({ a }: { a: Approval }) {
   if (a.type === "model_default") return <span className="text-xs text-fg-secondary">{a.impact.summary.split(" in the")[0]}</span>;
   return (
     <span className="flex flex-col items-end">
-      <span className="font-semibold tabular">{formatDeltaPercent(a.impact.percent)}</span>
+      <SignedPercent percent={a.impact.percent} className="font-semibold" />
       <span className="text-[0.6875rem] tabular text-fg-tertiary">
         {formatDeltaNumber(a.impact.units)} units · {pluralize(a.impact.skuCount, "SKU")}
       </span>
