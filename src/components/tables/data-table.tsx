@@ -9,6 +9,7 @@ import {
   type RowSelectionState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Columns3, Rows3 } from "lucide-react";
 import * as React from "react";
 import type { SortDirection } from "@/types/domain";
@@ -82,6 +83,17 @@ type DataTableProps<T> = {
   className?: string;
   footerNote?: React.ReactNode;
   maxHeight?: string;
+  /**
+   * Virtualise rows when the body scrolls and the list is long (PERF-001). Rows
+   * outside the viewport are not mounted, so the shared grid tracks and keyboard
+   * navigation are preserved without paying for thousands of DOM nodes.
+   * On by default whenever `maxHeight` gives the body its own scroll area.
+   */
+  virtualize?: boolean;
+  /** Row count at which virtualisation switches on. Default 60. */
+  virtualizeThreshold?: number;
+  /** Rows-per-page choices. Default [10, 25, 50, 100]. */
+  pageSizeOptions?: number[];
 };
 
 function useBreakpointHidden(columns: ColumnDef<unknown, unknown>[]) {
@@ -133,6 +145,9 @@ export function DataTable<T>({
   className,
   footerNote,
   maxHeight,
+  virtualize,
+  virtualizeThreshold,
+  pageSizeOptions,
 }: DataTableProps<T>) {
   const prefs = usePreferences();
   const [localDensity, setLocalDensity] = React.useState<Density | null>(null);
@@ -218,14 +233,42 @@ export function DataTable<T>({
     })
     .join(" ");
   const rowHeight = density === "compact" ? "var(--row-h-compact)" : "var(--row-h-comfortable)";
+  const rowHeightPx = density === "compact" ? 42 : 54;
   const rows = table.getRowModel().rows;
   const bodyRef = React.useRef<HTMLDivElement>(null);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  // `maxHeight="none"` is the explicit opt-out used by tables that should grow with the page.
+  const hasScrollArea = !!maxHeight && maxHeight !== "none";
+  const shouldVirtualize = (virtualize ?? true) && hasScrollArea && rows.length >= (virtualizeThreshold ?? 60);
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => rowHeightPx,
+    overscan: 8,
+    enabled: shouldVirtualize,
+  });
+  // Absolute placement for virtualised rows; plain flow order otherwise.
+  const renderedRows = shouldVirtualize
+    ? virtualizer.getVirtualItems().map((vi) => ({ row: rows[vi.index]!, index: vi.index, top: vi.start }))
+    : rows.map((row, index) => ({ row, index, top: null }));
 
   const onRowKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number, row: (typeof rows)[number]) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
-      const next = bodyRef.current?.querySelectorAll<HTMLElement>("[data-row]")[index + (e.key === "ArrowDown" ? 1 : -1)];
-      next?.focus();
+      const nextIndex = index + (e.key === "ArrowDown" ? 1 : -1);
+      if (nextIndex < 0 || nextIndex >= rows.length) return;
+      if (shouldVirtualize) {
+        virtualizer.scrollToIndex(nextIndex, { align: "auto" });
+        let tries = 0;
+        const focusNext = () => {
+          const el = bodyRef.current?.querySelector<HTMLElement>(`[data-row-index="${nextIndex}"]`);
+          if (el) el.focus();
+          else if (tries++ < 4) requestAnimationFrame(focusNext);
+        };
+        requestAnimationFrame(focusNext);
+      } else {
+        bodyRef.current?.querySelectorAll<HTMLElement>("[data-row]")[nextIndex]?.focus();
+      }
     } else if (e.key === "Enter" && onRowClick) {
       e.preventDefault();
       onRowClick(row.original);
@@ -292,7 +335,7 @@ export function DataTable<T>({
       ) : isLoading ? (
         <TableSkeleton rows={Math.min(pagination?.pageSize ?? 10, 10)} columns={Math.min(visibleColumns.length, 7)} density={density} />
       ) : (
-        <div className="relative overflow-x-auto" style={maxHeight ? { maxHeight } : undefined}>
+        <div ref={scrollRef} className={cn("relative", hasScrollArea ? "overflow-auto" : "overflow-x-auto")} style={hasScrollArea ? { maxHeight } : undefined}>
           <div role="table" aria-label={label} aria-rowcount={pagination?.total ?? rows.length} aria-busy={isFetching || undefined} className="min-w-full" style={{ minWidth: "max-content" }}>
             <div role="rowgroup" className="sticky top-0 z-[1]">
               {table.getHeaderGroups().map((hg) => (
@@ -348,19 +391,26 @@ export function DataTable<T>({
                 </div>
               ))}
             </div>
-            <div role="rowgroup" ref={bodyRef} className={cn(isFetching && "opacity-70 transition-opacity")}>
+            <div
+              role="rowgroup"
+              ref={bodyRef}
+              className={cn("relative", isFetching && "opacity-70 transition-opacity")}
+              style={shouldVirtualize ? { height: virtualizer.getTotalSize() } : undefined}
+            >
               {rows.length === 0 ? (
                 <div role="row">
                   <div role="cell">{empty}</div>
                 </div>
               ) : (
-                rows.map((row, index) => {
+                renderedRows.map(({ row, index, top }) => {
                   const active = activeRowId === row.id;
                   return (
                     <div
                       key={row.id}
                       role="row"
                       data-row
+                      data-row-index={index}
+                      aria-rowindex={index + 2}
                       tabIndex={onRowClick ? 0 : -1}
                       aria-selected={selection ? row.getIsSelected() : undefined}
                       aria-current={active || undefined}
@@ -370,8 +420,9 @@ export function DataTable<T>({
                         "grid items-center border-b border-border-subtle last:border-b-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
                         onRowClick && "cursor-pointer hover:bg-hover",
                         (row.getIsSelected() || active) && "bg-selected hover:bg-selected",
+                        top !== null && "absolute left-0 top-0 w-full",
                       )}
-                      style={{ gridTemplateColumns: template, height: rowHeight }}
+                      style={{ gridTemplateColumns: template, height: rowHeight, ...(top !== null ? { transform: `translateY(${top}px)` } : {}) }}
                     >
                       {row.getVisibleCells().map((cell) => {
                         const meta = cell.column.columnDef.meta as ColumnMeta | undefined;
@@ -417,7 +468,7 @@ export function DataTable<T>({
                   className="w-20"
                   value={String(pagination.pageSize)}
                   onValueChange={(v) => pagination.onPageSizeChange?.(Number(v))}
-                  options={[10, 25, 50, 100].map((n) => ({ value: String(n), label: String(n) }))}
+                  options={(pageSizeOptions ?? [10, 25, 50, 100]).map((n) => ({ value: String(n), label: String(n) }))}
                 />
               </div>
             )}

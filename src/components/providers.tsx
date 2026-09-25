@@ -5,10 +5,16 @@ import * as React from "react";
 import { ApiError } from "@/lib/api/client";
 import { PermissionError } from "@/lib/permissions";
 import { PreferencesProvider } from "@/lib/preferences";
+import { installBrowserTransport } from "@/lib/telemetry";
 import { ToastProvider } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/overlay";
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Telemetry (backlog §72) delivers through the collector endpoint once mounted.
+  React.useEffect(() => {
+    installBrowserTransport();
+  }, []);
+
   const [client] = React.useState(
     () =>
       new QueryClient({

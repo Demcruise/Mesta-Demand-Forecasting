@@ -2,6 +2,7 @@ import {
   Activity,
   BarChart3,
   CalendarClock,
+  ChartSpline,
   Boxes,
   ClipboardCheck,
   Cpu,
@@ -52,6 +53,7 @@ export const NAV: NavGroup[] = [
     items: [
       { label: "Forecast runs", href: "/forecasting/runs", icon: Workflow },
       { label: "Forecast explorer", href: "/forecasting/explorer", icon: Table2, match: ["/forecasting/explorer", "/forecasting/detail"] },
+      { label: "Forecast insights", href: "/forecasting/insights", icon: ChartSpline },
       { label: "Schedules", href: "/forecasting/schedules", icon: CalendarClock },
     ],
   },
@@ -123,6 +125,7 @@ export const SEGMENT_LABELS: Record<string, string> = {
   runs: "Forecast runs",
   new: "New",
   explorer: "Forecast explorer",
+  insights: "Forecast insights",
   detail: "Forecast explorer",
   "demand-data": "Demand data",
   products: "Products",

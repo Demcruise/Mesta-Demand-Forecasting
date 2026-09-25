@@ -44,7 +44,11 @@ export function RunDetailView({ runId }: { runId: string }) {
 
   const prevStatus = React.useRef(run?.status);
   React.useEffect(() => {
-    if (prevStatus.current && prevStatus.current !== run?.status && run?.status === "completed") track("forecast_run_completed", {});
+    const previous = prevStatus.current;
+    if (previous && previous !== run?.status) {
+      if (run?.status === "completed") track("forecast_run_completed", {});
+      if (run?.status === "failed") track("forecast_run_failed", {});
+    }
     prevStatus.current = run?.status;
   }, [run?.status]);
 

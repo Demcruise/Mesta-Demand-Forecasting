@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
+import { PageViewTracker } from "@/components/shell/page-view-tracker";
 import { decodeSession, isExpired, SESSION_COOKIE } from "@/lib/auth/session";
 import { findUser, workspaceById } from "@/lib/mock/directory";
 import { SessionProvider } from "@/lib/session-context";
@@ -20,6 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   return (
     <SessionProvider session={session}>
+      <PageViewTracker />
       <AppShell>{children}</AppShell>
     </SessionProvider>
   );

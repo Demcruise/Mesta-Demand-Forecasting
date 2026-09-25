@@ -99,6 +99,8 @@ export function HistoricalView() {
         onRetry={() => q.refetch()}
         errorWhat="Historical demand could not be loaded."
         storageKey="historical"
+        maxHeight="min(70vh, 44rem)"
+        pageSizeOptions={[25, 50, 100, 250]}
         density="compact"
         hideDensityToggle
         sort={{ key: "date", dir: state.query.dir, onChange: (_k, dir) => state.setSort("date", dir) }}

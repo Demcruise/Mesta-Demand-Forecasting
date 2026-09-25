@@ -213,6 +213,8 @@ export function ExplorerView() {
         onRetry={() => q.refetch()}
         errorWhat="Forecasts could not be loaded."
         storageKey="explorer"
+        maxHeight="min(70vh, 44rem)"
+        pageSizeOptions={[25, 50, 100, 250]}
         activeRowId={selectedId ? q.data?.page.items.find((r) => r.productId === selectedId)?.id : null}
         onRowClick={(r) => {
           track("forecast_opened", { from: "explorer" });

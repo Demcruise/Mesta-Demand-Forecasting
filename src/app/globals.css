@@ -41,6 +41,9 @@
   --p-gray-300: #c9d0d8;
   --p-gray-400: #9ca5b0;
   --p-gray-500: #6b747f;
+  /* gray-550 exists so tertiary text clears 4.5:1 (WCAG AA) on the canvas, muted and
+     subtle surfaces. gray-500 is 4.41:1 on the canvas — a fail for small text. */
+  --p-gray-550: #616a75;
   --p-gray-600: #5b6572;
   --p-gray-700: #3d4652;
   --p-gray-800: #232a33;
@@ -73,7 +76,7 @@
 
   --fg-primary: var(--p-gray-900);
   --fg-secondary: var(--p-gray-600);
-  --fg-tertiary: var(--p-gray-500);
+  --fg-tertiary: var(--p-gray-550);
   --fg-disabled: var(--p-gray-400);
   --fg-inverse: var(--p-gray-0);
 

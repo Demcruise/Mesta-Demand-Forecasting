@@ -43,13 +43,17 @@ The user menu has **Demo controls** to exercise states: *Slow network* (loading 
 | `npm run dev` | Development server |
 | `npm run build` | Production build (type-checks) |
 | `npm run typecheck` | TypeScript only |
-| `npm test` | Unit tests (Vitest) for formatting, permissions, session transport and the API layer |
+| `npm test` | Unit tests (Vitest): formatting, permissions, session transport, telemetry and the API layer |
+| `npm run test:e2e` | End-to-end, accessibility and visual-regression suite (Playwright; builds and serves on port 3100) |
+| `npm run test:a11y` | Accessibility audit only (axe-core, WCAG 2.0/2.1 A + AA) |
+| `npm run test:e2e:update` | Regenerate visual-regression baselines |
 
 ## Stack
 
 - Next.js 15 (App Router), React 19, TypeScript (strict, `noUncheckedIndexedAccess`)
 - Tailwind CSS v4 with design tokens in `src/app/globals.css`
-- Radix primitives (`radix-ui`), cmdk, TanStack Query and TanStack Table, Recharts
+- Radix primitives (`radix-ui`), cmdk, TanStack Query, TanStack Table and TanStack Virtual, Recharts
+- Tests: Vitest (unit) and Playwright with axe-core (end-to-end, accessibility, visual regression)
 - Fonts: Manrope and IBM Plex Mono, carried over from the Mesta design system
 
 ## Project structure
@@ -58,7 +62,8 @@ The user menu has **Demo controls** to exercise states: *Slow network* (loading 
 src/
 ├── app/                 routes only: thin pages that render a feature view
 │   ├── (auth)/          sign-in, demo IdP, callback, workspace selection, unauthorized
-│   └── (app)/           session-guarded application routes (see IA below)
+│   ├── (app)/           session-guarded application routes (see IA below)
+│   └── api/telemetry/   telemetry collector stub (backlog §72)
 ├── features/            one folder per product area (views, drawers, dialogs)
 ├── components/
 │   ├── ui/              primitives: button, field, select, overlay, controls, toast…
@@ -78,6 +83,8 @@ src/
 │   ├── permissions.ts   proposed RBAC model
 │   └── format.ts        product-wide formatting
 └── types/domain.ts      conceptual data contracts (backlog §61)
+
+e2e/                     Playwright: auth flow, route smoke, accessibility (axe), visual regression
 ```
 
 Information architecture follows backlog §7: Overview · Forecasting · Demand data · Models · Scenarios · Planning · Operations · Administration.
@@ -88,7 +95,22 @@ Information architecture follows backlog §7: Overview · Forecasting · Demand 
 - **URL state**: search, filters, sort, page and the selected entity live in the URL (`useListState`), so lists survive navigation and are deep-linkable.
 - **Authorization** is checked twice: the UI decides what to render (`can()`), and the API layer rejects unauthorized writes (`PermissionError`). Administrators cannot approve business changes; requesters cannot approve their own requests.
 - **Audit**: every consequential mutation appends an immutable audit event (backlog §71).
+- **Large tables** are virtualised (PERF-001): when a list has its own scroll area and more than 60 rows, `DataTable` mounts only the visible window while keeping the shared grid tracks, sticky header and keyboard navigation. Page sizes up to 250 are offered on the explorer and historical demand.
+- **Telemetry** (§72) buffers events and delivers them in batches through a pluggable transport; the browser bootstrap posts to `/api/telemetry`, a collector stub that validates and discards the batch. Free-text and personal properties are stripped before delivery. Override the sink with `NEXT_PUBLIC_TELEMETRY_ENDPOINT`.
 - **Replacing the mock backend**: keep the function signatures in `src/lib/api/*` and swap the bodies for HTTP calls. Delete `src/lib/mock` when nothing imports it.
+
+## Testing
+
+Unit tests (Vitest) cover formatting, the RBAC model, session transport, telemetry batching and redaction, and the API layer's rules. Playwright covers the rest and builds a production bundle first:
+
+| Suite | File | What it proves |
+|---|---|---|
+| Auth | `e2e/auth.spec.ts` | The full SSO journey, personal-email rejection, and that protected routes redirect without a session |
+| Smoke | `e2e/smoke.spec.ts` | Every route in the information architecture renders without an error state; the explorer drawer, the run wizard and table virtualisation |
+| Accessibility | `e2e/accessibility.spec.ts` | axe-core (WCAG 2.0/2.1 A + AA) finds no violations on 15 surfaces; a drawer closes on Escape |
+| Visual | `e2e/visual.spec.ts` | Full-page snapshots of the sign-in, overview, insights, exceptions and virtualised-explorer surfaces |
+
+The visual suite freezes the clock and pins the timezone and locale, because the mock backend anchors data to "today" and renders relative times. **Baselines are platform-specific** (`*-chromium-win32.png`); regenerate them with `npm run test:e2e:update` on the machine that owns them. The axe pass is automated coverage only — a manual keyboard and screen-reader review is still required before production (FND-013).
 
 ## Design system
 

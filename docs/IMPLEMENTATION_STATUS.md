@@ -20,8 +20,8 @@ Status of the [Enterprise Backlog v1](Mesta_Demand_Forecasting_Enterprise_Backlo
 | FND-010 | Freshness system | Done | Fresh, recent, delayed, stale and unavailable. Never invents a time when the timestamp is unknown. |
 | FND-011 | Loading states | Done | Skeletons for page, table, card, chart, drawer/detail and timeline, matching final geometry. |
 | FND-012 | Empty and error states | Done | Context-specific copy with recovery actions, permission notices and route error boundaries. |
-| FND-013 | Accessibility foundation | Partial | Semantic roles, focus-visible, keyboard rows, focus traps, labelled charts with table alternatives, reduced motion. Needs an automated (axe) and screen-reader audit. |
-| FND-014 | QA foundation | Partial | 22 unit tests (formatting, RBAC, session, API behaviour). No visual regression or E2E suite yet. |
+| FND-013 | Accessibility foundation | Partial | Semantic roles, focus-visible, keyboard rows, focus traps, labelled charts with table alternatives, reduced motion. An automated axe audit (WCAG 2.0/2.1 A + AA) covers 15 surfaces in `e2e/accessibility.spec.ts` and passes. A manual screen-reader pass is still outstanding. |
+| FND-014 | QA foundation | Partial | 34 unit tests (formatting, RBAC, session, telemetry, analytics, API behaviour) plus a Playwright suite — auth journey, route smoke, accessibility and visual regression (`npm run test:e2e`). Not yet wired into CI. |
 | FND-015 | React Bits integration | Partial | Registries configured in `components.json`; licence key via env. No Pro blocks installed without a licence. Components follow the wrapper principle (RB-002). |
 
 ## P0 · Core product
@@ -50,7 +50,7 @@ Status of the [Enterprise Backlog v1](Mesta_Demand_Forecasting_Enterprise_Backlo
 | INT-005 | Scenario list | Done | |
 | INT-006 | Scenario builder | Done | Every assumption shows baseline, changed value, delta, demand effect and rationale. Simulation preview before saving. Drivers are placeholders (§93 item 15). |
 | INT-007 | Scenario comparison | Done | Up to 4 scenarios, shared timeframe, uncertainty, assumptions, CSV export. |
-| INT-008 | Advanced analytics | Not started | Scope undefined in the backlog. |
+| INT-008 | Advanced analytics | Done | Forecast insights at `/forecasting/insights`: change decomposition by category and lifecycle, uncertainty ranking, largest movers (virtualised) and model accuracy by segment. Scope defined here because the backlog left it open. |
 
 ## P1 · Operations
 
@@ -79,32 +79,33 @@ Status of the [Enterprise Backlog v1](Mesta_Demand_Forecasting_Enterprise_Backlo
 
 | ID | Epic | Status |
 |---|---|---|
-| PLAT-001 | API access | Not started (explained in Settings › API & access) |
-| PLAT-002 | Webhooks | Not started |
-| PLAT-003 | Advanced exports | Partial (CSV only) |
-| PLAT-004 | Saved views | Partial (column visibility is remembered per table; no named views) |
+| PLAT-001 | API access | Done | Scoped, expiring API keys with one-time secret reveal, rotation and revocation (administrator-only). |
+| PLAT-002 | Webhooks | Done | HTTPS-only endpoints, event selection, test delivery and a delivery log. |
+| PLAT-003 | Advanced exports | Done | CSV and Excel (XLSX) through a shared export menu; formula injection neutralised in both formats. |
+| PLAT-004 | Saved views | Done | Personal or shared named views for the explorer, exceptions and runs. |
 | PLAT-005 | Advanced search | Partial (command menu searches products, runs, scenarios, models, exceptions and approvals) |
-| PLAT-006 | Advanced notification rules | Not started |
-| PLAT-007 | Advanced scheduling | Not started |
+| PLAT-006 | Advanced notification rules | Done | Per-user channel per event, severity floor, quiet hours and digest, driving the in-app feed. |
+| PLAT-007 | Advanced scheduling | Done | Forecast schedules with cadence, scope, model, pause/resume, run now and approval-gated automatic publication. |
 
 ## Other backlog items
 
 | ID | Status | Notes |
 |---|---|---|
 | NAV-001 Command menu | Done | Ctrl/Cmd + K, scoped to the workspace and permissions. |
-| ONBOARDING-001 | Not started | Every demo user already has a workspace. |
+| ONBOARDING-001 | Done | Workspace setup guide whose steps derive from workspace state, a "New Market Launch" sandbox to exercise it, and a sidebar entry until setup ends. |
 | EXPORT-001 | Done | Exports state the row count and respect filters. |
 | BULK-001 | Done | Selection count, allowed actions, confirmation, result toast. |
-| RESPONSIVE-001 | Partial | Column priority, mobile navigation drawer, full-screen drawers, no horizontal page overflow at 390px on key pages. Needs device QA. |
+| RESPONSIVE-001 | Partial | Column priority, mobile navigation drawer, full-screen drawers, no horizontal page overflow at 390px on key pages. Visual baselines cover 1440px only; tablet and mobile device QA outstanding. |
 | A11Y-001 | Partial | See FND-013. |
-| PERF-001 | Partial | Server-side paging for large lists; historical demand generated per page. No virtualisation or profiling yet. |
-| Telemetry (§72) | Partial | Event API in place (`src/lib/telemetry.ts`); not wired to a collector. |
+| PERF-001 | Done | Server-side paging, row virtualisation for long lists (`DataTable`, automatic above 60 rows when the body scrolls), and page sizes up to 250 on the explorer and historical demand. No profiling yet. |
+| Telemetry (§72) | Done | Events instrumented across the product, batched through a pluggable transport to `/api/telemetry` (collector stub), free-text redacted, page views tracked. No production collector yet. |
 
 ## Deliberate deviations
 
 - **Card radius** is 10px, not the 24px WMS card radius, to avoid oversized rounded cards (§86).
 - **Body text** is 14px, not the WMS 15px, for planning density.
 - **Status colours** use darker success and warning tones than the WMS lime and orange so text meets contrast on light backgrounds. The brand accents remain in chart series.
+- **Tertiary text** uses a dedicated palette step (`--p-gray-550`, #616a75) instead of the Mesta gray-500. Gray-500 is 4.41:1 on the canvas — below the 4.5:1 WCAG AA minimum for small text — which the axe audit caught on four surfaces. Gray-500 is still used for chart axes, where it clears 4.5:1 on white.
 
 ## Validation required before production (§93)
 
