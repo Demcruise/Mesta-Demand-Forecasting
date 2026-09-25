@@ -26,11 +26,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Permission } from "@/lib/permissions";
+import { getActiveLocale, type Locale } from "@/lib/i18n";
 
 /**
- * Global information architecture (backlog v3 §9 NAV-001). Six limited sections with
- * Indonesian labels; every page stays reachable from its own section rather than
- * disappearing, and restricted pages explain access instead of being hidden.
+ * Global information architecture. Six limited sections with
+ * localized labels (English default, Indonesian supported).
  */
 
 export type NavItem = {
@@ -46,65 +46,85 @@ export type NavItem = {
 
 export type NavGroup = { label: string; icon: LucideIcon; items: NavItem[] };
 
-export const NAV: NavGroup[] = [
-  {
-    label: "Ringkasan",
-    icon: LayoutDashboard,
-    items: [{ label: "Ringkasan", href: "/overview", icon: LayoutDashboard }],
+export function getNav(locale: Locale = getActiveLocale()): NavGroup[] {
+  const isId = locale === "id";
+  return [
+    {
+      label: isId ? "Ringkasan" : "Overview",
+      icon: LayoutDashboard,
+      items: [{ label: isId ? "Ringkasan" : "Overview", href: "/overview", icon: LayoutDashboard }],
+    },
+    {
+      label: isId ? "Perkiraan" : "Forecasting",
+      icon: TrendingUp,
+      items: [
+        { label: isId ? "Proses Perkiraan" : "Forecast Runs", href: "/forecasting/runs", icon: Workflow },
+        { label: isId ? "Perkiraan Permintaan" : "Forecast Explorer", href: "/forecasting/explorer", icon: Table2, match: ["/forecasting/explorer", "/forecasting/detail"] },
+        { label: isId ? "Wawasan Perkiraan" : "Forecast Insights", href: "/forecasting/insights", icon: ChartSpline },
+        { label: isId ? "Jadwal Perkiraan" : "Forecast Schedules", href: "/forecasting/schedules", icon: CalendarClock },
+      ],
+    },
+    {
+      label: isId ? "Data" : "Demand Data",
+      icon: Database,
+      items: [
+        { label: isId ? "Produk" : "Products", href: "/demand-data/products", icon: Boxes },
+        { label: isId ? "Permintaan Historis" : "Historical Demand", href: "/demand-data/historical", icon: History },
+        { label: isId ? "Kualitas Data" : "Data Quality", href: "/demand-data/quality", icon: ShieldAlert, count: "dataIssues" },
+        { label: isId ? "Sumber Data" : "Data Sources", href: "/demand-data/sources", icon: Plug },
+      ],
+    },
+    {
+      label: isId ? "Model" : "Models",
+      icon: Cpu,
+      items: [
+        { label: isId ? "Daftar Model" : "Model Registry", href: "/models", icon: Cpu, match: ["/models$", "/models/mdl_"] },
+        { label: isId ? "Performa Model" : "Model Performance", href: "/models/performance", icon: LineChart },
+        { label: isId ? "Uji Model" : "Backtesting", href: "/models/backtesting", icon: FlaskConical },
+      ],
+    },
+    {
+      label: isId ? "Perencanaan" : "Planning",
+      icon: ClipboardCheck,
+      items: [
+        { label: isId ? "Rencana" : "Plan Workspace", href: "/planning", icon: ClipboardCheck, match: ["/planning$"] },
+        { label: isId ? "Skenario" : "Scenarios", href: "/scenarios", icon: SlidersHorizontal, match: ["/scenarios$", "/scenarios/new", "/scenarios/scn_"] },
+        { label: isId ? "Bandingkan Skenario" : "Compare Scenarios", href: "/scenarios/compare", icon: GitCompareArrows },
+        { label: isId ? "Perlu Ditinjau" : "Exceptions", href: "/planning/exceptions", icon: ListChecks, count: "exceptions" },
+        { label: isId ? "Persetujuan" : "Approvals", href: "/planning/approvals", icon: ShieldAlert, count: "approvals" },
+      ],
+    },
+    {
+      label: isId ? "Sistem" : "System",
+      icon: Settings,
+      items: [
+        { label: isId ? "Integrasi" : "Integrations", href: "/administration/integrations", icon: Plug, permission: "integration.manage" },
+        { label: isId ? "Pemantauan" : "Monitoring", href: "/monitoring", icon: BarChart3 },
+        { label: isId ? "Riwayat Aktivitas" : "Audit Log", href: "/administration/audit", icon: ScrollText, permission: "audit.view" },
+        { label: isId ? "Pengguna & Akses" : "Users & Roles", href: "/administration/users", icon: Users, permission: "users.manage" },
+        { label: isId ? "Sumber Keputusan" : "Decision Lineage", href: "/forecasting/lineage", icon: Waypoints },
+        { label: isId ? "Pengaturan" : "Settings", href: "/administration/settings", icon: Settings, match: ["/administration/settings"] },
+      ],
+    },
+  ];
+}
+
+export const NAV: NavGroup[] = new Proxy([] as NavGroup[], {
+  get(_t, prop) {
+    const nav = getNav(getActiveLocale());
+    return (nav as any)[prop];
   },
-  {
-    label: "Perkiraan",
-    icon: TrendingUp,
-    items: [
-      { label: "Proses Perkiraan", href: "/forecasting/runs", icon: Workflow },
-      { label: "Perkiraan Permintaan", href: "/forecasting/explorer", icon: Table2, match: ["/forecasting/explorer", "/forecasting/detail"] },
-      { label: "Wawasan Perkiraan", href: "/forecasting/insights", icon: ChartSpline },
-      { label: "Jadwal Perkiraan", href: "/forecasting/schedules", icon: CalendarClock },
-    ],
+  has(_t, prop) {
+    return prop in getNav(getActiveLocale());
   },
-  {
-    label: "Data",
-    icon: Database,
-    items: [
-      { label: "Produk", href: "/demand-data/products", icon: Boxes },
-      { label: "Permintaan Historis", href: "/demand-data/historical", icon: History },
-      { label: "Kualitas Data", href: "/demand-data/quality", icon: ShieldAlert, count: "dataIssues" },
-      { label: "Sumber Data", href: "/demand-data/sources", icon: Plug },
-    ],
+  ownKeys() {
+    return Object.keys(getNav(getActiveLocale()));
   },
-  {
-    label: "Model",
-    icon: Cpu,
-    items: [
-      { label: "Daftar Model", href: "/models", icon: Cpu, match: ["/models$", "/models/mdl_"] },
-      { label: "Performa Model", href: "/models/performance", icon: LineChart },
-      { label: "Uji Model", href: "/models/backtesting", icon: FlaskConical },
-    ],
+  getOwnPropertyDescriptor(_t, prop) {
+    const nav = getNav(getActiveLocale());
+    return Object.getOwnPropertyDescriptor(nav, prop);
   },
-  {
-    label: "Perencanaan",
-    icon: ClipboardCheck,
-    items: [
-      { label: "Rencana", href: "/planning", icon: ClipboardCheck, match: ["/planning$"] },
-      { label: "Skenario", href: "/scenarios", icon: SlidersHorizontal, match: ["/scenarios$", "/scenarios/new", "/scenarios/scn_"] },
-      { label: "Bandingkan Skenario", href: "/scenarios/compare", icon: GitCompareArrows },
-      { label: "Perlu Ditinjau", href: "/planning/exceptions", icon: ListChecks, count: "exceptions" },
-      { label: "Persetujuan", href: "/planning/approvals", icon: ShieldAlert, count: "approvals" },
-    ],
-  },
-  {
-    label: "Sistem",
-    icon: Settings,
-    items: [
-      { label: "Integrasi", href: "/administration/integrations", icon: Plug, permission: "integration.manage" },
-      { label: "Pemantauan", href: "/monitoring", icon: BarChart3 },
-      { label: "Riwayat Aktivitas", href: "/administration/audit", icon: ScrollText, permission: "audit.view" },
-      { label: "Pengguna & Akses", href: "/administration/users", icon: Users, permission: "users.manage" },
-      { label: "Sumber Keputusan", href: "/forecasting/lineage", icon: Waypoints },
-      { label: "Pengaturan", href: "/administration/settings", icon: Settings, match: ["/administration/settings"] },
-    ],
-  },
-];
+});
 
 export function isActive(item: NavItem, pathname: string) {
   const patterns = item.match ?? [item.href];
@@ -114,8 +134,7 @@ export function isActive(item: NavItem, pathname: string) {
   });
 }
 
-/** Static breadcrumb labels by path segment (Indonesian). */
-export const SEGMENT_LABELS: Record<string, string> = {
+const SEGMENT_LABELS_ID: Record<string, string> = {
   overview: "Ringkasan",
   forecasting: "Perkiraan",
   runs: "Proses Perkiraan",
@@ -146,6 +165,61 @@ export const SEGMENT_LABELS: Record<string, string> = {
   onboarding: "Persiapan Ruang Kerja",
   schedules: "Jadwal Perkiraan",
 };
+
+const SEGMENT_LABELS_EN: Record<string, string> = {
+  overview: "Overview",
+  forecasting: "Forecasting",
+  runs: "Forecast Runs",
+  new: "New",
+  explorer: "Forecast Explorer",
+  insights: "Forecast Insights",
+  detail: "Forecast Detail",
+  "demand-data": "Demand Data",
+  products: "Products",
+  historical: "Historical Demand",
+  quality: "Data Quality",
+  sources: "Data Sources",
+  models: "Models",
+  performance: "Model Performance",
+  backtesting: "Backtesting",
+  scenarios: "Scenarios",
+  compare: "Compare Scenarios",
+  planning: "Planning",
+  exceptions: "Exceptions",
+  approvals: "Approvals",
+  monitoring: "Monitoring",
+  administration: "Administration",
+  integrations: "Integrations",
+  users: "Users & Roles",
+  audit: "Audit Log",
+  settings: "Settings",
+  lineage: "Decision Lineage",
+  onboarding: "Workspace Setup",
+  schedules: "Forecast Schedules",
+};
+
+export const SEGMENT_LABELS: Record<string, string> = new Proxy({} as Record<string, string>, {
+  get(_t, key: string) {
+    const isId = getActiveLocale() === "id";
+    const dict = isId ? SEGMENT_LABELS_ID : SEGMENT_LABELS_EN;
+    return dict[key] ?? key;
+  },
+  has(_t, key: string) {
+    return key in SEGMENT_LABELS_EN;
+  },
+  ownKeys() {
+    return Object.keys(SEGMENT_LABELS_EN);
+  },
+  getOwnPropertyDescriptor(_t, key: string) {
+    const isId = getActiveLocale() === "id";
+    const dict = isId ? SEGMENT_LABELS_ID : SEGMENT_LABELS_EN;
+    return {
+      value: dict[key] ?? key,
+      enumerable: true,
+      configurable: true,
+    };
+  },
+});
 
 /** Where a breadcrumb segment should link (some segments have no page of their own). */
 export const SEGMENT_HREFS: Record<string, string> = {

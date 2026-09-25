@@ -3,7 +3,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { AuthCard, AuthShell } from "@/components/auth/auth-shell";
 
-export const metadata: Metadata = { title: "Akses tidak tersedia" };
+export const metadata: Metadata = { title: "Access unavailable" };
 
 const COPY: Record<string, { title: string; body: string }> = {
   disabled: {

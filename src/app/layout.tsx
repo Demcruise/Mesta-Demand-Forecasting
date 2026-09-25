@@ -9,7 +9,7 @@ const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600
 
 export const metadata: Metadata = {
   title: { default: "Mesta Demand Forecasting", template: "%s · Mesta Demand Forecasting" },
-  description: "Perkiraan permintaan perusahaan: proses perkiraan, ketidakpastian, skenario, perencanaan, dan persetujuan.",
+  description: "Enterprise demand forecasting: forecast runs, uncertainty, scenarios, planning, and approvals.",
   robots: { index: false, follow: false },
 };
 

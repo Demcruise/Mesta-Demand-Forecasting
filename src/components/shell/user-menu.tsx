@@ -1,6 +1,6 @@
 "use client";
 
-import { FlaskConical, LogOut, Monitor, Moon, Rows3, Settings, Sun, UserRound } from "lucide-react";
+import { FlaskConical, Globe, LogOut, Monitor, Moon, Rows3, Settings, Sun, UserRound } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -9,6 +9,7 @@ import { useSession } from "@/lib/session-context";
 import { usePreferences, type Density, type ThemePreference } from "@/lib/preferences";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
+import type { Locale } from "@/lib/i18n";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -24,9 +25,10 @@ import { Avatar } from "@/components/entities/identity";
 
 export function UserMenu() {
   const { session, workspace, signOut } = useSession();
-  const { theme, density, setPreference } = usePreferences();
+  const { theme, density, locale, setPreference } = usePreferences();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const isId = locale === "id";
   const [demo, setDemo] = React.useState<DemoControls>(demoControls);
 
   React.useEffect(() => {
@@ -61,54 +63,64 @@ export function UserMenu() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem icon={<UserRound />} onSelect={() => router.push("/administration/settings/personal")}>
-          Personal preferences
+          {isId ? "Preferensi pribadi" : "Personal preferences"}
         </DropdownMenuItem>
         <DropdownMenuItem icon={<Settings />} onSelect={() => router.push("/administration/settings")}>
-          Settings
+          {isId ? "Pengaturan" : "Settings"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>Theme</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setPreference("theme", v as ThemePreference)}>
-          <DropdownMenuRadioItem value="light">
-            <Sun className="size-4 text-fg-tertiary" aria-hidden /> Light
+        <DropdownMenuLabel>{isId ? "Bahasa" : "Language"}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={locale} onValueChange={(v) => setPreference("locale", v as Locale)}>
+          <DropdownMenuRadioItem value="en">
+            English
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">
-            <Moon className="size-4 text-fg-tertiary" aria-hidden /> Dark
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">
-            <Monitor className="size-4 text-fg-tertiary" aria-hidden /> Match system
+          <DropdownMenuRadioItem value="id">
+            Bahasa Indonesia
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
-        <DropdownMenuLabel>Table density</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{isId ? "Tema" : "Theme"}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setPreference("theme", v as ThemePreference)}>
+          <DropdownMenuRadioItem value="light">
+            <Sun className="size-4 text-fg-tertiary" aria-hidden /> {isId ? "Terang" : "Light"}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">
+            <Moon className="size-4 text-fg-tertiary" aria-hidden /> {isId ? "Gelap" : "Dark"}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="system">
+            <Monitor className="size-4 text-fg-tertiary" aria-hidden /> {isId ? "Ikuti sistem" : "Match system"}
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuLabel>{isId ? "Kerapatan tabel" : "Table density"}</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={density} onValueChange={(v) => setPreference("density", v as Density)}>
           <DropdownMenuRadioItem value="comfortable">
-            <Rows3 className="size-4 text-fg-tertiary" aria-hidden /> Comfortable
+            <Rows3 className="size-4 text-fg-tertiary" aria-hidden /> {isId ? "Nyaman" : "Comfortable"}
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="compact">
-            <Rows3 className="size-4 text-fg-tertiary" aria-hidden /> Compact
+            <Rows3 className="size-4 text-fg-tertiary" aria-hidden /> {isId ? "Padat" : "Compact"}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>
           <span className="inline-flex items-center gap-1">
-            <FlaskConical className="size-3" aria-hidden /> Demo controls
+            <FlaskConical className="size-3" aria-hidden /> {isId ? "Kontrol demo" : "Demo controls"}
           </span>
         </DropdownMenuLabel>
         <DropdownMenuCheckboxItem checked={demo.latency === "slow"} onCheckedChange={(c) => updateDemo({ latency: c ? "slow" : "normal" })} onSelect={(e) => e.preventDefault()}>
-          Slow network
+          {isId ? "Jaringan lambat" : "Slow network"}
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem checked={demo.failReads} onCheckedChange={(c) => updateDemo({ failReads: c === true })} onSelect={(e) => e.preventDefault()}>
-          Fail reads
+          {isId ? "Gagal membaca" : "Fail reads"}
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem checked={demo.failWrites} onCheckedChange={(c) => updateDemo({ failWrites: c === true })} onSelect={(e) => e.preventDefault()}>
-          Fail writes
+          {isId ? "Gagal menulis" : "Fail writes"}
         </DropdownMenuCheckboxItem>
         <DropdownMenuSeparator />
         <div className="px-2 py-1.5 caption">
-          Signed in via {session.idp}. Session expires {formatDateTime(session.expiresAt)}.
+          {isId ? `Masuk via ${session.idp}. Sesi berakhir ${formatDateTime(session.expiresAt)}.` : `Signed in via ${session.idp}. Session expires ${formatDateTime(session.expiresAt)}.`}
         </div>
         <DropdownMenuItem icon={<LogOut />} onSelect={() => signOut("user")}>
-          Sign out
+          {isId ? "Keluar" : "Sign out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

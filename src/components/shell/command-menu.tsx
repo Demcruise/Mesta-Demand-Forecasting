@@ -13,6 +13,7 @@ import { formatRelative } from "@/lib/format";
 import { Kbd } from "@/components/ui/controls";
 import { STATUS } from "@/components/feedback/status";
 import type { StatusKey } from "@/types/domain";
+import { getActiveLocale, useI18n } from "@/lib/i18n";
 import { NAV } from "./nav-config";
 
 const RESULT_ICONS: Record<SearchResult["type"], React.ComponentType<{ className?: string }>> = {
@@ -25,7 +26,7 @@ const RESULT_ICONS: Record<SearchResult["type"], React.ComponentType<{ className
 };
 
 /** Search categories (v3 §9 NAV-002). */
-const RESULT_LABELS: Record<SearchResult["type"], string> = {
+const RESULT_LABELS_ID: Record<SearchResult["type"], string> = {
   Product: "Produk",
   "Forecast run": "Perkiraan",
   Scenario: "Skenario",
@@ -33,6 +34,21 @@ const RESULT_LABELS: Record<SearchResult["type"], string> = {
   Exception: "Perlu Ditinjau",
   Approval: "Persetujuan",
 };
+
+const RESULT_LABELS_EN: Record<SearchResult["type"], string> = {
+  Product: "Products",
+  "Forecast run": "Forecast Runs",
+  Scenario: "Scenarios",
+  Model: "Models",
+  Exception: "Exceptions",
+  Approval: "Approvals",
+};
+
+const RESULT_LABELS: Record<SearchResult["type"], string> = new Proxy({} as Record<SearchResult["type"], string>, {
+  get(_t, key: SearchResult["type"]) {
+    return getActiveLocale() === "id" ? RESULT_LABELS_ID[key] : RESULT_LABELS_EN[key];
+  },
+});
 
 const CommandMenuContext = React.createContext<{ open: () => void } | null>(null);
 
@@ -83,12 +99,15 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
     router.push(href);
   };
 
+  const { locale, t } = useI18n();
+  const isId = locale === "id";
+
   const actions = [
-    { label: "Buat Perkiraan", href: "/forecasting/runs/new", icon: Plus, allowed: can("forecast.run.create"), keywords: "perkiraan baru" },
-    { label: "Buat Skenario", href: "/scenarios/new", icon: Plus, allowed: can("scenario.create"), keywords: "skenario baru" },
-    { label: "Buka Perlu Ditinjau", href: "/planning/exceptions?status=open", icon: ListChecks, allowed: true, keywords: "perlu ditinjau" },
-    { label: "Buka Persetujuan", href: "/planning/approvals?status=pending", icon: ShieldCheck, allowed: true, keywords: "persetujuan" },
-    { label: "Buka Pengaturan", href: "/administration/settings", icon: Settings, allowed: true, keywords: "pengaturan" },
+    { label: isId ? "Buat Perkiraan" : "Create Forecast", href: "/forecasting/runs/new", icon: Plus, allowed: can("forecast.run.create"), keywords: isId ? "perkiraan baru" : "new forecast" },
+    { label: isId ? "Buat Skenario" : "Create Scenario", href: "/scenarios/new", icon: Plus, allowed: can("scenario.create"), keywords: isId ? "skenario baru" : "new scenario" },
+    { label: isId ? "Buka Perlu Ditinjau" : "Open Exceptions", href: "/planning/exceptions?status=open", icon: ListChecks, allowed: true, keywords: isId ? "perlu ditinjau" : "exceptions" },
+    { label: isId ? "Buka Persetujuan" : "Open Approvals", href: "/planning/approvals?status=pending", icon: ShieldCheck, allowed: true, keywords: isId ? "persetujuan" : "approvals" },
+    { label: isId ? "Buka Pengaturan" : "Open Settings", href: "/administration/settings", icon: Settings, allowed: true, keywords: isId ? "pengaturan" : "settings" },
   ].filter((a) => a.allowed);
 
   const grouped = React.useMemo(() => {
@@ -104,26 +123,28 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
         <D.Portal>
           <D.Overlay className="fixed inset-0 z-[var(--z-index-dialog)] bg-overlay" />
           <D.Content className="fixed left-1/2 top-[12vh] z-[var(--z-index-dialog)] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-surface shadow-dialog outline-none">
-            <D.Title className="sr-only">Cari dan perintah</D.Title>
-            <D.Description className="sr-only">Cari produk, perkiraan, skenario, model, item yang perlu ditinjau dan persetujuan di ruang kerja ini, atau jalankan perintah.</D.Description>
-            <Command label="Cari dan perintah" shouldFilter={false} className="flex flex-col">
+            <D.Title className="sr-only">{isId ? "Cari dan perintah" : "Search and commands"}</D.Title>
+            <D.Description className="sr-only">
+              {isId ? "Cari produk, perkiraan, skenario, model, item yang perlu ditinjau dan persetujuan di ruang kerja ini, atau jalankan perintah." : "Search products, runs, scenarios, models, exceptions and approvals in this workspace, or run commands."}
+            </D.Description>
+            <Command label={isId ? "Cari dan perintah" : "Search and commands"} shouldFilter={false} className="flex flex-col">
               <div className="flex items-center gap-2 border-b border-border px-4">
                 <Search className="size-4 shrink-0 text-fg-tertiary" aria-hidden />
                 <Command.Input
                   value={q}
                   onValueChange={setQ}
-                  placeholder="Cari produk, perkiraan, atau skenario"
+                  placeholder={t.nav.searchPlaceholder}
                   className="h-12 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-tertiary"
                 />
-                {results.isFetching && <Loader2 className="size-4 animate-spin text-fg-tertiary" aria-label="Mencari" />}
+                {results.isFetching && <Loader2 className="size-4 animate-spin text-fg-tertiary" aria-label={isId ? "Mencari" : "Searching"} />}
                 <Kbd>Esc</Kbd>
               </div>
               <Command.List className="max-h-[60vh] overflow-y-auto p-2">
                 {debounced.trim().length >= 2 && !results.isFetching && (results.data?.length ?? 0) === 0 && (
                   <Command.Empty className="px-3 py-8 text-center">
                     <FileSearch className="mx-auto mb-2 size-5 text-fg-tertiary" aria-hidden />
-                    <p className="body-sm font-semibold">Tidak ditemukan untuk “{debounced}”.</p>
-                    <p className="caption">Coba kata lain. Pencarian mencakup nama, SKU dan ID.</p>
+                    <p className="body-sm font-semibold">{isId ? `Tidak ditemukan untuk “${debounced}”.` : `No results for “${debounced}”.`}</p>
+                    <p className="caption">{isId ? "Coba kata lain. Pencarian mencakup nama, SKU dan ID." : "Try another search term. Search covers name, SKU and ID."}</p>
                   </Command.Empty>
                 )}
                 {Array.from(grouped.entries()).map(([type, items]) => {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { AuthCard, AuthShell } from "@/components/auth/auth-shell";
 
-export const metadata: Metadata = { title: "Telah keluar" };
+export const metadata: Metadata = { title: "Signed out" };
 
 export default function SignedOutPage() {
   return (

@@ -1,4 +1,5 @@
 import type { Role } from "@/types/domain";
+import { getActiveLocale, getTranslations } from "./i18n";
 
 /**
  * Proposed RBAC model (backlog §44). Roles and grants require stakeholder approval
@@ -90,21 +91,43 @@ export function can(role: Role | null | undefined, permission: Permission) {
   return GRANTS[role].includes(permission);
 }
 
-export const ROLE_LABELS: Record<Role, string> = {
-  viewer: "Pengamat",
-  planner: "Perencana",
-  manager: "Manajer",
-  analyst: "Analis",
-  admin: "Administrator",
-};
+export const ROLE_LABELS: Record<Role, string> = new Proxy({} as Record<Role, string>, {
+  get(_t, role: Role) {
+    return getTranslations(getActiveLocale()).roles[role]?.label ?? role;
+  },
+  has(_t, role: Role) {
+    return role in getTranslations(getActiveLocale()).roles;
+  },
+  ownKeys() {
+    return Object.keys(getTranslations(getActiveLocale()).roles);
+  },
+  getOwnPropertyDescriptor(_t, role: Role) {
+    return {
+      value: getTranslations(getActiveLocale()).roles[role]?.label ?? role,
+      enumerable: true,
+      configurable: true,
+    };
+  },
+});
 
-export const ROLE_DESCRIPTIONS: Record<Role, string> = {
-  viewer: "Melihat perkiraan, rencana, dan laporan. Tidak dapat mengubah data.",
-  planner: "Menjalankan perkiraan, mengubah perkiraan, dan menyusun skenario serta rencana.",
-  manager: "Semua yang dapat dilakukan perencana, ditambah persetujuan dan penerbitan.",
-  analyst: "Bertanggung jawab atas model, uji model, dan kualitas data. Tidak dapat menyetujui rencana.",
-  admin: "Mengelola pengguna, integrasi, dan pengaturan ruang kerja. Tidak dapat menyetujui perubahan bisnis.",
-};
+export const ROLE_DESCRIPTIONS: Record<Role, string> = new Proxy({} as Record<Role, string>, {
+  get(_t, role: Role) {
+    return getTranslations(getActiveLocale()).roles[role]?.description ?? "";
+  },
+  has(_t, role: Role) {
+    return role in getTranslations(getActiveLocale()).roles;
+  },
+  ownKeys() {
+    return Object.keys(getTranslations(getActiveLocale()).roles);
+  },
+  getOwnPropertyDescriptor(_t, role: Role) {
+    return {
+      value: getTranslations(getActiveLocale()).roles[role]?.description ?? "",
+      enumerable: true,
+      configurable: true,
+    };
+  },
+});
 
 /** Which role must hold a permission for the UI to explain who can act. */
 export function rolesWith(permission: Permission): Role[] {

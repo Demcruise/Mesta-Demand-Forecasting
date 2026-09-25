@@ -9,7 +9,7 @@ import { useApiMutation, useApiQuery } from "@/hooks/use-api";
 import { useSession } from "@/lib/session-context";
 import { usePreferences } from "@/lib/preferences";
 import { ROLE_LABELS } from "@/lib/permissions";
-import { formatPercent } from "@/lib/format";
+import { formatDate, formatDeltaPercent, formatNumber, formatPercent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -95,61 +95,74 @@ export function SettingsView({ section }: { section: SectionKey }) {
 }
 
 function PersonalSection() {
-  const { theme, density, sidebarCollapsed, setPreference } = usePreferences();
+  const { theme, density, sidebarCollapsed, locale, setPreference } = usePreferences();
   const { session } = useSession();
+  const isId = locale === "id";
   return (
     <div className="flex flex-col gap-4">
-      <Panel title="Profil" description="Dikelola oleh penyedia identitas Anda.">
+      <Panel title={isId ? "Profil" : "Profile"} description={isId ? "Dikelola oleh penyedia identitas Anda." : "Managed by your identity provider."}>
         <DescriptionList
           columns={2}
           items={[
-            { label: "Nama", value: session.name },
-            { label: "Email", value: session.email },
-            { label: "Peran di ruang kerja ini", value: ROLE_LABELS[session.role] },
-            { label: "Masuk melalui", value: session.idp },
+            { label: isId ? "Nama" : "Name", value: session.name },
+            { label: isId ? "Email" : "Email", value: session.email },
+            { label: isId ? "Peran di ruang kerja ini" : "Role in this workspace", value: ROLE_LABELS[session.role] },
+            { label: isId ? "Masuk melalui" : "Signed in via", value: session.idp },
           ]}
         />
       </Panel>
-      <Panel title="Tampilan" description="Hanya tersimpan di peramban ini.">
+      <Panel title={isId ? "Tampilan" : "Appearance"} description={isId ? "Hanya tersimpan di peramban ini." : "Saved in this browser only."}>
         <div className="flex flex-col gap-5">
-          <Field label="Theme" htmlFor="theme">
+          <Field label={isId ? "Bahasa" : "Language"} htmlFor="locale" hint={isId ? "Pilih bahasa tampilan antarmuka Mesta." : "Choose the interface display language for Mesta."}>
             <RadioCards
-              aria-label="Theme"
+              aria-label={isId ? "Bahasa" : "Language"}
+              columns={2}
+              value={locale}
+              onValueChange={(v) => setPreference("locale", v as "en" | "id")}
+              options={[
+                { value: "en", label: "English", description: "Default interface language" },
+                { value: "id", label: "Bahasa Indonesia", description: "Antarmuka bahasa Indonesia" },
+              ]}
+            />
+          </Field>
+          <Field label={isId ? "Tema" : "Theme"} htmlFor="theme">
+            <RadioCards
+              aria-label={isId ? "Tema" : "Theme"}
               columns={3}
               value={theme}
               onValueChange={(v) => setPreference("theme", v as typeof theme)}
               options={[
-                { value: "light", label: "Terang" },
-                { value: "dark", label: "Gelap" },
-                { value: "system", label: "Ikuti sistem" },
+                { value: "light", label: isId ? "Terang" : "Light" },
+                { value: "dark", label: isId ? "Gelap" : "Dark" },
+                { value: "system", label: isId ? "Ikuti sistem" : "Match system" },
               ]}
             />
           </Field>
-          <Field label="Kerapatan tabel bawaan" htmlFor="density" hint="Tiap tabel tetap dapat diubah sendiri-sendiri.">
+          <Field label={isId ? "Kerapatan tabel bawaan" : "Default table density"} htmlFor="density" hint={isId ? "Tiap tabel tetap dapat diubah sendiri-sendiri." : "Tables can still be switched individually."}>
             <RadioCards
-              aria-label="Kerapatan tabel bawaan"
+              aria-label={isId ? "Kerapatan tabel bawaan" : "Default table density"}
               columns={2}
               value={density}
               onValueChange={(v) => setPreference("density", v as typeof density)}
               options={[
-                { value: "comfortable", label: "Nyaman", description: "baris 54px" },
-                { value: "compact", label: "Padat", description: "baris 42px" },
+                { value: "comfortable", label: isId ? "Nyaman" : "Comfortable", description: isId ? "baris 54px" : "54px rows" },
+                { value: "compact", label: isId ? "Padat" : "Compact", description: isId ? "baris 42px" : "42px rows" },
               ]}
             />
           </Field>
-          <SwitchField id="sidebar" label="Tutup bilah samping" description="Tampilkan ikon saja agar tabel lebih lega." checked={sidebarCollapsed} onCheckedChange={(v) => setPreference("sidebarCollapsed", v)} />
+          <SwitchField id="sidebar" label={isId ? "Tutup bilah samping" : "Collapse sidebar"} description={isId ? "Tampilkan ikon saja agar tabel lebih lega." : "Show icons only to give tables more room."} checked={sidebarCollapsed} onCheckedChange={(v) => setPreference("sidebarCollapsed", v)} />
         </div>
       </Panel>
-      <Panel title="Format">
+      <Panel title={isId ? "Format" : "Formats"}>
         <DescriptionList
           columns={3}
           items={[
-            { label: "Tanggal", value: "25 Sep 2026" },
-            { label: "Angka", value: "12.440" },
-            { label: "Perubahan", value: "+4,5% / −3,2%" },
+            { label: isId ? "Tanggal" : "Dates", value: formatDate("2026-09-25") },
+            { label: isId ? "Angka" : "Numbers", value: formatNumber(12440) },
+            { label: isId ? "Perubahan" : "Changes", value: `${formatDeltaPercent(0.045)} / ${formatDeltaPercent(-0.032)}` },
           ]}
         />
-        <p className="mt-3 caption">One product-wide convention (backlog §65), so exports and screenshots read the same for everyone.</p>
+        <p className="mt-3 caption">{isId ? "Format angka dan tanggal otomatis mengikuti bahasa yang dipilih." : "Number and date formats automatically follow your selected language."}</p>
       </Panel>
     </div>
   );

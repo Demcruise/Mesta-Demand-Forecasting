@@ -5,6 +5,7 @@ import * as React from "react";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/overlay";
+import { getActiveLocale } from "@/lib/i18n";
 
 /**
  * FreshnessIndicator (FRESH-001). States: Fresh, Recent, Delayed, Stale, Unavailable.
@@ -24,12 +25,20 @@ export function freshnessState(timestamp: string | null | undefined, now = Date.
   return "stale";
 }
 
-const COPY: Record<FreshnessState, { label: string; note: string; dot: string; text: string }> = {
+const COPY_ID: Record<FreshnessState, { label: string; note: string; dot: string; text: string }> = {
   fresh: { label: "Terbaru", note: "Data masih baru.", dot: "bg-success", text: "text-fg-secondary" },
   recent: { label: "Baru saja", note: "Diperbarui dalam 24 jam terakhir.", dot: "bg-info", text: "text-fg-secondary" },
   delayed: { label: "Terlambat", note: "Lebih dari 24 jam. Periksa jadwal sumber data.", dot: "bg-warning", text: "text-warning-fg" },
   stale: { label: "Usang", note: "Sumber data mungkin sudah lama. Keputusan dapat memakai data lama.", dot: "bg-critical", text: "text-critical-fg" },
   unavailable: { label: "Tidak tersedia", note: "Waktu pembaruan data ini tidak diketahui.", dot: "bg-fg-disabled", text: "text-fg-tertiary" },
+};
+
+const COPY_EN: Record<FreshnessState, { label: string; note: string; dot: string; text: string }> = {
+  fresh: { label: "Fresh", note: "Data is up to date.", dot: "bg-success", text: "text-fg-secondary" },
+  recent: { label: "Recent", note: "Updated in the last 24 hours.", dot: "bg-info", text: "text-fg-secondary" },
+  delayed: { label: "Delayed", note: "Over 24 hours old. Check data source schedule.", dot: "bg-warning", text: "text-warning-fg" },
+  stale: { label: "Stale", note: "Data source may be degraded. Decisions may use stale data.", dot: "bg-critical", text: "text-critical-fg" },
+  unavailable: { label: "Unavailable", note: "Update time for this data is unknown.", dot: "bg-fg-disabled", text: "text-fg-tertiary" },
 };
 
 /** Re-renders every minute so relative times do not drift. */
@@ -44,7 +53,7 @@ function useNow(intervalMs = 60_000) {
 
 export function FreshnessIndicator({
   timestamp,
-  label = "Diperbarui",
+  label,
   source,
   className,
   variant = "inline",
@@ -57,15 +66,18 @@ export function FreshnessIndicator({
   variant?: "inline" | "stacked";
   thresholds?: { fresh: number; recent: number; delayed: number };
 }) {
+  const isId = getActiveLocale() === "id";
+  const defaultLabel = isId ? "Diperbarui" : "Updated";
+  const effectiveLabel = label ?? defaultLabel;
   const now = useNow();
   const state = freshnessState(timestamp, now, thresholds);
-  const copy = COPY[state];
-  const text = timestamp ? `${label} ${formatRelative(timestamp, now)}` : "Waktu pembaruan tidak diketahui";
+  const copy = isId ? COPY_ID[state] : COPY_EN[state];
+  const text = timestamp ? `${effectiveLabel} ${formatRelative(timestamp, now)}` : (isId ? "Waktu pembaruan tidak diketahui" : "Update time unknown");
   const tooltip = (
     <span className="flex flex-col gap-0.5">
       <span className="font-semibold">{copy.label}</span>
       {timestamp && <span>{formatDateTime(timestamp)}</span>}
-      {source && <span>Sumber: {source}</span>}
+      {source && <span>{isId ? "Sumber: " : "Source: "}{source}</span>}
       <span>{copy.note}</span>
     </span>
   );

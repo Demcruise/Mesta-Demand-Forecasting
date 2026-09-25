@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { getTranslations, I18nContext, setActiveLocale, type Locale } from "./i18n";
 
 /**
- * Per-viewer conveniences (theme, table density). Stored in localStorage and
+ * Per-viewer conveniences (theme, table density, language). Stored in localStorage and
  * wrapped in try/catch: the app renders correctly when storage is unavailable.
  */
 
@@ -14,10 +15,11 @@ type Preferences = {
   theme: ThemePreference;
   density: Density;
   sidebarCollapsed: boolean;
+  locale: Locale;
 };
 
 const KEY = "mdf.preferences";
-const DEFAULTS: Preferences = { theme: "system", density: "comfortable", sidebarCollapsed: false };
+const DEFAULTS: Preferences = { theme: "system", density: "comfortable", sidebarCollapsed: false, locale: "en" };
 
 function load(): Preferences {
   try {
@@ -44,6 +46,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     const p = load();
     setPrefs(p);
     applyTheme(p.theme);
+    setActiveLocale(p.locale);
   }, []);
 
   React.useEffect(() => {
@@ -63,12 +66,26 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         // Non-critical.
       }
       if (key === "theme") applyTheme(value as ThemePreference);
+      if (key === "locale") setActiveLocale(value as Locale);
       return next;
     });
   }, []);
 
   const value = React.useMemo(() => ({ ...prefs, setPreference }), [prefs, setPreference]);
-  return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
+  const i18nValue = React.useMemo(
+    () => ({
+      locale: prefs.locale,
+      setLocale: (l: Locale) => setPreference("locale", l),
+      t: getTranslations(prefs.locale),
+    }),
+    [prefs.locale, setPreference],
+  );
+
+  return (
+    <PreferencesContext.Provider value={value}>
+      <I18nContext.Provider value={i18nValue}>{children}</I18nContext.Provider>
+    </PreferencesContext.Provider>
+  );
 }
 
 export function usePreferences() {

@@ -8,14 +8,25 @@ import { ROLE_LABELS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger, Tooltip } from "@/components/ui/overlay";
 import { Tag } from "@/components/feedback/status";
+import { getActiveLocale } from "@/lib/i18n";
 
 const ENV_TONE = { Production: "primary", Staging: "info", Sandbox: "neutral" } as const;
-const ENV_LABELS: Record<Workspace["environment"], string> = { Production: "Produksi", Staging: "Staging", Sandbox: "Sandbox" };
+const ENV_LABELS: Record<Workspace["environment"], string> = new Proxy({} as Record<Workspace["environment"], string>, {
+  get(_t, env: Workspace["environment"]) {
+    if (getActiveLocale() === "id") {
+      return env === "Production" ? "Produksi" : env;
+    }
+    return env;
+  },
+});
 
 function WorkspaceStatus({ status }: { status: Workspace["status"] }) {
   if (status === "active") return null;
+  const isId = getActiveLocale() === "id";
   return (
-    <Tag tone={status === "degraded" ? "warning" : "neutral"}>{status === "degraded" ? "Menurun" : "Pemeliharaan"}</Tag>
+    <Tag tone={status === "degraded" ? "warning" : "neutral"}>
+      {status === "degraded" ? (isId ? "Menurun" : "Degraded") : (isId ? "Pemeliharaan" : "Maintenance")}
+    </Tag>
   );
 }
 

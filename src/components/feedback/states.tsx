@@ -7,6 +7,7 @@ import { PermissionError, rolesWith, ROLE_LABELS, type Permission } from "@/lib/
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/controls";
+import { getActiveLocale } from "@/lib/i18n";
 
 /* ── Empty (STATE-EMPTY-001): why the state exists + what to do next ── */
 
@@ -50,7 +51,7 @@ export function ErrorState({
   what,
   error,
   onRetry,
-  retryLabel = "Coba Lagi",
+  retryLabel,
   recovery,
   className,
   compact,
@@ -64,6 +65,8 @@ export function ErrorState({
   className?: string;
   compact?: boolean;
 }) {
+  const isId = getActiveLocale() === "id";
+  const label = retryLabel ?? (isId ? "Coba Lagi" : "Try again");
   if (error instanceof PermissionError || (error instanceof ApiError && error.code === "permission")) {
     return <PermissionNotice className={className} message={error.message} detail={error instanceof ApiError ? error.detail : undefined} permission={error instanceof PermissionError ? error.permission : undefined} />;
   }
@@ -71,7 +74,7 @@ export function ErrorState({
   const unavailable = error instanceof ApiError && error.code === "unavailable";
   const Icon = notFound ? SearchX : unavailable ? WifiOff : AlertOctagon;
   // Raw exception text is not shown to users; it is only surfaced in development.
-  const why = error instanceof ApiError ? [error.message, error.detail].filter(Boolean).join(" ") : "Terjadi kesalahan saat menampilkan konten ini.";
+  const why = error instanceof ApiError ? [error.message, error.detail].filter(Boolean).join(" ") : (isId ? "Terjadi kesalahan saat menampilkan konten ini." : "An error occurred while loading this content.");
   const devDetail = !(error instanceof ApiError) && error instanceof Error && process.env.NODE_ENV === "development" ? error.message : null;
   return (
     <div role="alert" className={cn("flex flex-col items-center justify-center text-center", compact ? "px-4 py-8" : "px-6 py-14", className)}>
@@ -80,14 +83,14 @@ export function ErrorState({
       </span>
       <p className="card-title">{what}</p>
       <p className="mt-1 max-w-md body-sm text-fg-secondary">{why}</p>
-      {!notFound && !unavailable && <p className="mt-1 max-w-md caption">Coba lagi. Jika masih gagal, hubungi administrator ruang kerja Anda.</p>}
+      {!notFound && !unavailable && <p className="mt-1 max-w-md caption">{isId ? "Coba lagi. Jika masih gagal, hubungi administrator ruang kerja Anda." : "Try again. If it continues to fail, contact your workspace administrator."}</p>}
       {devDetail && <p className="mt-2 max-w-md mono-id text-fg-tertiary">{devDetail}</p>}
       {(onRetry || recovery) && (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           {onRetry && !notFound && (
             <Button onClick={onRetry} variant="secondary">
               <RefreshCw aria-hidden />
-              {retryLabel}
+              {label}
             </Button>
           )}
           {recovery}
@@ -110,14 +113,15 @@ export function PermissionNotice({
   className?: string;
   compact?: boolean;
 }) {
+  const isId = getActiveLocale() === "id";
   const roles = permission ? rolesWith(permission).map((r) => ROLE_LABELS[r]) : [];
   return (
     <div className={cn("flex items-start gap-3 rounded-lg border border-border bg-subtle p-4", compact && "p-3", className)} role="note">
       <Lock className="mt-0.5 size-4 shrink-0 text-fg-tertiary" aria-hidden />
       <div className="min-w-0">
-        <p className="body-sm font-semibold text-fg">{message ?? "Anda tidak memiliki akses untuk melakukan perubahan ini."}</p>
+        <p className="body-sm font-semibold text-fg">{message ?? (isId ? "Anda tidak memiliki akses untuk melakukan perubahan ini." : "You do not have permission to make this change.")}</p>
         <p className="caption mt-0.5">
-          {detail ?? (roles.length > 0 ? `Tersedia untuk: ${roles.join(", ")}. Hubungi administrator ruang kerja jika Anda memerlukan akses.` : "Hubungi administrator ruang kerja jika Anda memerlukan akses.")}
+          {detail ?? (roles.length > 0 ? (isId ? `Tersedia untuk: ${roles.join(", ")}. Hubungi administrator ruang kerja jika Anda memerlukan akses.` : `Available to: ${roles.join(", ")}. Contact your workspace administrator if you need access.`) : (isId ? "Hubungi administrator ruang kerja jika Anda memerlukan akses." : "Contact your workspace administrator if you need access."))}
         </p>
       </div>
     </div>
@@ -162,9 +166,14 @@ export function InlineAlert({
 
 /* ── Loading skeletons (STATE-LOADING-001): geometry matches final content ── */
 
+function loadingLabel(what: string) {
+  return getActiveLocale() === "id" ? `Memuat ${what}` : `Loading ${what}`;
+}
+
 export function TableSkeleton({ rows = 8, columns = 6, density = "comfortable" }: { rows?: number; columns?: number; density?: "compact" | "comfortable" }) {
+  const isId = getActiveLocale() === "id";
   return (
-    <div role="status" aria-label="Memuat tabel" className="overflow-hidden">
+    <div role="status" aria-label={loadingLabel(isId ? "tabel" : "table")} className="overflow-hidden">
       <div className="flex h-10 items-center gap-4 border-b border-border bg-subtle px-4">
         {Array.from({ length: columns }, (_, i) => (
           <Skeleton key={i} className="h-3" style={{ width: i === 0 ? "22%" : `${10 + ((i * 7) % 8)}%` }} />
@@ -177,27 +186,29 @@ export function TableSkeleton({ rows = 8, columns = 6, density = "comfortable" }
           ))}
         </div>
       ))}
-      <span className="sr-only">Memuat</span>
+      <span className="sr-only">{isId ? "Memuat" : "Loading"}</span>
     </div>
   );
 }
 
 export function ChartSkeleton({ height = 280 }: { height?: number }) {
+  const isId = getActiveLocale() === "id";
   return (
-    <div role="status" aria-label="Memuat grafik" className="flex flex-col gap-3">
+    <div role="status" aria-label={loadingLabel(isId ? "grafik" : "chart")} className="flex flex-col gap-3">
       <div className="relative flex items-end gap-1.5" style={{ height }}>
         {Array.from({ length: 36 }, (_, i) => (
           <Skeleton key={i} className="flex-1 rounded-xs" style={{ height: `${35 + Math.abs(Math.sin(i / 4)) * 45}%` }} />
         ))}
       </div>
-      <span className="sr-only">Memuat</span>
+      <span className="sr-only">{isId ? "Memuat" : "Loading"}</span>
     </div>
   );
 }
 
 export function CardSkeleton({ lines = 3, className }: { lines?: number; className?: string }) {
+  const isId = getActiveLocale() === "id";
   return (
-    <div role="status" aria-label="Loading" className={cn("flex flex-col gap-2.5", className)}>
+    <div role="status" aria-label={isId ? "Memuat" : "Loading"} className={cn("flex flex-col gap-2.5", className)}>
       <Skeleton className="h-3 w-1/3" />
       <Skeleton className="h-7 w-1/2" />
       {Array.from({ length: lines - 1 }, (_, i) => (
@@ -208,8 +219,9 @@ export function CardSkeleton({ lines = 3, className }: { lines?: number; classNa
 }
 
 export function DetailSkeleton() {
+  const isId = getActiveLocale() === "id";
   return (
-    <div role="status" aria-label="Memuat detail" className="flex flex-col gap-6">
+    <div role="status" aria-label={loadingLabel(isId ? "detail" : "details")} className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-6 w-2/3" />
@@ -227,8 +239,9 @@ export function DetailSkeleton() {
 }
 
 export function TimelineSkeleton({ items = 4 }: { items?: number }) {
+  const isId = getActiveLocale() === "id";
   return (
-    <div role="status" aria-label="Memuat aktivitas" className="flex flex-col gap-4">
+    <div role="status" aria-label={loadingLabel(isId ? "aktivitas" : "activity")} className="flex flex-col gap-4">
       {Array.from({ length: items }, (_, i) => (
         <div key={i} className="flex gap-3">
           <Skeleton className="size-7 shrink-0 rounded-full" />
@@ -243,8 +256,9 @@ export function TimelineSkeleton({ items = 4 }: { items?: number }) {
 }
 
 export function PageSkeleton() {
+  const isId = getActiveLocale() === "id";
   return (
-    <div role="status" aria-label="Memuat halaman" className="flex flex-col gap-6">
+    <div role="status" aria-label={loadingLabel(isId ? "halaman" : "page")} className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-3 w-40" />
         <Skeleton className="h-7 w-72" />

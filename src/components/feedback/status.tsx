@@ -26,6 +26,7 @@ import {
 import type { Severity, StatusKey } from "@/types/domain";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/overlay";
+import { getActiveLocale, getTranslations, type Locale } from "@/lib/i18n";
 
 /**
  * Status system (STATUS-001). Every status carries label + icon + semantic colour +
@@ -36,43 +37,67 @@ export type Tone = "neutral" | "info" | "success" | "warning" | "critical" | "pr
 
 type StatusDef = { label: string; tone: Tone; icon: LucideIcon; tooltip: string; spin?: boolean };
 
-export const STATUS: Record<StatusKey, StatusDef> = {
-  draft: { label: "Draft", tone: "neutral", icon: FileEdit, tooltip: "Belum dikirim atau dijalankan." },
-  queued: { label: "Menunggu", tone: "info", icon: Clock, tooltip: "Menunggu antrean diproses." },
-  running: { label: "Sedang diproses", tone: "info", icon: Loader2, tooltip: "Sedang diproses sekarang.", spin: true },
-  completed: { label: "Selesai", tone: "success", icon: CheckCircle2, tooltip: "Selesai. Hasil sudah tersedia tetapi belum diterbitkan." },
-  published: { label: "Diterbitkan", tone: "primary", icon: Send, tooltip: "Diterbitkan sebagai acuan perencanaan." },
-  approved: { label: "Disetujui", tone: "success", icon: ShieldCheck, tooltip: "Disetujui oleh peninjau yang berwenang." },
-  rejected: { label: "Ditolak", tone: "critical", icon: XCircle, tooltip: "Ditolak oleh peninjau." },
-  needs_review: { label: "Perlu ditinjau", tone: "warning", icon: Eye, tooltip: "Memiliki setidaknya satu item yang perlu ditinjau." },
-  failed: { label: "Gagal", tone: "critical", icon: AlertOctagon, tooltip: "Berhenti karena terjadi kesalahan." },
-  paused: { label: "Dijeda", tone: "neutral", icon: PauseCircle, tooltip: "Dijeda dan tidak sedang diproses." },
-  archived: { label: "Diarsipkan", tone: "neutral", icon: Archive, tooltip: "Disimpan untuk referensi. Hanya baca." },
-  stale: { label: "Usang", tone: "warning", icon: AlertTriangle, tooltip: "Data sumber lebih lama dari batas pembaruan." },
-  unavailable: { label: "Tidak tersedia", tone: "neutral", icon: Slash, tooltip: "Data tidak tersedia." },
-  cancelled: { label: "Dibatalkan", tone: "neutral", icon: Ban, tooltip: "Dihentikan oleh pengguna sebelum selesai." },
-  pending: { label: "Menunggu keputusan", tone: "warning", icon: Clock, tooltip: "Menunggu keputusan." },
-  open: { label: "Terbuka", tone: "warning", icon: CircleDot, tooltip: "Belum ditangani." },
-  investigating: { label: "Sedang ditelusuri", tone: "info", icon: Eye, tooltip: "Sedang ditangani." },
-  resolved: { label: "Teratasi", tone: "success", icon: CheckCircle2, tooltip: "Ditutup dengan penyelesaian." },
-  dismissed: { label: "Diabaikan", tone: "neutral", icon: Slash, tooltip: "Ditutup tanpa tindakan." },
-  escalated: { label: "Dieskalasi", tone: "critical", icon: AlertTriangle, tooltip: "Diteruskan ke manajer." },
-  revision_requested: { label: "Perlu revisi", tone: "warning", icon: RotateCcw, tooltip: "Dikembalikan ke pengaju untuk diperbaiki." },
-  in_review: { label: "Sedang ditinjau", tone: "info", icon: Eye, tooltip: "Sudah dikirim dan menunggu persetujuan." },
-  simulated: { label: "Tersimulasi", tone: "success", icon: CheckCircle2, tooltip: "Hasil simulasi sudah tersedia." },
-  connected: { label: "Terhubung", tone: "success", icon: CheckCircle2, tooltip: "Sinkronisasi berjalan sesuai jadwal." },
-  syncing: { label: "Menyinkronkan", tone: "info", icon: Loader2, tooltip: "Sinkronisasi sedang berjalan.", spin: true },
-  warning: { label: "Peringatan", tone: "warning", icon: AlertTriangle, tooltip: "Tersinkron, tetapi ada hal yang perlu ditinjau." },
-  disconnected: { label: "Terputus", tone: "neutral", icon: Unplug, tooltip: "Tidak terhubung. Tidak ada data yang diterima." },
-  active: { label: "Aktif", tone: "success", icon: CheckCircle2, tooltip: "Dapat masuk." },
-  invited: { label: "Diundang", tone: "info", icon: UserPlus, tooltip: "Undangan terkirim, belum diterima." },
-  suspended: { label: "Ditangguhkan", tone: "critical", icon: Ban, tooltip: "Tidak dapat masuk." },
-  production: { label: "Produksi", tone: "primary", icon: Radio, tooltip: "Disetujui untuk perkiraan produksi." },
-  candidate: { label: "Kandidat", tone: "info", icon: CircleDashed, tooltip: "Sedang dievaluasi. Belum menjadi default." },
-  training: { label: "Pelatihan", tone: "info", icon: Loader2, tooltip: "Pelatihan sedang berjalan.", spin: true },
-  overridden: { label: "Diubah manual", tone: "primary", icon: Pencil, tooltip: "Ada perubahan manual dari perencana." },
-  normal: { label: "Tidak ada masalah", tone: "neutral", icon: CheckCircle2, tooltip: "Tidak ada item yang perlu ditinjau atau diubah." },
+const STATUS_META: Record<StatusKey, { tone: Tone; icon: LucideIcon; spin?: boolean }> = {
+  draft: { tone: "neutral", icon: FileEdit },
+  queued: { tone: "info", icon: Clock },
+  running: { tone: "info", icon: Loader2, spin: true },
+  completed: { tone: "success", icon: CheckCircle2 },
+  published: { tone: "primary", icon: Send },
+  approved: { tone: "success", icon: ShieldCheck },
+  rejected: { tone: "critical", icon: XCircle },
+  needs_review: { tone: "warning", icon: Eye },
+  failed: { tone: "critical", icon: AlertOctagon },
+  paused: { tone: "neutral", icon: PauseCircle },
+  archived: { tone: "neutral", icon: Archive },
+  stale: { tone: "warning", icon: AlertTriangle },
+  unavailable: { tone: "neutral", icon: Slash },
+  cancelled: { tone: "neutral", icon: Ban },
+  pending: { tone: "warning", icon: Clock },
+  open: { tone: "warning", icon: CircleDot },
+  investigating: { tone: "info", icon: Eye },
+  resolved: { tone: "success", icon: CheckCircle2 },
+  dismissed: { tone: "neutral", icon: Slash },
+  escalated: { tone: "critical", icon: AlertTriangle },
+  revision_requested: { tone: "warning", icon: RotateCcw },
+  in_review: { tone: "info", icon: Eye },
+  simulated: { tone: "success", icon: CheckCircle2 },
+  connected: { tone: "success", icon: CheckCircle2 },
+  syncing: { tone: "info", icon: Loader2, spin: true },
+  warning: { tone: "warning", icon: AlertTriangle },
+  disconnected: { tone: "neutral", icon: Unplug },
+  active: { tone: "success", icon: CheckCircle2 },
+  invited: { tone: "info", icon: UserPlus },
+  suspended: { tone: "critical", icon: Ban },
+  production: { tone: "primary", icon: Radio },
+  candidate: { tone: "info", icon: CircleDashed },
+  training: { tone: "info", icon: Loader2, spin: true },
+  overridden: { tone: "primary", icon: Pencil },
+  normal: { tone: "neutral", icon: CheckCircle2 },
 };
+
+export const STATUS: Record<StatusKey, StatusDef> = new Proxy({} as Record<StatusKey, StatusDef>, {
+  get(_t, key: StatusKey) {
+    const meta = STATUS_META[key] ?? { tone: "neutral", icon: CircleDot };
+    const text = getTranslations(getActiveLocale()).statuses[key] ?? { label: key, tooltip: "" };
+    return { ...meta, label: text.label, tooltip: text.tooltip };
+  },
+  has(_t, key: StatusKey) {
+    return key in STATUS_META;
+  },
+  ownKeys() {
+    return Object.keys(STATUS_META);
+  },
+  getOwnPropertyDescriptor(_t, key: StatusKey) {
+    const meta = STATUS_META[key];
+    if (!meta) return undefined;
+    const text = getTranslations(getActiveLocale()).statuses[key] ?? { label: key, tooltip: "" };
+    return {
+      value: { ...meta, label: text.label, tooltip: text.tooltip },
+      enumerable: true,
+      configurable: true,
+    };
+  },
+});
 
 export const TONE_CLASSES: Record<Tone, string> = {
   neutral: "bg-neutral-subtle text-neutral-fg border-border",
@@ -105,16 +130,24 @@ export function StatusBadge({ status, className, label, size = "md" }: { status:
   );
 }
 
-const SEVERITY: Record<Severity | "blocking", { label: string; tone: Tone; icon: LucideIcon }> = {
-  critical: { label: "Kritis", tone: "critical", icon: AlertOctagon },
-  blocking: { label: "Menghambat", tone: "critical", icon: AlertOctagon },
-  warning: { label: "Peringatan", tone: "warning", icon: AlertTriangle },
-  info: { label: "Info", tone: "info", icon: Info },
-};
+export function getSeverityLabel(severity: Severity | "blocking", locale: Locale = getActiveLocale()) {
+  const isId = locale === "id";
+  if (severity === "blocking") return isId ? "Menghambat" : "Blocking";
+  if (severity === "critical") return isId ? "Kritis" : "Critical";
+  if (severity === "warning") return isId ? "Peringatan" : "Warning";
+  return "Info";
+}
 
 export function SeverityBadge({ severity, size = "md" }: { severity: Severity | "blocking"; size?: "sm" | "md" }) {
-  const def = SEVERITY[severity];
+  const meta: Record<Severity | "blocking", { tone: Tone; icon: LucideIcon }> = {
+    critical: { tone: "critical", icon: AlertOctagon },
+    blocking: { tone: "critical", icon: AlertOctagon },
+    warning: { tone: "warning", icon: AlertTriangle },
+    info: { tone: "info", icon: Info },
+  };
+  const def = meta[severity];
   const Icon = def.icon;
+  const label = getSeverityLabel(severity);
   return (
     <span
       className={cn(
@@ -124,7 +157,7 @@ export function SeverityBadge({ severity, size = "md" }: { severity: Severity | 
       )}
     >
       <Icon className="size-3.5" aria-hidden />
-      {def.label}
+      {label}
     </span>
   );
 }

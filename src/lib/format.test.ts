@@ -1,7 +1,27 @@
-import { describe, expect, it } from "vitest";
-import { formatDate, formatDateTime, formatDeltaNumber, formatDeltaPercent, formatDuration, formatNumber, formatPercent, formatRelative, formatShortDate, pluralize } from "./format";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  formatDate,
+  formatDateTime,
+  formatDeltaNumber,
+  formatDeltaPercent,
+  formatDuration,
+  formatNumber,
+  formatPercent,
+  formatRelative,
+  formatShortDate,
+  pluralize,
+  setFormatLocale,
+} from "./format";
 
 describe("format (Indonesian conventions)", () => {
+  beforeEach(() => {
+    setFormatLocale("id");
+  });
+
+  afterEach(() => {
+    setFormatLocale("en");
+  });
+
   it("groups integers with a dot and handles missing values", () => {
     expect(formatNumber(12440)).toBe("12.440");
     expect(formatNumber(2480)).toBe("2.480");
@@ -50,5 +70,47 @@ describe("format (Indonesian conventions)", () => {
     expect(pluralize(1, "SKU")).toBe("1 SKU");
     expect(pluralize(2480, "SKU")).toBe("2.480 SKU");
     expect(pluralize(12, "produk")).toBe("12 produk");
+  });
+});
+
+describe("format (English conventions)", () => {
+  beforeEach(() => {
+    setFormatLocale("en");
+  });
+
+  it("groups integers with a comma", () => {
+    expect(formatNumber(12440)).toBe("12,440");
+    expect(formatNumber(2480)).toBe("2,480");
+  });
+
+  it("formats percentages with a dot", () => {
+    expect(formatPercent(0.045)).toBe("4.5%");
+    expect(formatPercent(0.8, 0)).toBe("80%");
+  });
+
+  it("signs deltas with a true minus sign", () => {
+    expect(formatDeltaPercent(0.045)).toBe("+4.5%");
+    expect(formatDeltaPercent(-0.032)).toBe("−3.2%");
+    expect(formatDeltaPercent(-0.0001)).toBe("0.0%");
+    expect(formatDeltaNumber(-1204)).toBe("−1,204");
+  });
+
+  it("uses English three-letter months", () => {
+    expect(formatDate("2026-05-02T10:00:00")).toBe("2 May 2026");
+    expect(formatDate("2026-08-17T10:00:00")).toBe("17 Aug 2026");
+    expect(formatDate("2026-10-10T10:00:00")).toBe("10 Oct 2026");
+    expect(formatDate("2026-12-25T10:00:00")).toBe("25 Dec 2026");
+  });
+
+  it("formats durations in English", () => {
+    expect(formatDuration(14_000)).toBe("14s");
+    expect(formatDuration(125_000)).toBe("2m 5s");
+    expect(formatDuration(3_900_000)).toBe("1h 5m");
+  });
+
+  it("pluralizes in English", () => {
+    expect(pluralize(1, "SKU")).toBe("1 SKU");
+    expect(pluralize(2480, "SKU")).toBe("2,480 SKUs");
+    expect(pluralize(12, "product")).toBe("12 products");
   });
 });
