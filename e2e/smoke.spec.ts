@@ -50,7 +50,7 @@ test.describe("key workflows", () => {
 
   test("forecast explorer opens a product without losing list context", async ({ page }) => {
     await page.goto("/forecasting/explorer");
-    await expect(page.getByRole("heading", { name: "Forecast explorer" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Perkiraan Permintaan" })).toBeVisible();
     await page.locator("[data-row]").first().click();
     // The selected entity is deep-linkable state, so the drawer survives a reload.
     await expect(page).toHaveURL(/[?&]id=prd_/);

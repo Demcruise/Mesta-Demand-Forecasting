@@ -3,20 +3,20 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { AuthCard, AuthShell } from "@/components/auth/auth-shell";
 
-export const metadata: Metadata = { title: "Access unavailable" };
+export const metadata: Metadata = { title: "Akses tidak tersedia" };
 
 const COPY: Record<string, { title: string; body: string }> = {
   disabled: {
-    title: "Your account is disabled",
-    body: "Your organisation has suspended access to Mesta for this account. If you think this is a mistake, contact your workspace administrator.",
+    title: "Akun Anda dinonaktifkan",
+    body: "Organisasi Anda menangguhkan akses ke Mesta untuk akun ini. Jika menurut Anda ini keliru, hubungi administrator ruang kerja Anda.",
   },
   "no-workspace": {
-    title: "You have no workspace yet",
-    body: "Your account exists but has not been added to a workspace. Ask your workspace administrator to invite you.",
+    title: "Anda belum memiliki ruang kerja",
+    body: "Akun Anda ada, tetapi belum ditambahkan ke ruang kerja. Minta administrator ruang kerja mengundang Anda.",
   },
   default: {
-    title: "You do not have access",
-    body: "Your account is not permitted to open this page. Contact your workspace administrator if you need access.",
+    title: "Anda tidak memiliki akses",
+    body: "Akun Anda tidak diizinkan membuka halaman ini. Hubungi administrator ruang kerja jika Anda memerlukan akses.",
   },
 };
 
@@ -27,7 +27,7 @@ export default async function UnauthorizedPage({ searchParams }: { searchParams:
     <AuthShell>
       <AuthCard title={copy.title} description={copy.body}>
         <Link href="/sign-in" className={buttonVariants({ variant: "primary", size: "lg", className: "w-full" })}>
-          Return to sign in
+          Kembali ke halaman masuk
         </Link>
       </AuthCard>
     </AuthShell>

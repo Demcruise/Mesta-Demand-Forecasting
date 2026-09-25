@@ -56,7 +56,7 @@ function SelectWorkspace() {
 
   return (
     <AuthShell>
-      <AuthCard title="Choose a workspace" description={`Signed in as ${session.email}. You can switch workspace later from the sidebar.`}>
+      <AuthCard title="Pilih Ruang Kerja" description={`Masuk sebagai ${session.email}. Anda dapat mengganti ruang kerja nanti dari bilah samping.`}>
         <ul className="flex flex-col gap-2">
           {workspaces.map((w) => (
             <li key={w.id}>
@@ -72,10 +72,10 @@ function SelectWorkspace() {
                   <span className="flex flex-wrap items-center gap-1.5">
                     <span className="body-sm font-semibold text-fg">{w.name}</span>
                     <Tag tone={w.environment === "Production" ? "primary" : w.environment === "Staging" ? "info" : "neutral"}>{w.environment}</Tag>
-                    {w.status !== "active" && <Tag tone="warning">{w.status === "degraded" ? "Degraded" : "Maintenance"}</Tag>}
+                    {w.status !== "active" && <Tag tone="warning">{w.status === "degraded" ? "Menurun" : "Pemeliharaan"}</Tag>}
                   </span>
                   <span className="caption">
-                    {w.region} · Your role: {ROLE_LABELS[session.role]}
+                    {w.region} · Peran Anda: {ROLE_LABELS[session.role]}
                   </span>
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-fg-tertiary" aria-hidden />

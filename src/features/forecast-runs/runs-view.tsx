@@ -18,7 +18,8 @@ import { PageContainer, PageHeader } from "@/components/page/page";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
 import { FilterBar } from "@/components/tables/filter-bar";
 import { SavedViewsMenu } from "@/components/tables/saved-views";
-import { StatusBadge } from "@/components/feedback/status";
+import { StatusBadge, STATUS } from "@/components/feedback/status";
+import type { StatusKey } from "@/types/domain";
 import { FreshnessIndicator } from "@/components/feedback/freshness";
 import { EmptyState } from "@/components/feedback/states";
 import { DateCell, RunIdentity, scopeLabel, UserIdentity } from "@/components/entities/identity";
@@ -43,8 +44,8 @@ export function RunsView() {
     () => [
       {
         id: "run",
-        header: "Run",
-        meta: { width: "minmax(260px, 2.2fr)", sortKey: "name", pinned: true, label: "Run" } satisfies ColumnMeta,
+        header: "Proses",
+        meta: { width: "minmax(260px, 2.2fr)", sortKey: "name", pinned: true, label: "Proses" } satisfies ColumnMeta,
         cell: ({ row }) => <RunIdentity run={row.original} />,
       },
       {
@@ -59,7 +60,7 @@ export function RunsView() {
               <StatusBadge status={r.status} size="sm" />
               {(r.status === "running" || r.status === "queued") && (
                 <span className="text-[0.6875rem] text-fg-tertiary">
-                  Step {Math.min(p.done + 1, p.total)} of {p.total}
+                  Langkah {Math.min(p.done + 1, p.total)} dari {p.total}
                   {p.current ? ` · ${p.current.label}` : ""}
                 </span>
               )}
@@ -69,12 +70,12 @@ export function RunsView() {
       },
       {
         id: "scope",
-        header: "Scope",
+        header: "Cakupan",
         meta: { width: "minmax(180px, 1.3fr)", hideBelow: "lg" } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-[0.8125rem]">{scopeLabel(row.original)}</span>
-            <span className="text-xs tabular text-fg-tertiary">{formatNumber(row.original.scope.skuCount)} SKUs</span>
+            <span className="text-xs tabular text-fg-tertiary">{formatNumber(row.original.scope.skuCount)} SKU</span>
           </span>
         ),
       },
@@ -86,43 +87,43 @@ export function RunsView() {
       },
       {
         id: "horizon",
-        header: "Horizon",
+        header: "Periode",
         meta: { width: "90px", numeric: true, sortKey: "horizon" } satisfies ColumnMeta,
-        cell: ({ row }) => `${row.original.horizonDays} d`,
+        cell: ({ row }) => `${row.original.horizonDays} h`,
       },
       {
         id: "created",
-        header: "Created",
+        header: "Dibuat",
         meta: { width: "120px", sortKey: "createdAt" } satisfies ColumnMeta,
         cell: ({ row }) => <DateCell value={row.original.createdAt} relative />,
       },
       {
         id: "duration",
-        header: "Duration",
-        meta: { width: "100px", numeric: true, hideBelow: "xl", description: "Time from start to completion." } satisfies ColumnMeta,
+        header: "Durasi",
+        meta: { width: "100px", numeric: true, hideBelow: "xl", description: "Waktu dari mulai sampai selesai." } satisfies ColumnMeta,
         cell: ({ row }) => {
           const r = row.original;
           if (!r.startedAt) return <span className="text-fg-tertiary">—</span>;
-          if (!r.completedAt) return <span className="text-fg-tertiary">In progress</span>;
+          if (!r.completedAt) return <span className="text-fg-tertiary">Sedang berjalan</span>;
           return formatDuration(new Date(r.completedAt).getTime() - new Date(r.startedAt).getTime());
         },
       },
       {
         id: "freshness",
-        header: "Data freshness",
-        meta: { width: "170px", hideBelow: "lg", description: "When the input demand data was last refreshed." } satisfies ColumnMeta,
+        header: "Terakhir Diperbarui",
+        meta: { width: "170px", hideBelow: "lg", description: "Kapan data permintaan terakhir diperbarui." } satisfies ColumnMeta,
         cell: ({ row }) => <FreshnessIndicator timestamp={row.original.dataAsOf} label="Data" />,
       },
       {
         id: "createdBy",
-        header: "Created by",
+        header: "Dibuat oleh",
         meta: { width: "minmax(150px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta,
         cell: ({ row }) => <UserIdentity userId={row.original.createdBy} />,
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
-        meta: { width: "52px", pinned: true, label: "Actions" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">Aksi</span>,
+        meta: { width: "52px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
         cell: ({ row }) => <RunActionMenu run={row.original} actions={actions} baselineId={baseline?.id} />,
       },
     ],
@@ -132,18 +133,18 @@ export function RunsView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Forecast runs"
-        description="Every forecast generation job in this workspace: what it covered, which model produced it and whether it can be used."
+        title="Proses Perkiraan"
+        description="Lihat proses yang sedang berjalan dan hasil perkiraan sebelumnya."
         actions={
           can("forecast.run.create") ? (
             <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "primary" })}>
-              <Plus aria-hidden /> Create forecast run
+              <Plus aria-hidden /> Buat Perkiraan
             </Link>
           ) : undefined
         }
       />
       <DataTable
-        label="Forecast runs"
+        label="Proses Perkiraan"
         columns={columns}
         data={q.data?.items}
         getRowId={(r) => r.id}
@@ -151,7 +152,7 @@ export function RunsView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Forecast runs could not be loaded."
+        errorWhat="Proses perkiraan tidak dapat dimuat."
         storageKey="runs"
         onRowClick={(r) => router.push(`/forecasting/runs/${r.id}`)}
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
@@ -160,15 +161,15 @@ export function RunsView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Search run ID, name or creator"
+            searchPlaceholder="Cari ID, nama, atau pembuat proses"
             facets={[
               {
                 key: "status",
                 label: "Status",
                 primary: true,
-                options: ["queued", "running", "completed", "published", "failed", "cancelled", "draft", "archived"].map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) })),
+                options: (["queued", "running", "completed", "published", "failed", "cancelled", "draft", "archived"] as StatusKey[]).map((s) => ({ value: s, label: STATUS[s].label })),
               },
-              { key: "category", label: "Category", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
+              { key: "category", label: "Kategori", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
               {
                 key: "model",
                 label: "Model",
@@ -184,23 +185,23 @@ export function RunsView() {
         }
         empty={
           state.activeFilterCount > 0 ? (
-            <EmptyState title="No forecast runs match the current filters." description="Clear filters to see all runs in this workspace." action={<button className={buttonVariants({ variant: "secondary" })} onClick={state.clearFilters}>Clear filters</button>} />
+            <EmptyState title="Tidak ada proses perkiraan yang cocok dengan filter." description="Hapus filter untuk melihat semua proses di ruang kerja ini." action={<button className={buttonVariants({ variant: "secondary" })} onClick={state.clearFilters}>Hapus filter</button>} />
           ) : (
             <EmptyState
               icon={Workflow}
-              title="No forecast runs have been created for this workspace."
-              description="Create a forecast run to generate a new demand outlook."
+              title="Belum ada proses perkiraan di ruang kerja ini."
+              description="Buat proses perkiraan untuk mulai melihat hasil."
               action={
                 can("forecast.run.create") ? (
                   <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "primary" })}>
-                    Create forecast run
+                    Buat Perkiraan
                   </Link>
                 ) : undefined
               }
             />
           )
         }
-        footerNote={q.data && q.data.items.some((r) => r.status === "running" || r.status === "queued") ? "Refreshing every 3 seconds while runs are active." : undefined}
+        footerNote={q.data && q.data.items.some((r) => r.status === "running" || r.status === "queued") ? "Menyegarkan setiap 3 detik selama ada proses berjalan." : undefined}
       />
       {actions.dialog}
     </PageContainer>

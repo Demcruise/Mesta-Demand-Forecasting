@@ -48,15 +48,15 @@ export function ExplorerView() {
   React.useEffect(() => setSelection({}), [runParam]);
 
   const exportMutation = useApiMutation(async (c, format: ExportFormat) => ({ format, ...(await exportForecastRows(c, runParam, state.query)) }), {
-    failure: "Export failed.",
-    success: (r) => `Exported ${formatNumber(r.rows.length)} rows`,
-    successDescription: "Current filters and sort were applied.",
+    failure: "Ekspor gagal.",
+    success: (r) => `Mengekspor ${formatNumber(r.rows.length)} baris`,
+    successDescription: "Filter dan urutan yang aktif diterapkan.",
     onSuccess: (r) => {
       track("export_requested", { rows: r.rows.length, surface: "explorer", format: r.format });
       downloadExport(
         r.format,
         `forecast-${r.run.id}`,
-        ["Run", "SKU", "Product", "Category", "Forecast", "Override", "Previous forecast", "Actual last period", "Change %", "Lower 80%", "Upper 80%", "Status", "Open exceptions"],
+        ["Proses", "SKU", "Produk", "Kategori", "Perkiraan", "Ubah manual", "Perkiraan sebelumnya", "Aktual periode sebelumnya", "Perubahan %", "Batas bawah 80%", "Batas atas 80%", "Status", "Perlu ditinjau"],
         r.rows.map((x) => [r.run.id, x.product.sku, x.product.name, x.product.category, x.forecast, x.overrideUnits, x.previousForecast, x.actualLastPeriod, Number((x.deltaPercent * 100).toFixed(1)), x.lowerBound, x.upperBound, x.status, x.exceptionCount]),
         r.run.id,
       );
@@ -70,20 +70,20 @@ export function ExplorerView() {
     () => [
       {
         id: "product",
-        header: "Product",
-        meta: { width: "minmax(260px, 2.4fr)", sortKey: "product", pinned: true, label: "Product" } satisfies ColumnMeta,
+        header: "Produk",
+        meta: { width: "minmax(260px, 2.4fr)", sortKey: "product", pinned: true, label: "Produk" } satisfies ColumnMeta,
         cell: ({ row }) => <ProductIdentity product={row.original.product} />,
       },
       {
         id: "forecast",
         header: "Forecast",
-        meta: { width: "120px", numeric: true, sortKey: "forecast", description: "Total forecast over the run horizon. Overridden values show the override." } satisfies ColumnMeta,
+        meta: { width: "120px", numeric: true, sortKey: "forecast", description: "Total perkiraan selama periode perkiraan. Nilai yang diubah manual menampilkan hasil ubahannya." } satisfies ColumnMeta,
         cell: ({ row }) => {
           const r = row.original;
           return r.overrideUnits != null ? (
             <Tooltip content={`Model forecast ${formatNumber(r.forecast)}; override ${formatNumber(r.overrideUnits)}`}>
               <span tabIndex={0} className="inline-flex items-center gap-1 font-semibold">
-                <Pencil className="size-3 text-primary" aria-label="Overridden" />
+                <Pencil className="size-3 text-primary" aria-label="Diubah manual" />
                 {formatNumber(r.overrideUnits)}
               </span>
             </Tooltip>
@@ -94,32 +94,32 @@ export function ExplorerView() {
       },
       {
         id: "previous",
-        header: "Previous",
-        meta: { width: "110px", numeric: true, sortKey: "previous", hideBelow: "md", description: "Forecast from the previous published run for the same horizon." } satisfies ColumnMeta,
+        header: "Sebelumnya",
+        meta: { width: "110px", numeric: true, sortKey: "previous", hideBelow: "md", description: "Perkiraan dari proses terbit sebelumnya untuk periode yang sama." } satisfies ColumnMeta,
         cell: ({ row }) => <span className="text-fg-secondary">{formatNumber(row.original.previousForecast)}</span>,
       },
       {
         id: "actual",
-        header: "Actual (prior)",
-        meta: { width: "120px", numeric: true, sortKey: "actual", hideBelow: "lg", description: "Actual demand over the same number of days immediately before the forecast period." } satisfies ColumnMeta,
+        header: "Aktual (sebelumnya)",
+        meta: { width: "120px", numeric: true, sortKey: "actual", hideBelow: "lg", description: "Permintaan aktual pada jumlah hari yang sama tepat sebelum periode perkiraan." } satisfies ColumnMeta,
         cell: ({ row }) => <span className="text-fg-secondary">{formatNumber(row.original.actualLastPeriod)}</span>,
       },
       {
         id: "delta",
-        header: "Change",
-        meta: { width: "100px", numeric: true, sortKey: "deltaPercent", description: "Change versus the previous run. Highlighted above the 15% review threshold." } satisfies ColumnMeta,
+        header: "Perubahan",
+        meta: { width: "100px", numeric: true, sortKey: "deltaPercent", description: "Perubahan dibanding perkiraan sebelumnya. Ditandai bila melewati batas tinjauan 15%." } satisfies ColumnMeta,
         cell: ({ row }) => <ForecastDelta percent={row.original.deltaPercent} size="sm" />,
       },
       {
         id: "trend",
-        header: "Trend",
-        meta: { width: "112px", hideBelow: "lg", description: "Weekly demand: 8 weeks of actuals, then forecast weeks." } satisfies ColumnMeta,
+        header: "Tren",
+        meta: { width: "112px", hideBelow: "lg", description: "Permintaan mingguan: 8 minggu aktual, lalu minggu perkiraan." } satisfies ColumnMeta,
         cell: ({ row }) => <Sparkline values={row.original.trend} forecastFrom={8} />,
       },
       {
         id: "interval",
-        header: "80% interval",
-        meta: { width: "150px", numeric: true, sortKey: "width", hideBelow: "xl", description: "Range expected to contain actual demand 80% of the time." } satisfies ColumnMeta,
+        header: "Rentang 80%",
+        meta: { width: "150px", numeric: true, sortKey: "width", hideBelow: "xl", description: "Rentang yang diperkirakan memuat permintaan aktual 80% dari waktu." } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="text-xs text-fg-secondary tabular">
             {formatNumber(row.original.lowerBound)}–{formatNumber(row.original.upperBound)}
@@ -134,15 +134,15 @@ export function ExplorerView() {
       },
       {
         id: "exceptions",
-        header: "Exceptions",
+        header: "Perlu Ditinjau",
         meta: { width: "100px", numeric: true, sortKey: "exceptions", hideBelow: "md" } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.exceptionCount > 0 ? (
             <Link href={`/planning/exceptions?id=${row.original.exceptionIds[0]}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-warning-fg hover:underline">
-              {row.original.exceptionCount} open
+              {row.original.exceptionCount} terbuka
             </Link>
           ) : (
-            <span className="text-fg-tertiary">None</span>
+            <span className="text-fg-tertiary">Tidak ada</span>
           ),
       },
     ],
@@ -152,16 +152,16 @@ export function ExplorerView() {
   const bulkBar = (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <p className="body-sm font-semibold text-fg">
-        {pluralize(selectedRows.length, "forecast")} selected · {formatNumber(selectedUnits)} units
+        {pluralize(selectedRows.length, "perkiraan")} dipilih · {formatNumber(selectedUnits)} unit
       </p>
       <div className="flex flex-wrap items-center gap-2">
         {can("forecast.override") && (
           <Button size="sm" variant="primary" onClick={() => setOverrideOpen(true)} disabled={run?.status !== "published"}>
-            <Pencil aria-hidden /> Override selected
+            <Pencil aria-hidden /> Ubah perkiraan terpilih
           </Button>
         )}
         <Button size="sm" variant="ghost" onClick={() => setSelection({})}>
-          Clear selection
+          Hapus pilihan
         </Button>
       </div>
     </div>
@@ -170,40 +170,40 @@ export function ExplorerView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Forecast explorer"
-        description="Scan forecasts across products, find unusual changes and open any product to investigate."
+        title="Perkiraan Permintaan"
+        description="Bandingkan perkiraan produk dan lihat perubahan yang perlu ditinjau."
         meta={
           run ? (
             <>
               <span className="text-xs font-medium text-fg-secondary">
-                {run.status === "published" ? "Planning baseline" : "Unpublished run"} · {scopeLabel(run)} · {run.horizonDays}-day horizon from {formatDate(run.completedAt)}
+                {run.status === "published" ? "Acuan perencanaan" : "Belum diterbitkan"} · {scopeLabel(run)} · periode {run.horizonDays} hari sejak {formatDate(run.completedAt)}
               </span>
-              <FreshnessIndicator timestamp={run.completedAt} label="Generated" />
+              <FreshnessIndicator timestamp={run.completedAt} label="Dibuat" />
             </>
           ) : undefined
         }
         actions={
           <Select
             className="w-[min(26rem,90vw)]"
-            aria-label="Forecast run"
+            aria-label="Proses perkiraan"
             prefix="Run:"
             value={run?.id}
             onValueChange={(v) => state.setParams({ run: v, id: null }, { resetPage: true })}
-            placeholder="Latest published run"
-            options={(runs.data?.items ?? []).map((r) => ({ value: r.id, label: `${r.id} · ${r.name}`, description: `${r.status === "published" ? "Published" : "Completed, not published"} · ${formatDateTime(r.completedAt)}` }))}
+            placeholder="Perkiraan terbit terakhir"
+            options={(runs.data?.items ?? []).map((r) => ({ value: r.id, label: `${r.id} · ${r.name}`, description: `${r.status === "published" ? "Diterbitkan" : "Selesai, belum diterbitkan"} · ${formatDateTime(r.completedAt)}` }))}
           />
         }
       />
       {run && run.status !== "published" && (
-        <InlineAlert tone="info" title="You are viewing an unpublished run.">
-          Overrides can only be applied to the published planning baseline.{" "}
+        <InlineAlert tone="info" title="Anda melihat proses yang belum diterbitkan.">
+          Perubahan manual hanya dapat diterapkan pada acuan perencanaan yang sudah diterbitkan.{" "}
           <Link href={`/forecasting/runs/${run.id}`} className="font-semibold text-primary hover:underline">
             Open run
           </Link>
         </InlineAlert>
       )}
       <DataTable
-        label="Forecasts by product"
+        label="Perkiraan per produk"
         columns={columns}
         data={q.data?.page.items}
         getRowId={(r) => r.id}
@@ -211,7 +211,7 @@ export function ExplorerView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Forecasts could not be loaded."
+        errorWhat="Perkiraan tidak dapat dimuat."
         storageKey="explorer"
         maxHeight="min(70vh, 44rem)"
         pageSizeOptions={[25, 50, 100, 250]}
@@ -225,57 +225,57 @@ export function ExplorerView() {
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.page.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
         onExport={can("export") ? (format) => exportMutation.mutate(format) : undefined}
-        exportLabel={exportMutation.isPending ? "Exporting…" : `Export ${q.data ? formatNumber(q.data.page.total) : ""} rows`}
+        exportLabel={exportMutation.isPending ? "Mengekspor…" : `Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`}
         toolbarEnd={<SavedViewsMenu surface="explorer" />}
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Search product, SKU or brand"
+            searchPlaceholder="Cari produk, SKU, atau merek"
             sortOptions={[
-              { value: "forecast:desc", label: "Largest forecast", dir: "desc" },
-              { value: "deltaPercent:desc", label: "Largest increase", dir: "desc" },
-              { value: "deltaPercent:asc", label: "Largest decrease", dir: "asc" },
-              { value: "width:desc", label: "Widest interval", dir: "desc" },
-              { value: "exceptions:desc", label: "Most exceptions", dir: "desc" },
-              { value: "product:asc", label: "Product A–Z", dir: "asc" },
+              { value: "forecast:desc", label: "Perkiraan terbesar", dir: "desc" },
+              { value: "deltaPercent:desc", label: "Kenaikan terbesar", dir: "desc" },
+              { value: "deltaPercent:asc", label: "Penurunan terbesar", dir: "asc" },
+              { value: "width:desc", label: "Rentang terlebar", dir: "desc" },
+              { value: "exceptions:desc", label: "Paling banyak ditinjau", dir: "desc" },
+              { value: "product:asc", label: "Produk A–Z", dir: "asc" },
             ]}
             facets={[
-              { key: "category", label: "Category", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
+              { key: "category", label: "Kategori", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
               {
                 key: "status",
                 label: "Status",
                 primary: true,
                 options: [
-                  { value: "needs_review", label: "Needs review" },
-                  { value: "overridden", label: "Overridden" },
-                  { value: "normal", label: "No issues" },
+                  { value: "needs_review", label: "Perlu ditinjau" },
+                  { value: "overridden", label: "Diubah manual" },
+                  { value: "normal", label: "Tidak ada masalah" },
                 ],
               },
               {
                 key: "delta",
-                label: "Change vs previous",
+                label: "Perubahan vs sebelumnya",
                 options: [
-                  { value: "increase", label: "Increase over 5%" },
-                  { value: "decrease", label: "Decrease over 5%" },
-                  { value: "stable", label: "Within ±5%" },
+                  { value: "increase", label: "Naik lebih dari 5%" },
+                  { value: "decrease", label: "Turun lebih dari 5%" },
+                  { value: "stable", label: "Dalam ±5%" },
                 ],
               },
               {
                 key: "exceptions",
-                label: "Exceptions",
+                label: "Perlu Ditinjau",
                 options: [
-                  { value: "with", label: "Has open exceptions" },
-                  { value: "without", label: "No open exceptions" },
+                  { value: "with", label: "Ada yang terbuka" },
+                  { value: "without", label: "Tidak ada yang terbuka" },
                 ],
               },
               {
                 key: "lifecycle",
-                label: "Lifecycle",
+                label: "Siklus produk",
                 options: [
-                  { value: "new", label: "New" },
-                  { value: "core", label: "Core" },
-                  { value: "seasonal", label: "Seasonal" },
-                  { value: "end-of-life", label: "End of life" },
+                  { value: "new", label: "Baru" },
+                  { value: "core", label: "Inti" },
+                  { value: "seasonal", label: "Musiman" },
+                  { value: "end-of-life", label: "Akhir masa" },
                 ],
               },
             ]}
@@ -284,8 +284,8 @@ export function ExplorerView() {
         empty={
           <EmptyState
             icon={TableProperties}
-            title="No forecasts match the current filters."
-            description="Try a different search or clear filters to see all products in this run."
+            title="Tidak ada perkiraan yang cocok dengan filter."
+            description="Coba kata kunci lain atau hapus filter untuk melihat semua produk pada proses ini."
             action={
               <Button variant="secondary" onClick={state.clearFilters}>
                 Clear filters

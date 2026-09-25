@@ -3,14 +3,14 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { AuthCard, AuthShell } from "@/components/auth/auth-shell";
 
-export const metadata: Metadata = { title: "Signed out" };
+export const metadata: Metadata = { title: "Telah keluar" };
 
 export default function SignedOutPage() {
   return (
     <AuthShell>
-      <AuthCard title="You have signed out" description="Your Mesta session has ended on this device. Your identity provider session may still be active; sign out there too if you use a shared computer.">
+      <AuthCard title="Anda telah keluar" description="Sesi Mesta Anda di perangkat ini sudah berakhir. Sesi penyedia identitas Anda mungkin masih aktif; keluar juga di sana jika memakai komputer bersama.">
         <Link href="/sign-in" className={buttonVariants({ variant: "primary", size: "lg", className: "w-full" })}>
-          Sign in again
+          Masuk kembali
         </Link>
       </AuthCard>
     </AuthShell>

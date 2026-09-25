@@ -23,7 +23,7 @@ type Status = { kind: "processing"; message: string } | { kind: "error"; title: 
 function Callback() {
   const router = useRouter();
   const params = useSearchParams();
-  const [status, setStatus] = React.useState<Status>({ kind: "processing", message: "Verifying your sign-in" });
+  const [status, setStatus] = React.useState<Status>({ kind: "processing", message: "Memverifikasi proses masuk Anda" });
   const ran = React.useRef(false);
 
   React.useEffect(() => {
@@ -39,12 +39,12 @@ function Callback() {
       expected = null;
     }
     if (!expected || expected.state !== state) {
-      setStatus({ kind: "error", title: "This sign-in link is no longer valid.", detail: "The sign-in request expired or was started in another browser tab. Start again from the sign-in page." });
+      setStatus({ kind: "error", title: "Tautan masuk ini sudah tidak berlaku.", detail: "Permintaan masuk sudah kedaluwarsa atau dimulai di tab lain. Mulai lagi dari halaman masuk." });
       return;
     }
     const user = findUser(code.replace(/^demo_/, ""));
     if (!user) {
-      setStatus({ kind: "error", title: "Your identity provider did not return a known account.", detail: "Contact your workspace administrator to be added to Mesta." });
+      setStatus({ kind: "error", title: "Penyedia identitas tidak mengembalikan akun yang dikenali.", detail: "Hubungi administrator ruang kerja Anda agar ditambahkan ke Mesta." });
       return;
     }
     if (user.status === "suspended") {
@@ -55,7 +55,7 @@ function Callback() {
       router.replace("/unauthorized?reason=no-workspace");
       return;
     }
-    setStatus({ kind: "processing", message: "Resolving your workspace and role" });
+    setStatus({ kind: "processing", message: "Menentukan ruang kerja dan peran Anda" });
     let last: string | null = null;
     try {
       last = window.localStorage.getItem(LAST_WORKSPACE_KEY);
@@ -91,19 +91,19 @@ function Callback() {
   return (
     <AuthShell>
       {status.kind === "processing" ? (
-        <AuthCard title="Signing you in">
+        <AuthCard title="Memasukkan Anda">
           <div className="flex items-center gap-3" role="status" aria-live="polite">
             <Loader2 className="size-5 animate-spin text-primary" aria-hidden />
             <span className="body text-fg-secondary">{status.message}…</span>
           </div>
         </AuthCard>
       ) : (
-        <AuthCard title="Sign-in could not be completed">
+        <AuthCard title="Proses masuk tidak dapat diselesaikan">
           <InlineAlert tone="critical" title={status.title}>
             {status.detail}
           </InlineAlert>
           <Link href="/sign-in" className={buttonVariants({ variant: "primary", size: "lg", className: "mt-5 w-full" })}>
-            Return to sign in
+            Kembali ke halaman masuk
           </Link>
         </AuthCard>
       )}

@@ -1,12 +1,12 @@
 import type { ForecastRun, RunStep, RunStepKey } from "@/types/domain";
 
 export const RUN_STEPS: { key: RunStepKey; label: string }[] = [
-  { key: "queued", label: "Queued" },
-  { key: "loading", label: "Loading data" },
-  { key: "validating", label: "Validating data" },
-  { key: "modelling", label: "Running model" },
-  { key: "generating", label: "Generating forecast" },
-  { key: "writing", label: "Writing results" },
+  { key: "queued", label: "Menunggu" },
+  { key: "loading", label: "Menyiapkan data" },
+  { key: "validating", label: "Memeriksa data" },
+  { key: "modelling", label: "Menjalankan model" },
+  { key: "generating", label: "Membuat hasil" },
+  { key: "writing", label: "Menyimpan hasil" },
 ];
 
 /** Relative duration of each step; scaled by run size. */

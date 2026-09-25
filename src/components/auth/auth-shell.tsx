@@ -20,9 +20,9 @@ export function AuthShell({ children, footer }: { children: React.ReactNode; foo
       <footer className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-6 py-5 caption">
         {footer ?? (
           <>
-            <span>Access is managed by your organisation&apos;s identity provider.</span>
+            <span>Akses dikelola oleh penyedia identitas organisasi Anda.</span>
             <span aria-hidden>·</span>
-            <span>Need access? Contact your workspace administrator.</span>
+            <span>Butuh akses? Hubungi administrator ruang kerja Anda.</span>
           </>
         )}
       </footer>

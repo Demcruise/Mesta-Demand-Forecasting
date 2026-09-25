@@ -85,7 +85,7 @@ export function ProductIdentity({
         <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-dashed border-border-strong">
           <Box className="size-4" aria-hidden />
         </span>
-        <span className="body-sm">Product unavailable</span>
+        <span className="body-sm">Produk tidak tersedia</span>
       </span>
     );
   }
@@ -150,7 +150,7 @@ export function Avatar({ name, size = "md", className }: { name: string; size?: 
 
 export function UserIdentity({ userId, secondary, size = "sm", className }: { userId: string | null | undefined; secondary?: React.ReactNode; size?: "sm" | "md"; className?: string }) {
   const name = actorName(userId);
-  if (!userId) return <span className={cn("body-sm text-fg-tertiary", className)}>Unassigned</span>;
+  if (!userId) return <span className={cn("body-sm text-fg-tertiary", className)}>Belum ditugaskan</span>;
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-2", className)}>
       <Avatar name={name} size={size} />
@@ -185,8 +185,8 @@ export function RunIdentity({ run, href = true, className }: { run: ForecastRun;
 }
 
 export function scopeLabel(run: Pick<ForecastRun, "scope">) {
-  const cats = run.scope.categories.length === 0 ? "All categories" : run.scope.categories.length === 1 ? run.scope.categories[0] : `${run.scope.categories.length} categories`;
-  const regions = run.scope.regions.length === 0 ? "All regions" : run.scope.regions.length === 1 ? run.scope.regions[0] : `${run.scope.regions.length} regions`;
+  const cats = run.scope.categories.length === 0 ? "Semua kategori" : run.scope.categories.length === 1 ? run.scope.categories[0] : `${run.scope.categories.length} kategori`;
+  const regions = run.scope.regions.length === 0 ? "Semua wilayah" : run.scope.regions.length === 1 ? run.scope.regions[0] : `${run.scope.regions.length} wilayah`;
   return `${cats} · ${regions}`;
 }
 

@@ -36,12 +36,12 @@ export function SignInFlow() {
     e.preventDefault();
     const value = email.trim().toLowerCase();
     if (!EMAIL_RE.test(value)) {
-      setError("Enter your work email address, for example name@company.com.");
+      setError("Masukkan email kantor Anda, misalnya nama@perusahaan.com.");
       return;
     }
     const domain = value.split("@")[1] ?? "";
     if (PUBLIC_EMAIL_DOMAINS.includes(domain)) {
-      setError("Personal email addresses cannot sign in. Use the email address your organisation gave you.");
+      setError("Email pribadi tidak dapat digunakan untuk masuk. Gunakan email yang diberikan organisasi Anda.");
       return;
     }
     setError(null);
@@ -66,15 +66,15 @@ export function SignInFlow() {
   return (
     <AuthShell>
       {reason === "expired" && (
-        <InlineAlert tone="warning" title="Your session has ended." className="mb-4">
-          Sign in again to continue where you left off.
+        <InlineAlert tone="warning" title="Sesi Anda telah berakhir." className="mb-4">
+          Masuk kembali untuk melanjutkan.
         </InlineAlert>
       )}
       {reason === "signed_out" && (
-        <InlineAlert tone="success" title="You have signed out." className="mb-4" />
+        <InlineAlert tone="success" title="Anda telah keluar." className="mb-4" />
       )}
       {step.kind === "found" || step.kind === "redirecting" ? (
-        <AuthCard title="Continue to your organisation" description="Your organisation signs in with single sign-on.">
+        <AuthCard title="Lanjutkan ke organisasi Anda" description="Organisasi Anda masuk dengan single sign-on.">
           <div className="flex items-start gap-3 rounded-lg border border-border bg-subtle p-4">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-fg">
               <Building2 className="size-5" aria-hidden />
@@ -82,7 +82,7 @@ export function SignInFlow() {
             <div className="min-w-0">
               <p className="body-sm font-semibold text-fg">{ORGANIZATION.name}</p>
               <p className="truncate caption">{step.email}</p>
-              <p className="mt-1 caption">Identity provider: {ORGANIZATION.idp}</p>
+              <p className="mt-1 caption">Penyedia identitas: {ORGANIZATION.idp}</p>
             </div>
           </div>
           <Button
@@ -90,25 +90,25 @@ export function SignInFlow() {
             size="lg"
             className="mt-5 w-full"
             loading={step.kind === "redirecting"}
-            loadingText="Redirecting to identity provider"
+            loadingText="Mengalihkan ke penyedia identitas"
             onClick={() => continueWithSso(step.email)}
           >
             <KeyRound aria-hidden />
-            Continue with SSO
+            Lanjutkan dengan SSO
           </Button>
           <p className="mt-3 flex items-start gap-1.5 caption">
             <ShieldCheck className="mt-px size-3.5 shrink-0" aria-hidden />
-            Multi-factor authentication is handled by your identity provider.
+            Autentikasi dua faktor ditangani oleh penyedia identitas Anda.
           </p>
           <Button variant="link" className="mt-4" onClick={() => setStep({ kind: "idle" })} disabled={step.kind === "redirecting"}>
             <ArrowLeft aria-hidden />
-            Use a different email
+            Gunakan email lain
           </Button>
         </AuthCard>
       ) : (
-        <AuthCard title="Sign in to Mesta" description="Enter your work email. We will find your organisation and send you to its sign-in page.">
+        <AuthCard title="Masuk ke Mesta" description="Masukkan email kantor Anda. Kami akan menemukan organisasi Anda dan mengarahkan ke halaman masuknya.">
           <form onSubmit={discover} noValidate className="flex flex-col gap-4">
-            <Field label="Work email" htmlFor="email" error={error} hint="Demo: use an address at mesta.click, for example rina.wijaya@mesta.click.">
+            <Field label="Email kantor" htmlFor="email" error={error} hint="Demo: gunakan alamat @mesta.click, misalnya rina.wijaya@mesta.click.">
               <Input
                 id="email"
                 type="email"
@@ -123,23 +123,23 @@ export function SignInFlow() {
                 }}
                 aria-invalid={!!error}
                 aria-describedby={error ? "email-error" : "email-hint"}
-                placeholder="name@company.com"
+                placeholder="nama@perusahaan.com"
                 className="h-[var(--control-h-lg)]"
               />
             </Field>
             {step.kind === "not_found" && (
-              <InlineAlert tone="warning" title={`No organisation uses ${step.domain} with Mesta.`}>
-                Check the address for typos. If your organisation is new to Mesta, ask your administrator to register the domain.
+              <InlineAlert tone="warning" title={`Tidak ada organisasi yang memakai ${step.domain} di Mesta.`}>
+                Periksa kembali alamatnya. Jika organisasi Anda baru menggunakan Mesta, minta administrator mendaftarkan domainnya.
               </InlineAlert>
             )}
-            <Button type="submit" variant="primary" size="lg" className="w-full" loading={step.kind === "validating"} loadingText="Finding your organisation">
-              Continue to organisation
+            <Button type="submit" variant="primary" size="lg" className="w-full" loading={step.kind === "validating"} loadingText="Mencari organisasi Anda">
+              Lanjutkan ke organisasi
             </Button>
           </form>
         </AuthCard>
       )}
       <p className="sr-only" role="status" aria-live="polite">
-        {step.kind === "validating" ? "Finding your organisation" : step.kind === "found" ? `Organisation found: ${ORGANIZATION.name}` : step.kind === "redirecting" ? "Redirecting to identity provider" : ""}
+        {step.kind === "validating" ? "Mencari organisasi Anda" : step.kind === "found" ? `Organisasi ditemukan: ${ORGANIZATION.name}` : step.kind === "redirecting" ? "Mengalihkan ke penyedia identitas" : ""}
       </p>
     </AuthShell>
   );
