@@ -27,28 +27,47 @@ import { ForecastInterval, MetricCard, MetricStrip } from "@/components/forecast
 import { Sparkline } from "@/components/charts/small-charts";
 import { ActivityList } from "@/components/governance/audit";
 import { OverrideDialog } from "@/features/forecast-detail/override-dialog";
+import { pick, localized } from "@/lib/i18n";
 
-export const EXCEPTION_TYPE_LABELS: Record<ExceptionType, string> = {
-  large_delta: "Perubahan perkiraan besar",
+export const EXCEPTION_TYPE_LABELS: Record<ExceptionType, string> = localized({
+  large_delta: pick("Perubahan perkiraan besar", "Large forecast change"),
   low_confidence: "Rentang lebar",
-  high_error: "Selisih perkiraan tinggi",
-  data_freshness: "Data belum diperbarui",
-  data_quality: "Masalah data",
-  model_anomaly: "Anomali model",
+  high_error: pick("Selisih perkiraan tinggi", "High forecast error"),
+  data_freshness: pick("Data belum diperbarui", pick("Kebaruan data", "Data freshness")),
+  data_quality: pick("Masalah data", pick("Kualitas data", "Data quality")),
+  model_anomaly: pick("Anomali model", "Model anomaly"),
   manual_override: "Diubah manual",
   threshold_breach: "Melewati batas",
-};
+}, {
+  large_delta: "Large forecast change",
+  low_confidence: "Low confidence",
+  high_error: "High forecast error",
+  data_freshness: pick("Kebaruan data", "Data freshness"),
+  data_quality: pick("Kualitas data", "Data quality"),
+  model_anomaly: pick("Anomali model", "Model anomaly"),
+  manual_override: "Manual override",
+  threshold_breach: "Threshold breach",
+});
 
-const RECOMMENDED: Record<ExceptionType, string[]> = {
-  large_delta: ["Periksa apakah ada promosi, perubahan daftar produk, atau kejadian pasokan yang menjelaskan perubahan ini.", "Jika model kurang konteks, terapkan perubahan manual disertai bukti.", "Jika perubahannya memang diharapkan, tandai selesai dengan catatan."],
-  low_confidence: ["Tinjau volatilitas permintaan dan nilai ekstrem terakhir.", "Rencanakan stok pengaman memakai batas atas, bukan angka perkiraan saja.", "Pertimbangkan model permintaan intermiten untuk produk lambat laku."],
-  high_error: ["Bandingkan perkiraan terakhir dengan aktual di Detail Perkiraan.", "Tandai untuk tinjauan model bila selisih berlanjut lebih dari 2 minggu."],
-  data_freshness: ["Periksa status sumber di Sumber Data.", "Gunakan perkiraan terdampak dengan hati-hati sampai sumber tersinkron."],
-  data_quality: ["Buka masalah kualitas data terkait.", "Hindari perubahan manual berdasarkan riwayat terdampak sampai diperbaiki."],
-  model_anomaly: ["Tandai untuk tinjauan model.", "Bandingkan dengan model cadangan."],
-  manual_override: ["Pastikan perubahan manual masih berlaku."],
-  threshold_breach: ["Tinjau terhadap batas yang dikonfigurasi."],
-};
+const RECOMMENDED: Record<ExceptionType, string[]> = localized({
+  large_delta: [pick("Periksa apakah ada promosi, perubahan daftar produk, atau kejadian pasokan yang menjelaskan perubahan ini.", "Check for a promotion, listing change or supply event that explains the change."), pick("Jika model kurang konteks, terapkan perubahan manual disertai bukti.", "If the model is missing context, apply an override with evidence."), pick("Jika perubahannya memang diharapkan, tandai selesai dengan catatan.", "If the change is expected, resolve with a note.")],
+  low_confidence: [pick("Tinjau volatilitas permintaan dan nilai ekstrem terakhir.", "Review recent demand volatility and outliers."), pick("Rencanakan stok pengaman memakai batas atas, bukan angka perkiraan saja.", "Plan safety stock against the upper bound, not the point forecast."), pick("Pertimbangkan model permintaan intermiten untuk produk lambat laku.", "Consider the intermittent-demand model for slow movers.")],
+  high_error: [pick("Bandingkan perkiraan terakhir dengan aktual di Detail Perkiraan.", "Compare recent forecasts with actuals in the forecast detail."), pick("Tandai untuk tinjauan model bila selisih berlanjut lebih dari 2 minggu.", "Flag for model review if the error persists for more than 2 weeks.")],
+  data_freshness: [pick("Periksa status sumber di Sumber Data.", "Check the source status in Data sources."), pick("Gunakan perkiraan terdampak dengan hati-hati sampai sumber tersinkron.", "Treat affected forecasts with caution until the source syncs.")],
+  data_quality: [pick("Buka masalah kualitas data terkait.", "Open the related data quality issue."), pick("Hindari perubahan manual berdasarkan riwayat terdampak sampai diperbaiki.", "Avoid overrides based on affected history until it is corrected.")],
+  model_anomaly: [pick("Tandai untuk tinjauan model.", "Flag for model review."), pick("Bandingkan dengan model cadangan.", "Compare with the fallback model.")],
+  manual_override: [pick("Pastikan perubahan manual masih berlaku.", "Confirm the override is still valid.")],
+  threshold_breach: [pick("Tinjau terhadap batas yang dikonfigurasi.", "Review against the configured threshold.")],
+}, {
+  large_delta: ["Check for a promotion, listing change or supply event that explains the change.", pick("Jika model kurang konteks, terapkan perubahan manual disertai bukti.", "If the model is missing context, apply an override with evidence."), "If the change is expected, resolve with a note."],
+  low_confidence: ["Review recent demand volatility and outliers.", "Plan safety stock against the upper bound, not the point forecast.", pick("Pertimbangkan model permintaan intermiten untuk produk lambat laku.", "Consider the intermittent-demand model for slow movers.")],
+  high_error: ["Compare recent forecasts with actuals in the forecast detail.", pick("Tandai untuk tinjauan model bila selisih berlanjut lebih dari 2 minggu.", "Flag for model review if the error persists for more than 2 weeks.")],
+  data_freshness: [pick("Periksa status sumber di Sumber Data.", "Check the source status in Data sources."), "Treat affected forecasts with caution until the source syncs."],
+  data_quality: [pick("Buka masalah kualitas data terkait.", "Open the related data quality issue."), "Avoid overrides based on affected history until it is corrected."],
+  model_anomaly: [pick("Tandai untuk tinjauan model.", "Flag for model review."), pick("Bandingkan dengan model cadangan.", "Compare with the fallback model.")],
+  manual_override: ["Confirm the override is still valid."],
+  threshold_breach: ["Review against the configured threshold."],
+});
 
 /** PAGE-EXCEPTIONS: prioritise forecast items that need human attention. */
 export function ExceptionsView() {
@@ -64,7 +83,7 @@ export function ExceptionsView() {
   const bulkUpdate = useApiMutation((c, v: { status?: ForecastException["status"]; ownerId?: string | null; note?: string }) => updateExceptions(c, selectedIds, v), {
     invalidate: [["exceptions"], ["exception"], ["overview"], ["nav-counts"], ["forecast-rows"]],
     success: (r) => `${pluralize(r.length, "exception")} updated`,
-    failure: "Item tidak dapat diperbarui.",
+    failure: pick("Item tidak dapat diperbarui.", "The exceptions were not updated."),
     onSuccess: (_r, v) => {
       if (v.status === "resolved") track("exception_resolved", { count: selectedIds.length });
       setSelection({});
@@ -76,8 +95,8 @@ export function ExceptionsView() {
     () => [
       {
         id: "exception",
-        header: "Masalah",
-        meta: { width: "minmax(200px, 1.4fr)", pinned: true, label: "Masalah" } satisfies ColumnMeta,
+        header: pick("Masalah", "Exception"),
+        meta: { width: "minmax(200px, 1.4fr)", pinned: true, label: pick("Masalah", "Exception") } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-[0.8125rem] font-semibold">{EXCEPTION_TYPE_LABELS[row.original.type]}</span>
@@ -85,12 +104,12 @@ export function ExceptionsView() {
           </span>
         ),
       },
-      { id: "severity", header: "Tingkat", meta: { width: "110px", sortKey: "severity" } satisfies ColumnMeta, cell: ({ row }) => <SeverityBadge severity={row.original.severity} size="sm" /> },
-      { id: "entity", header: "Produk", meta: { width: "minmax(240px, 2fr)", sortKey: "product" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original.product} /> },
+      { id: "severity", header: pick("Tingkat", "Severity"), meta: { width: "110px", sortKey: "severity" } satisfies ColumnMeta, cell: ({ row }) => <SeverityBadge severity={row.original.severity} size="sm" /> },
+      { id: "entity", header: pick("Produk", "Product"), meta: { width: "minmax(240px, 2fr)", sortKey: "product" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original.product} /> },
       {
         id: "value",
-        header: "Nilai",
-        meta: { width: "150px", numeric: true, sortKey: "value", description: "Nilai terukur dibanding batas yang dikonfigurasi." } satisfies ColumnMeta,
+        header: pick("Nilai", "Value"),
+        meta: { width: "150px", numeric: true, sortKey: "value", description: pick("Nilai terukur dibanding batas yang dikonfigurasi.", "Measured value compared with the configured threshold.") } satisfies ColumnMeta,
         cell: ({ row }) => {
           const e = row.original;
           if (e.valueUnit === "%") {
@@ -105,8 +124,8 @@ export function ExceptionsView() {
           return <span className="text-xs text-fg-secondary">{pluralize(e.affectedSkus, "SKU")}</span>;
         },
       },
-      { id: "detected", header: "Terdeteksi", meta: { width: "120px", sortKey: "detectedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{formatRelative(row.original.detectedAt)}</span> },
-      { id: "owner", header: "Penanggung jawab", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
+      { id: "detected", header: pick("Terdeteksi", "Detected"), meta: { width: "120px", sortKey: "detectedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{formatRelative(row.original.detectedAt)}</span> },
+      { id: "owner", header: pick("Penanggung jawab", "Owner"), meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
       { id: "status", header: "Status", meta: { width: "140px", sortKey: "status" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
     ],
     [],
@@ -115,15 +134,15 @@ export function ExceptionsView() {
   const s = q.data?.summary;
   return (
     <PageContainer>
-      <PageHeader title="Perlu Ditinjau" description="Item yang memerlukan pemeriksaan atau tindakan, diurutkan berdasarkan tingkat kepentingan. Setiap item menjelaskan mengapa ditandai." />
+      <PageHeader title={pick("Perlu Ditinjau", "Exceptions")} description={pick("Item yang memerlukan pemeriksaan atau tindakan, diurutkan berdasarkan tingkat kepentingan. Setiap item menjelaskan mengapa ditandai.", "Forecasts that need a human decision, ordered by severity. Each one explains why it was raised.")} />
       <MetricStrip>
-        <MetricCard label="Terbuka" value={s ? formatNumber(s.open) : "—"} context="Terbuka, sedang ditelusuri, atau dieskalasi" href="/planning/exceptions?status=open,investigating,escalated" hrefLabel="Lihat yang terbuka" />
-        <MetricCard label="Kritis" value={s ? formatNumber(s.critical) : "—"} context="Perubahan 25% atau lebih, atau masalah data yang menghambat" href="/planning/exceptions?severity=critical&status=open,investigating,escalated" hrefLabel="Lihat yang kritis" />
-        <MetricCard label="Belum ditugaskan" value={s ? formatNumber(s.unassigned) : "—"} context="Belum ada yang menangani" href="/planning/exceptions?owner=unassigned&status=open" hrefLabel="Lihat yang belum ditugaskan" />
-        <MetricCard label="Ditugaskan ke saya" value={s ? formatNumber(s.mine) : "—"} href={`/planning/exceptions?owner=${session.userId}&status=open,investigating,escalated`} hrefLabel="Lihat milik saya" />
+        <MetricCard label={pick("Terbuka", "Open")} value={s ? formatNumber(s.open) : "—"} context={pick("Terbuka, sedang ditelusuri, atau dieskalasi", "Open, investigating or escalated")} href="/planning/exceptions?status=open,investigating,escalated" hrefLabel={pick("Lihat yang terbuka", "Show open")} />
+        <MetricCard label={pick("Kritis", "Critical")} value={s ? formatNumber(s.critical) : "—"} context={pick("Perubahan 25% atau lebih, atau masalah data yang menghambat", pick("Perubahan 25% atau lebih, atau masalah data menghambat", "Change of 25% or more, or a blocking data issue"))} href="/planning/exceptions?severity=critical&status=open,investigating,escalated" hrefLabel={pick("Lihat yang kritis", "Show critical")} />
+        <MetricCard label={pick("Belum ditugaskan", "Unassigned")} value={s ? formatNumber(s.unassigned) : "—"} context={pick("Belum ada yang menangani", "Nobody is working on these yet")} href="/planning/exceptions?owner=unassigned&status=open" hrefLabel={pick("Lihat yang belum ditugaskan", "Show unassigned")} />
+        <MetricCard label={pick("Ditugaskan ke saya", "Assigned to me")} value={s ? formatNumber(s.mine) : "—"} href={`/planning/exceptions?owner=${session.userId}&status=open,investigating,escalated`} hrefLabel={pick("Lihat milik saya", "Show mine")} />
       </MetricStrip>
       <DataTable
-        label="Item yang perlu ditinjau"
+        label={pick("Item yang perlu ditinjau", "Forecast exceptions")}
         columns={columns}
         data={q.data?.page.items}
         getRowId={(r) => r.id}
@@ -131,7 +150,7 @@ export function ExceptionsView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Item yang perlu ditinjau tidak dapat dimuat."
+        errorWhat={pick("Item yang perlu ditinjau tidak dapat dimuat.", "Exceptions could not be loaded.")}
         storageKey="exceptions"
         activeRowId={selectedId}
         onRowClick={(r) => {
@@ -164,21 +183,21 @@ export function ExceptionsView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Cari ID, produk, atau alasan"
+            searchPlaceholder={pick("Cari ID, produk, atau alasan", "Search exception ID, product or reason")}
             facets={[
               { key: "status", label: "Status", primary: true, options: (["open", "investigating", "escalated", "resolved", "dismissed"] as StatusKey[]).map((v) => ({ value: v, label: STATUS[v].label })) },
-              { key: "severity", label: "Tingkat", primary: true, options: [{ value: "critical", label: "Kritis" }, { value: "warning", label: "Peringatan" }, { value: "info", label: "Info" }] },
-              { key: "type", label: "Jenis", options: Object.entries(EXCEPTION_TYPE_LABELS).map(([value, label]) => ({ value, label })) },
-              { key: "category", label: "Kategori", options: CATEGORIES.map((c) => ({ value: c, label: c })) },
-              { key: "owner", label: "Penanggung jawab", options: [{ value: "unassigned", label: "Belum ditugaskan" }, ...USERS.filter((u) => u.status === "active").map((u) => ({ value: u.id, label: u.name }))] },
+              { key: "severity", label: pick("Tingkat", "Severity"), primary: true, options: [{ value: "critical", label: pick("Kritis", "Critical") }, { value: "warning", label: pick("Peringatan", "Warning") }, { value: "info", label: "Info" }] },
+              { key: "type", label: pick("Jenis", "Type"), options: Object.entries(EXCEPTION_TYPE_LABELS).map(([value, label]) => ({ value, label })) },
+              { key: "category", label: pick("Kategori", "Category"), options: CATEGORIES.map((c) => ({ value: c, label: c })) },
+              { key: "owner", label: pick("Penanggung jawab", "Owner"), options: [{ value: "unassigned", label: pick("Belum ditugaskan", "Unassigned") }, ...USERS.filter((u) => u.status === "active").map((u) => ({ value: u.id, label: u.name }))] },
             ]}
           />
         }
         empty={
           state.activeFilterCount > 0 ? (
-            <EmptyState title="Tidak ada item yang cocok dengan filter." action={<Button variant="secondary" onClick={state.clearFilters}>Hapus filter</Button>} />
+            <EmptyState title={pick("Tidak ada item yang cocok dengan filter.", "No exceptions match the current filters.")} action={<Button variant="secondary" onClick={state.clearFilters}>{pick("Hapus filter", "Clear filters")}</Button>} />
           ) : (
-            <EmptyState icon={ListChecks} title="Tidak ada yang perlu ditinjau." description="Semua perkiraan berada dalam batas yang dikonfigurasi." />
+            <EmptyState icon={ListChecks} title={pick("Tidak ada yang perlu ditinjau.", "No exceptions need review.")} description={pick("Semua perkiraan berada dalam batas yang dikonfigurasi.", "Forecasts are within all configured thresholds.")} />
           )
         }
       />
@@ -187,7 +206,7 @@ export function ExceptionsView() {
         <DialogContent
           size="sm"
           title={`Resolve ${pluralize(selectedIds.length, "exception")}?`}
-          description="Item yang selesai keluar dari antrean. Catatannya ditambahkan ke aktivitas tiap item dan riwayat aktivitas."
+          description={pick("Item yang selesai keluar dari antrean. Catatannya ditambahkan ke aktivitas tiap item dan riwayat aktivitas.", "Resolved exceptions leave the queue. The note is added to each exception's activity and the audit log.")}
           footer={
             <>
               <Button variant="ghost" onClick={() => setBulk(null)}>
@@ -199,7 +218,7 @@ export function ExceptionsView() {
             </>
           }
         >
-          <Field label="Catatan penyelesaian" htmlFor="bulk-note" required hint="Minimal 5 karakter.">
+          <Field label={pick("Catatan penyelesaian", "Resolution note")} htmlFor="bulk-note" required hint={pick("Minimal 5 karakter.", "At least 5 characters.")}>
             <Textarea id="bulk-note" value={note} onChange={(e) => setNote(e.target.value)} autoFocus placeholder="e.g. Confirmed with the category team: expected after range review." />
           </Field>
         </DialogContent>
@@ -218,7 +237,7 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
   const update = useApiMutation((c, v: { status?: ForecastException["status"]; ownerId?: string | null; note?: string }) => updateExceptions(c, [id as string], v), {
     invalidate: [["exceptions"], ["exception"], ["overview"], ["nav-counts"], ["forecast-rows"]],
     success: (r) => `${r[0]?.id} ${r[0]?.status}`,
-    failure: "Item tidak dapat diperbarui.",
+    failure: pick("Item tidak dapat diperbarui.", "The exception was not updated."),
     onSuccess: (_r, v) => {
       if (v.status === "resolved") track("exception_resolved", { count: 1 });
       setDialog(null);
@@ -233,7 +252,7 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
           <DrawerContent
             size="lg"
             eyebrow={<EntityId value={id} copy={false} />}
-            title={d ? EXCEPTION_TYPE_LABELS[d.exception.type] : "Masalah"}
+            title={d ? EXCEPTION_TYPE_LABELS[d.exception.type] : pick("Masalah", "Exception")}
             description={d ? `${d.product.name} · ${d.product.sku}` : undefined}
             footer={
               d && can("exception.update") && !closed ? (
@@ -256,7 +275,7 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
             {q.isPending ? (
               <DetailSkeleton />
             ) : q.isError ? (
-              <ErrorState compact what="Item ini tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />
+              <ErrorState compact what={pick("Item ini tidak dapat dimuat.", "This exception could not be loaded.")} error={q.error} onRetry={() => q.refetch()} />
             ) : d ? (
               <div className="flex flex-col gap-6">
                 <div className="flex flex-wrap items-center gap-2">
@@ -278,10 +297,10 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
                 <DescriptionList
                   columns={2}
                   items={[
-                    { label: "Terdampak", value: <ProductIdentity product={d.product} href={`/forecasting/detail/${d.product.id}${d.run ? `?run=${d.run.id}` : ""}`} /> },
-                    { label: "Cakupan", value: pluralize(d.exception.affectedSkus, "SKU") },
-                    { label: "Proses perkiraan", value: d.run ? <Link href={`/forecasting/runs/${d.run.id}`} className="mono-id text-primary hover:underline">{d.run.id}</Link> : "—" },
-                    { label: "Penanggung jawab", value: <UserIdentity userId={d.exception.ownerId} /> },
+                    { label: pick("Terdampak", "Affected"), value: <ProductIdentity product={d.product} href={`/forecasting/detail/${d.product.id}${d.run ? `?run=${d.run.id}` : ""}`} /> },
+                    { label: pick("Cakupan", "Scope"), value: pluralize(d.exception.affectedSkus, "SKU") },
+                    { label: pick("Proses perkiraan", "Forecast run"), value: d.run ? <Link href={`/forecasting/runs/${d.run.id}`} className="mono-id text-primary hover:underline">{d.run.id}</Link> : "—" },
+                    { label: pick("Penanggung jawab", "Owner"), value: <UserIdentity userId={d.exception.ownerId} /> },
                   ]}
                 />
                 {d.row && (
@@ -392,10 +411,10 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
             title={dialog === "resolved" ? `Resolve ${d.exception.id}?` : dialog === "dismissed" ? `Dismiss ${d.exception.id}?` : `Escalate ${d.exception.id}?`}
             description={
               dialog === "resolved"
-                ? "Jelaskan keputusannya agar orang lain dapat memercayai perkiraan ini."
+                ? pick("Jelaskan keputusannya agar orang lain dapat memercayai perkiraan ini.", "Explain what was decided so others can trust the forecast.")
                 : dialog === "dismissed"
-                  ? "Item yang diabaikan ditutup tanpa tindakan. Jelaskan mengapa tidak perlu tindakan."
-                  : "Item yang dieskalasi diteruskan ke Manajer dan tetap terbuka."
+                  ? pick("Item yang diabaikan ditutup tanpa tindakan. Jelaskan mengapa tidak perlu tindakan.", "Dismissed exceptions are closed without action. Explain why none is needed.")
+                  : pick("Item yang dieskalasi diteruskan ke Manajer dan tetap terbuka.", "Escalated exceptions are raised to a Manager and stay open.")
             }
             footer={
               <>
@@ -403,12 +422,12 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
                   Cancel
                 </Button>
                 <Button variant="primary" disabled={note.trim().length < 5} loading={update.isPending} onClick={() => update.mutate({ status: dialog, note })}>
-                  {dialog === "resolved" ? "Tandai selesai" : dialog === "dismissed" ? "Abaikan item" : "Eskalasi item"}
+                  {dialog === "resolved" ? pick("Tandai selesai", "Resolve exception") : dialog === "dismissed" ? pick("Abaikan item", "Dismiss exception") : pick("Eskalasi item", "Escalate exception")}
                 </Button>
               </>
             }
           >
-            <Field label="Catatan" htmlFor="ex-note" required hint="Tercatat di aktivitas dan riwayat aktivitas. Minimal 5 karakter.">
+            <Field label={pick("Catatan", "Note")} htmlFor="ex-note" required hint={pick("Tercatat di aktivitas dan riwayat aktivitas. Minimal 5 karakter.", "Recorded in the activity and the audit log. At least 5 characters.")}>
               <Textarea id="ex-note" value={note} onChange={(e) => setNote(e.target.value)} autoFocus />
             </Field>
           </DialogContent>

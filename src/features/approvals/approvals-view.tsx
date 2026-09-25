@@ -26,13 +26,19 @@ import { DetailSkeleton, EmptyState, ErrorState, InlineAlert, PermissionNotice }
 import { EntityId, UserIdentity } from "@/components/entities/identity";
 import { MetricCard, MetricStrip } from "@/components/forecasting/metrics";
 import { ActivityList, ConsequenceSummary } from "@/components/governance/audit";
+import { pick, localized } from "@/lib/i18n";
 
-export const APPROVAL_TYPE_LABELS: Record<ApprovalType, string> = {
-  override: "Perubahan perkiraan",
-  scenario: "Penggunaan skenario",
-  plan_publish: "Penerbitan rencana",
-  model_default: "Perubahan model bawaan",
-};
+export const APPROVAL_TYPE_LABELS: Record<ApprovalType, string> = localized({
+  override: pick("Perubahan perkiraan", "Forecast override"),
+  scenario: pick("Penggunaan skenario", "Scenario adoption"),
+  plan_publish: pick("Penerbitan rencana", "Plan publication"),
+  model_default: pick("Perubahan model bawaan", "Default model change"),
+}, {
+  override: "Forecast override",
+  scenario: "Scenario adoption",
+  plan_publish: "Plan publication",
+  model_default: pick("Perubahan model bawaan", "Default model change"),
+});
 
 function objectHref(a: Approval) {
   switch (a.type) {
@@ -70,8 +76,8 @@ export function ApprovalsView() {
       { id: "type", header: "Jenis", meta: { width: "170px", sortKey: "type" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{APPROVAL_TYPE_LABELS[row.original.type]}</Tag> },
       {
         id: "object",
-        header: "Permintaan",
-        meta: { width: "minmax(260px, 2.5fr)", pinned: true, label: "Permintaan" } satisfies ColumnMeta,
+        header: pick("Permintaan", "Demand"),
+        meta: { width: "minmax(260px, 2.5fr)", pinned: true, label: pick("Permintaan", "Demand") } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-[0.8125rem] font-semibold">{row.original.objectLabel}</span>
@@ -79,7 +85,7 @@ export function ApprovalsView() {
           </span>
         ),
       },
-      { id: "by", header: "Diajukan oleh", meta: { width: "minmax(150px, 1fr)", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.requestedBy} secondary={formatRelative(row.original.requestedAt)} /> },
+      { id: "by", header: pick("Diajukan oleh", "Submitted by"), meta: { width: "minmax(150px, 1fr)", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.requestedBy} secondary={formatRelative(row.original.requestedAt)} /> },
       { id: "impact", header: "Dampak", meta: { width: "170px", numeric: true, sortKey: "impact" } satisfies ColumnMeta, cell: ({ row }) => <Impact a={row.original} /> },
       { id: "status", header: "Status", meta: { width: "170px" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
       {
@@ -98,14 +104,14 @@ export function ApprovalsView() {
   const s = q.data?.summary;
   return (
     <PageContainer>
-      <PageHeader title="Persetujuan" description="Tinjau perubahan sebelum diterapkan: perubahan perkiraan, penggunaan skenario, penerbitan rencana, dan perubahan model." />
+      <PageHeader title={pick("Persetujuan", "Approval")} description={pick("Tinjau perubahan sebelum diterapkan: perubahan perkiraan, penggunaan skenario, penerbitan rencana, dan perubahan model.", "Review changes before they apply: forecast overrides, scenario usage, plan publication and model changes.")} />
       <MetricStrip className="xl:grid-cols-3">
-        <MetricCard label="Menunggu keputusan" value={s ? formatNumber(s.pending) : "—"} href="/planning/approvals?status=pending" hrefLabel="Lihat yang menunggu" />
-        <MetricCard label="Jatuh tempo 24 jam" value={s ? formatNumber(s.dueToday) : "—"} />
-        <MetricCard label="Terlambat" value={s ? formatNumber(s.overdue) : "—"} context={s?.overdue ? "Melewati batas waktu" : "Tidak ada yang terlambat"} />
+        <MetricCard label={pick("Menunggu keputusan", "Awaiting decision")} value={s ? formatNumber(s.pending) : "—"} href="/planning/approvals?status=pending" hrefLabel={pick("Lihat yang menunggu", "View pending")} />
+        <MetricCard label={pick("Jatuh tempo 24 jam", "Due within 24h")} value={s ? formatNumber(s.dueToday) : "—"} />
+        <MetricCard label="Terlambat" value={s ? formatNumber(s.overdue) : "—"} context={s?.overdue ? "Melewati batas waktu" : pick("Tidak ada yang terlambat", "None overdue")} />
       </MetricStrip>
       <DataTable
-        label="Permintaan persetujuan"
+        label={pick("Permintaan persetujuan", "Approval requests")}
         columns={columns}
         data={q.data?.page.items}
         getRowId={(r) => r.id}
@@ -113,7 +119,7 @@ export function ApprovalsView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Permintaan persetujuan tidak dapat dimuat."
+        errorWhat={pick("Permintaan persetujuan tidak dapat dimuat.", "Approval requests could not be loaded.")}
         activeRowId={selectedId}
         onRowClick={(r) => {
           track("approval_opened", { type: r.type });
@@ -125,14 +131,14 @@ export function ApprovalsView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Cari permintaan"
+            searchPlaceholder={pick("Cari permintaan", "Search requests")}
             facets={[
               { key: "status", label: "Status", primary: true, options: (["pending", "approved", "rejected", "revision_requested"] as StatusKey[]).map((v) => ({ value: v, label: STATUS[v].label })) },
               { key: "type", label: "Jenis", primary: true, options: Object.entries(APPROVAL_TYPE_LABELS).map(([value, label]) => ({ value, label })) },
             ]}
           />
         }
-        empty={<EmptyState icon={ShieldCheck} title={state.activeFilterCount ? "Tidak ada permintaan yang cocok dengan filter." : "Tidak ada persetujuan yang menunggu."} description="Permintaan muncul di sini saat perubahan perkiraan, skenario, rencana, atau model perlu keputusan." />}
+        empty={<EmptyState icon={ShieldCheck} title={state.activeFilterCount ? pick("Tidak ada permintaan yang cocok dengan filter.", "No requests match the current filters.") : pick("Tidak ada persetujuan yang menunggu.", "No approvals are pending.")} description={pick("Permintaan muncul di sini saat perubahan perkiraan, skenario, rencana, atau model perlu keputusan.", "Requests appear here when forecast, scenario, plan or model changes need a decision.")} />}
       />
       <ApprovalDrawer id={selectedId} onClose={() => state.setParam("id", null)} />
     </PageContainer>
@@ -148,7 +154,7 @@ function ApprovalDrawer({ id, onClose }: { id: string | null; onClose: () => voi
     invalidate: [["approvals"], ["approval"], ["overview"], ["nav-counts"], ["notifications"], ["plan"], ["scenario"], ["scenarios"], ["model"], ["forecast-rows"], ["forecast-detail"]],
     success: (a) => `${a.status === "approved" ? "Disetujui" : a.status === "rejected" ? "Ditolak" : "Perlu revisi"}: ${a.objectLabel}`,
     successDescription: (a) => (a.status === "approved" ? a.afterApproval : `${actorName(a.requestedBy)} has been notified.`),
-    failure: "Keputusan tidak dapat dicatat.",
+    failure: pick("Keputusan tidak dapat dicatat.", "The decision could not be recorded."),
     onSuccess: () => {
       track("approval_completed", {});
       setDecision(null);
@@ -163,8 +169,8 @@ function ApprovalDrawer({ id, onClose }: { id: string | null; onClose: () => voi
       {id && (
         <DrawerContent
           size="lg"
-          eyebrow={a ? APPROVAL_TYPE_LABELS[a.type] : "Persetujuan"}
-          title={a?.objectLabel ?? "Permintaan persetujuan"}
+          eyebrow={a ? APPROVAL_TYPE_LABELS[a.type] : pick("Persetujuan", "Approval")}
+          title={a?.objectLabel ?? pick("Permintaan persetujuan", "Approval requests")}
           description={a ? <>Requested by {actorName(a.requestedBy)} · {formatDateTime(a.requestedAt)}</> : undefined}
           footer={
             a && a.status === "pending" && can("approval.decide") && !own ? (
@@ -185,7 +191,7 @@ function ApprovalDrawer({ id, onClose }: { id: string | null; onClose: () => voi
           {q.isPending ? (
             <DetailSkeleton />
           ) : q.isError ? (
-            <ErrorState compact what="Permintaan ini tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />
+            <ErrorState compact what={pick("Permintaan ini tidak dapat dimuat.", "This request could not be loaded.")} error={q.error} onRetry={() => q.refetch()} />
           ) : a ? (
             <div className="flex flex-col gap-6">
               <div className="flex flex-wrap items-center gap-2">
@@ -193,8 +199,8 @@ function ApprovalDrawer({ id, onClose }: { id: string | null; onClose: () => voi
                 <EntityId value={a.id} />
                 {a.status === "pending" && <span className="caption">Due {formatDateTime(a.dueAt)}</span>}
               </div>
-              {a.status === "pending" && own && <InlineAlert tone="info" title="Anda yang mengajukan perubahan ini.">Pemisahan tugas: Manajer lain yang harus memutuskan.</InlineAlert>}
-              {a.status === "pending" && !can("approval.decide") && <PermissionNotice permission="approval.decide" compact message="Anda dapat mengikuti permintaan ini, tetapi tidak memutuskannya." />}
+              {a.status === "pending" && own && <InlineAlert tone="info" title={pick("Anda yang mengajukan perubahan ini.", "You submitted this change.")}>{pick("Pemisahan tugas: Manajer lain yang harus memutuskan.", "Separation of duties: a different Manager must decide.")}</InlineAlert>}
+              {a.status === "pending" && !can("approval.decide") && <PermissionNotice permission="approval.decide" compact message={pick("Anda dapat mengikuti permintaan ini, tetapi tidak memutuskannya.", "You can follow this request but cannot decide it.")} />}
               <section aria-labelledby="ap-cs">
                 <h3 id="ap-cs" className="mb-2 card-title">
                   Change set
@@ -216,9 +222,9 @@ function ApprovalDrawer({ id, onClose }: { id: string | null; onClose: () => voi
                 </h3>
                 <ConsequenceSummary
                   rows={[
-                    ...(a.type !== "model_default" ? [{ label: "Berapa besar?", value: `${formatDeltaPercent(a.impact.percent)} (${formatDeltaNumber(a.impact.units)} unit)`, emphasis: true }] : []),
-                    { label: "Siapa yang terdampak?", value: pluralize(a.impact.skuCount, "SKU") },
-                    { label: "Ringkasan", value: a.impact.summary },
+                    ...(a.type !== "model_default" ? [{ label: pick("Berapa besar?", "How much?"), value: pick(`${formatDeltaPercent(a.impact.percent)} (${formatDeltaNumber(a.impact.units)} unit)`, `${formatDeltaPercent(a.impact.percent)} (${formatDeltaNumber(a.impact.units)} units)`), emphasis: true }] : []),
+                    { label: pick("Siapa yang terdampak?", "Who is affected?"), value: pluralize(a.impact.skuCount, "SKU") },
+                    { label: pick("Ringkasan", "Summary"), value: a.impact.summary },
                   ]}
                 />
               </section>
@@ -269,7 +275,7 @@ function ApprovalDrawer({ id, onClose }: { id: string | null; onClose: () => voi
       <Dialog open={!!decision} onOpenChange={(o) => !o && setDecision(null)}>
         {decision && a && (
           <DialogContent
-            title={decision === "approved" ? `Setujui ${a.objectLabel}?` : decision === "rejected" ? `Tolak ${a.objectLabel}?` : "Minta revisi?"}
+            title={decision === "approved" ? pick(`Setujui ${a.objectLabel}?`, `Approve ${a.objectLabel}?`) : decision === "rejected" ? pick(`Tolak ${a.objectLabel}?`, `Reject ${a.objectLabel}?`) : pick("Minta revisi?", "Request a revision?")}
             footer={
               <>
                 <Button variant="ghost" onClick={() => setDecision(null)}>
@@ -281,28 +287,28 @@ function ApprovalDrawer({ id, onClose }: { id: string | null; onClose: () => voi
                   loading={decide.isPending}
                   onClick={() => decide.mutate({ decision, comment })}
                 >
-                  {decision === "approved" ? "Setujui perubahan" : decision === "rejected" ? "Tolak permintaan" : "Kembalikan untuk revisi"}
+                  {decision === "approved" ? pick("Setujui perubahan", "Approve request") : decision === "rejected" ? pick("Tolak permintaan", "Reject request") : pick("Kembalikan untuk revisi", "Send back for revision")}
                 </Button>
               </>
             }
           >
             <ConsequenceSummary
               rows={[
-                { label: "Apa yang berubah?", value: a.changeSet.map((c) => `${c.field}: ${c.from} → ${c.to}`).join("; ") },
-                ...(a.type !== "model_default" ? [{ label: "Berapa besar?", value: `${formatDeltaPercent(a.impact.percent)} (${formatDeltaNumber(a.impact.units)} unit)`, emphasis: true }] : []),
-                { label: "Siapa yang terdampak?", value: pluralize(a.impact.skuCount, "SKU") },
-                { label: "Mengapa?", value: a.assumptions[0] ?? a.evidence[0] ?? "—" },
-                { label: "Kebijakan apa yang berlaku?", value: a.policy.rule },
-                { label: "Apa yang terjadi setelahnya?", value: decision === "approved" ? a.afterApproval : `${actorName(a.requestedBy)} diberi tahu dan perubahan tidak diterapkan.`, emphasis: true },
+                { label: pick("Apa yang berubah?", "What will change?"), value: a.changeSet.map((c) => `${c.field}: ${c.from} → ${c.to}`).join("; ") },
+                ...(a.type !== "model_default" ? [{ label: pick("Berapa besar?", "How much?"), value: pick(`${formatDeltaPercent(a.impact.percent)} (${formatDeltaNumber(a.impact.units)} unit)`, `${formatDeltaPercent(a.impact.percent)} (${formatDeltaNumber(a.impact.units)} units)`), emphasis: true }] : []),
+                { label: pick("Siapa yang terdampak?", "Who is affected?"), value: pluralize(a.impact.skuCount, "SKU") },
+                { label: pick("Mengapa?", "Why?"), value: a.assumptions[0] ?? a.evidence[0] ?? "—" },
+                { label: pick("Kebijakan apa yang berlaku?", "What policy applies?"), value: a.policy.rule },
+                { label: pick("Apa yang terjadi setelahnya?", "What happens next?"), value: decision === "approved" ? a.afterApproval : pick(`${actorName(a.requestedBy)} diberi tahu dan perubahan tidak diterapkan.`, `${actorName(a.requestedBy)} is notified and the change is not applied.`), emphasis: true },
               ]}
             />
             <Field
               className="mt-4"
-              label={decision === "approved" ? "Komentar" : "Alasan"}
+              label={decision === "approved" ? pick("Komentar", "Comment") : pick("Alasan", "Reason")}
               htmlFor="ap-comment"
               optional={decision === "approved"}
               required={decision !== "approved"}
-              hint={decision === "approved" ? "Tercatat bersama persetujuan Anda." : "Pengaju akan melihat ini. Minimal 5 karakter."}
+              hint={decision === "approved" ? pick("Tercatat bersama persetujuan Anda.", "Recorded with your approval.") : pick("Pengaju akan melihat ini. Minimal 5 karakter.", "The requester sees this. At least 5 characters.")}
             >
               <Textarea id="ap-comment" value={comment} onChange={(e) => setComment(e.target.value)} autoFocus />
             </Field>

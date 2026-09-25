@@ -26,15 +26,23 @@ import { StatusBadge } from "@/components/feedback/status";
 import { FreshnessIndicator } from "@/components/feedback/freshness";
 import { ConsequenceSummary } from "@/components/governance/audit";
 import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
+import { pick, localized } from "@/lib/i18n";
 
-const STEPS: WizardStep[] = [
-  { key: "scope", label: "Cakupan", description: "Yang ingin diperkirakan" },
-  { key: "period", label: "Periode", description: "Data historis yang dipakai" },
-  { key: "horizon", label: "Rentang", description: "Seberapa jauh ke depan" },
-  { key: "model", label: "Model", description: "Model dan versinya" },
-  { key: "validate", label: "Periksa Data", description: "Periksa masukan" },
-  { key: "review", label: "Tinjau", description: "Konfirmasi pengaturan" },
-];
+const STEPS: WizardStep[] = localized([
+  { key: "scope", label: "Cakupan", description: pick("Yang ingin diperkirakan", "What to forecast") },
+  { key: "period", label: "Periode", description: pick("Data historis yang dipakai", "History to learn from") },
+  { key: "horizon", label: "Rentang", description: pick("Seberapa jauh ke depan", "How far ahead") },
+  { key: "model", label: pick("Model", "Model"), description: pick("Model dan versinya", pick("Model dan versi mana", "Which model and version")) },
+  { key: "validate", label: pick("Periksa Data", pick("Periksa data", "Validate data")), description: "Periksa masukan" },
+  { key: "review", label: "Tinjau", description: pick("Konfirmasi pengaturan", "Confirm configuration") },
+], [
+  { key: "scope", label: "Define scope", description: "What to forecast" },
+  { key: "period", label: pick("Periode data", "Data period"), description: "History to learn from" },
+  { key: "horizon", label: "Horizon", description: "How far ahead" },
+  { key: "model", label: pick("Model", "Model"), description: pick("Model dan versi mana", "Which model and version") },
+  { key: "validate", label: pick("Periksa data", "Validate data"), description: "Check inputs" },
+  { key: "review", label: "Review", description: "Confirm configuration" },
+]);
 
 /** Large runs get an explicit consequence confirmation before starting (backlog §20). */
 const HIGH_IMPACT_SKUS = 500;
@@ -45,7 +53,7 @@ export function CreateRunView() {
   const params = useSearchParams();
   const fromId = params.get("from");
   const { ctx, can } = useSession();
-  useBreadcrumbLeaf("Perkiraan Baru");
+  useBreadcrumbLeaf(pick("Perkiraan Baru", "New forecast run"));
   const [step, setStep] = React.useState(0);
   const [completed, setCompleted] = React.useState<Set<number>>(new Set());
   const [input, setInput] = React.useState<RunInput>(() => ({ ...defaultRunInput(ctx), name: params.get("name") ?? "" }));
@@ -67,8 +75,8 @@ export function CreateRunView() {
   const create = useApiMutation((c, v: RunInput) => createRun(c, v), {
     invalidate: [["runs"], ["overview"]],
     success: (r) => `Forecast run ${r.id} queued`,
-    successDescription: "Proses akan segera dimulai. Anda boleh meninggalkan halaman ini; Anda akan diberi tahu saat selesai.",
-    failure: "Proses perkiraan tidak dapat dibuat.",
+    successDescription: pick("Proses akan segera dimulai. Anda boleh meninggalkan halaman ini; Anda akan diberi tahu saat selesai.", "Processing starts shortly. You can leave this page; you will be notified when it finishes."),
+    failure: pick("Proses perkiraan tidak dapat dibuat.", "The forecast run was not created."),
     onSuccess: (r) => {
       track("forecast_run_started", { horizon: r.horizonDays, skus: r.scope.skuCount });
       router.push(`/forecasting/runs/${r.id}`);
@@ -78,7 +86,7 @@ export function CreateRunView() {
   if (!can("forecast.run.create")) {
     return (
       <PageContainer width="narrow">
-        <PageHeader title="Buat Perkiraan" />
+        <PageHeader title={pick("Buat Perkiraan", "Create forecast run")} />
         <PermissionNotice permission="forecast.run.create" />
       </PageContainer>
     );
@@ -90,7 +98,7 @@ export function CreateRunView() {
   const checks = validation.data ?? [];
   const blocking = checks.filter((c) => c.result === "blocking");
   const warnings = checks.filter((c) => c.result === "warning");
-  const nameError = touchedName && input.name.trim().length === 0 ? "Beri nama proses agar mudah ditemukan lagi." : null;
+  const nameError = touchedName && input.name.trim().length === 0 ? pick("Beri nama proses agar mudah ditemukan lagi.", "Name the run so it can be found later.") : null;
 
   const stepValid = (i: number) => {
     if (i === 0) return input.name.trim().length > 0 && (scope.data?.skuCount ?? 0) > 0;
@@ -113,35 +121,35 @@ export function CreateRunView() {
     else create.mutate(input);
   };
 
-  const nextLabel = ["Lanjut ke Periode", "Lanjut ke Rentang", "Lanjut ke Model", "Periksa Data", "Lanjut ke Tinjau"][step];
-  const backLabel = ["", "Kembali ke Cakupan", "Kembali ke Periode", "Kembali ke Rentang", "Kembali ke Model", "Kembali ke Pemeriksaan"][step];
+  const nextLabel = [pick("Lanjut ke Periode", pick("Atur periode data", "Set data period")), pick("Lanjut ke Rentang", "Configure horizon"), pick("Lanjut ke Model", pick("Pilih model", "Choose model")), pick("Periksa Data", pick("Periksa data", "Validate data")), pick("Lanjut ke Tinjau", "Review configuration")][step];
+  const backLabel = ["", pick("Kembali ke Cakupan", "Back to scope"), pick("Kembali ke Periode", pick("Kembali ke periode data", "Back to data period")), pick("Kembali ke Rentang", "Back to horizon"), pick("Kembali ke Model", pick("Kembali ke model", "Back to model")), pick("Kembali ke Pemeriksaan", "Back to validation")][step];
 
   const summaryRows = [
     { label: "Name", value: input.name || "—" },
-    { label: "Cakupan", value: `${input.businessUnit} · ${input.categories.length ? input.categories.join(", ") : "Semua kategori"} · ${input.regions.length ? input.regions.join(", ") : "Semua wilayah"}` },
-    { label: "Size", value: scope.data ? `${pluralize(scope.data.skuCount, "SKU")} × ${scope.data.locationCount} locations` : "…" },
-    { label: "Periode historis", value: `${formatDateRange(input.historicalStart, input.historicalEnd)} (${historyDays} hari)` },
-    { label: "Rentang perkiraan", value: `${input.horizonDays} hari · ${input.frequency === "daily" ? "harian" : "mingguan"}` },
-    { label: "Model", value: selectedModel ? `${selectedModel.name} ${selectedModel.version}` : "—" },
-    { label: "Hasil yang diharapkan", value: scope.data ? `${formatNumber(scope.data.skuCount * input.horizonDays)} perkiraan SKU-hari dengan rentang 80%` : "…" },
-    { label: "Peringatan yang diketahui", value: warnings.length ? warnings.map((w) => w.detail).join(" ") : "Tidak ada", emphasis: warnings.length > 0 },
+    { label: pick("Cakupan", "Scope"), value: pick(`${input.businessUnit} · ${input.categories.length ? input.categories.join(", ") : "Semua kategori"} · ${input.regions.length ? input.regions.join(", ") : "Semua wilayah"}`, `${input.businessUnit} · ${input.categories.length ? input.categories.join(", ") : "All categories"} · ${input.regions.length ? input.regions.join(", ") : "All regions"}`) },
+    { label: "Size", value: scope.data ? pick(`${pluralize(scope.data.skuCount, "SKU")} × ${scope.data.locationCount} lokasi`, pick(`${pluralize(scope.data.skuCount, "SKU")} × ${scope.data.locationCount} lokasi`, `${pluralize(scope.data.skuCount, "SKU")} × ${scope.data.locationCount} locations`)) : "…" },
+    { label: pick("Periode historis", "Historical period"), value: pick(`${formatDateRange(input.historicalStart, input.historicalEnd)} (${historyDays} hari)`, `${formatDateRange(input.historicalStart, input.historicalEnd)} (${historyDays} days)`) },
+    { label: pick("Rentang perkiraan", "Forecast horizon"), value: pick(`${input.horizonDays} hari · ${input.frequency === "daily" ? "harian" : "mingguan"}`, `${input.horizonDays} days · ${input.frequency}`) },
+    { label: pick("Model", "Model"), value: selectedModel ? pick(`${selectedModel.name} ${selectedModel.version}`, pick(`${selectedModel.name} ${selectedModel.version}`, `${selectedModel.name} ${selectedModel.version}`)) : "—" },
+    { label: pick("Hasil yang diharapkan", "Expected output"), value: scope.data ? pick(`${formatNumber(scope.data.skuCount * input.horizonDays)} perkiraan SKU-hari dengan rentang 80%`, `${formatNumber(scope.data.skuCount * input.horizonDays)} SKU-day forecasts with 80% prediction intervals`) : "…" },
+    { label: pick("Peringatan yang diketahui", "Known warnings"), value: warnings.length ? warnings.map((w) => w.detail).join(" ") : pick("Tidak ada", "None"), emphasis: warnings.length > 0 },
   ];
 
   return (
     <PageContainer>
       <PageHeader
-        title={fromId ? "Buat Perkiraan dari Salinan" : "Buat Perkiraan"}
-        description="Pilih data dan model untuk membuat perkiraan permintaan. Belum ada yang diterbitkan sampai manajer menerbitkan hasilnya."
+        title={fromId ? pick("Buat Perkiraan dari Salinan", "Create forecast run from a copy") : pick("Buat Perkiraan", "Create forecast run")}
+        description={pick("Pilih data dan model untuk membuat perkiraan permintaan. Belum ada yang diterbitkan sampai manajer menerbitkan hasilnya.", "Configure what to forecast, validate the inputs, then run. Nothing is published until a manager publishes the results.")}
       />
-      {fromId && source.isError && <ErrorState compact what="Proses yang ingin disalin tidak dapat dimuat." error={source.error} />}
+      {fromId && source.isError && <ErrorState compact what={pick("Proses yang ingin disalin tidak dapat dimuat.", "The run to copy could not be loaded.")} error={source.error} />}
       <WizardLayout steps={<WizardSteps steps={STEPS} current={step} completed={completed} onSelect={setStep} />}>
         {step === 0 && (
           <WizardPanel
-            title="Pilih Cakupan"
-            description="Tentukan produk atau kategori yang ingin diperkirakan. Biarkan kosong untuk mencakup semuanya."
+            title={pick("Pilih Cakupan", "Define scope")}
+            description={pick("Tentukan produk atau kategori yang ingin diperkirakan. Biarkan kosong untuk mencakup semuanya.", "Choose the products and locations to forecast. Leave a dimension empty to include all of it.")}
             footer={
               <>
-                <span className="caption tabular">{scope.data ? `${pluralize(scope.data.skuCount, "SKU")} · ${scope.data.locationCount} lokasi · ${formatNumber(scope.data.seriesCount)} seri` : "Menghitung cakupan…"}</span>
+                <span className="caption tabular">{scope.data ? pick(`${pluralize(scope.data.skuCount, "SKU")} · ${scope.data.locationCount} lokasi · ${formatNumber(scope.data.seriesCount)} seri`, `${pluralize(scope.data.skuCount, "SKU")} · ${scope.data.locationCount} locations · ${formatNumber(scope.data.seriesCount)} series`) : pick("Menghitung cakupan…", "Calculating scope…")}</span>
                 <Button variant="primary" onClick={goNext}>
                   {nextLabel}
                 </Button>
@@ -149,18 +157,18 @@ export function CreateRunView() {
             }
           >
             <div className="grid gap-5">
-              <Field label="Nama proses" htmlFor="run-name" required error={nameError} hint="Tampil di daftar proses, pemberitahuan, dan riwayat aktivitas.">
+              <Field label={pick("Nama proses", "Run name")} htmlFor="run-name" required error={nameError} hint={pick("Tampil di daftar proses, pemberitahuan, dan riwayat aktivitas.", "Shown in run lists, notifications and audit history.")}>
                 <Input id="run-name" value={input.name} onChange={(e) => set("name", e.target.value)} onBlur={() => setTouchedName(true)} placeholder="e.g. Beverages · 60-day promo horizon" aria-invalid={!!nameError} aria-describedby={nameError ? "run-name-error" : "run-name-hint"} maxLength={80} />
               </Field>
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Unit bisnis" htmlFor="bu">
+                <Field label={pick("Unit bisnis", "Business unit")} htmlFor="bu">
                   <Select id="bu" value={input.businessUnit} onValueChange={(v) => set("businessUnit", v)} options={RUN_FORM_OPTIONS.businessUnits.map((b) => ({ value: b, label: b }))} />
                 </Field>
-                <Field label="Kategori" htmlFor="cats" hint="Kosong berarti semua kategori.">
-                  <MultiSelect id="cats" aria-describedby="cats-hint" value={input.categories} onChange={(v) => set("categories", v)} allLabel="Semua kategori" options={RUN_FORM_OPTIONS.categories.map((c) => ({ value: c, label: c }))} placeholder="Cari kategori" />
+                <Field label={pick("Kategori", "Categories")} htmlFor="cats" hint={pick("Kosong berarti semua kategori.", "Empty means all categories.")}>
+                  <MultiSelect id="cats" aria-describedby="cats-hint" value={input.categories} onChange={(v) => set("categories", v)} allLabel={pick("Semua kategori", "All categories")} options={RUN_FORM_OPTIONS.categories.map((c) => ({ value: c, label: c }))} placeholder={pick("Cari kategori", "Search categories")} />
                 </Field>
-                <Field label="Wilayah" htmlFor="regions" hint="Kosong berarti semua wilayah.">
-                  <MultiSelect id="regions" aria-describedby="regions-hint" value={input.regions} onChange={(v) => set("regions", v)} allLabel="Semua wilayah" options={RUN_FORM_OPTIONS.regions.map((c) => ({ value: c, label: c }))} placeholder="Cari wilayah" />
+                <Field label={pick("Wilayah", "Regions")} htmlFor="regions" hint={pick("Kosong berarti semua wilayah.", "Empty means all regions.")}>
+                  <MultiSelect id="regions" aria-describedby="regions-hint" value={input.regions} onChange={(v) => set("regions", v)} allLabel={pick("Semua wilayah", "All regions")} options={RUN_FORM_OPTIONS.regions.map((c) => ({ value: c, label: c }))} placeholder={pick("Cari wilayah", "Search regions")} />
                 </Field>
               </div>
               <div>
@@ -169,7 +177,7 @@ export function CreateRunView() {
                   {showAdvanced ? "Hide" : "Show"} store group, product group and SKU filters
                 </button>
                 {showAdvanced && (
-                  <InlineAlert tone="info" title="Filter grup toko, grup produk, dan SKU belum tersedia." className="mt-3">
+                  <InlineAlert tone="info" title={pick("Filter grup toko, grup produk, dan SKU belum tersedia.", "Store group, product group and SKU filters are not available yet.")} className="mt-3">
                     These dimensions depend on the confirmed product and location hierarchy (backlog §93 items 3 and 4). Use categories and regions for now.
                   </InlineAlert>
                 )}
@@ -180,8 +188,8 @@ export function CreateRunView() {
 
         {step === 1 && (
           <WizardPanel
-            title="Pilih Periode"
-            description="Pilih data historis yang akan digunakan model."
+            title={pick("Pilih Periode", pick("Pilih periode data", "Select data period"))}
+            description={pick("Pilih data historis yang akan digunakan model.", pick("Periode historis yang dipelajari model.", "The historical window the model learns from."))}
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
@@ -194,37 +202,37 @@ export function CreateRunView() {
             }
           >
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Awal historis" htmlFor="hs" required>
+              <Field label={pick("Awal historis", "Historical start")} htmlFor="hs" required>
                 <Input id="hs" type="date" value={input.historicalStart} max={input.historicalEnd} onChange={(e) => set("historicalStart", e.target.value)} />
               </Field>
-              <Field label="Akhir historis" htmlFor="he" required hint="Hari terakhir dengan data lengkap.">
+              <Field label={pick("Akhir historis", "Historical end")} htmlFor="he" required hint={pick("Hari terakhir dengan data lengkap.", pick("Hari data lengkap terakhir.", "Latest complete day of data."))}>
                 <Input id="he" type="date" value={input.historicalEnd} min={input.historicalStart} onChange={(e) => set("historicalEnd", e.target.value)} />
               </Field>
-              <Field label="Sumber data" htmlFor="src" hint="Permintaan menggabungkan data POS dan pesanan ERP. Atur sumbernya di Sumber Data.">
-                <Select id="src" value="combined" onValueChange={() => undefined} options={[{ value: "combined", label: "Transaksi POS + pesanan penjualan ERP" }]} />
+              <Field label={pick("Sumber data", "Data source")} htmlFor="src" hint={pick("Permintaan menggabungkan data POS dan pesanan ERP. Atur sumbernya di Sumber Data.", pick("Permintaan menggabungkan POS dan pesanan ERP. Atur sumber di Sumber Data.", "Demand combines POS and ERP orders. Configure sources in Data sources."))}>
+                <Select id="src" value="combined" onValueChange={() => undefined} options={[{ value: "combined", label: pick("Transaksi POS + pesanan penjualan ERP", "POS transactions + ERP sales orders") }]} />
               </Field>
-              <Field label="Frekuensi" htmlFor="freq">
+              <Field label={pick("Frekuensi", "Frequency")} htmlFor="freq">
                 <Select
                   id="freq"
                   value={input.frequency}
                   onValueChange={(v) => set("frequency", v as RunInput["frequency"])}
                   options={[
-                    { value: "daily", label: "Harian" },
-                    { value: "weekly", label: "Mingguan", description: "Hanya untuk model permintaan intermiten" },
+                    { value: "daily", label: pick("Harian", "Daily") },
+                    { value: "weekly", label: pick("Mingguan", "Weekly"), description: pick("Hanya untuk model permintaan intermiten", pick("Hanya model permintaan intermiten", "Only intermittent-demand models")) },
                   ]}
                 />
               </Field>
             </div>
             <Panel className="mt-5 shadow-none" bodyClassName="grid gap-4 sm:grid-cols-4">
-              <Stat label="Rentang historis" value={`${historyDays} hari`} />
-              <Stat label="Data tersedia sampai" value={formatDate(input.historicalEnd)} />
+              <Stat label={pick("Rentang historis", "Historical window")} value={pick(`${historyDays} hari`, `${historyDays} days`)} />
+              <Stat label={pick("Data tersedia sampai", "Data available through")} value={formatDate(input.historicalEnd)} />
               <div>
-                <p className="caption">Terakhir diperbarui</p>
-                <FreshnessIndicator timestamp={sources.data?.find((x) => x.id === "src_pos")?.lastSuccessAt} label="POS diperbarui" source="Transaksi POS" />
+                <p className="caption">{pick("Terakhir diperbarui", pick("Kebaruan data", "Data freshness"))}</p>
+                <FreshnessIndicator timestamp={sources.data?.find((x) => x.id === "src_pos")?.lastSuccessAt} label={pick("POS diperbarui", "POS updated")} source={pick("Transaksi POS", "POS transactions")} />
               </div>
               <Stat
-                label="Periode yang kosong"
-                value={dq.data ? (dq.data.page.total === 0 ? "Tidak ditemukan" : pluralize(dq.data.page.items.reduce((n, i) => n + i.affectedSkus, 0), "SKU") + " terdampak") : "…"}
+                label={pick("Periode yang kosong", "Missing periods")}
+                value={dq.data ? (dq.data.page.total === 0 ? pick("Tidak ditemukan", "None detected") : pluralize(dq.data.page.items.reduce((n, i) => n + i.affectedSkus, 0), "SKU") + pick(" terdampak", " affected")) : "…"}
                 hint={dq.data?.page.items[0]?.title}
               />
             </Panel>
@@ -233,8 +241,8 @@ export function CreateRunView() {
 
         {step === 2 && (
           <WizardPanel
-            title="Pilih Rentang Perkiraan"
-            description="Tentukan berapa lama ke depan yang ingin diperkirakan. Rentang lebih panjang memiliki rentang perkiraan yang lebih lebar."
+            title={pick("Pilih Rentang Perkiraan", "Configure horizon")}
+            description={pick("Tentukan berapa lama ke depan yang ingin diperkirakan. Rentang lebih panjang memiliki rentang perkiraan yang lebih lebar.", "How many days ahead to forecast. Longer horizons have wider prediction intervals.")}
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
@@ -247,20 +255,20 @@ export function CreateRunView() {
             }
           >
             <RadioCards
-              aria-label="Rentang perkiraan"
+              aria-label={pick("Rentang perkiraan", "Forecast horizon")}
               columns={3}
               value={RUN_FORM_OPTIONS.horizons.includes(input.horizonDays) ? String(input.horizonDays) : "custom"}
               onValueChange={(v) => v !== "custom" && set("horizonDays", Number(v))}
               options={[
                 ...RUN_FORM_OPTIONS.horizons.map((h) => ({
                   value: String(h),
-                  label: `${h} hari`,
-                  description: h <= 14 ? "Pengisian ulang" : h <= 30 ? "Perencanaan bulanan" : "Persiapan musiman",
+                  label: pick(`${h} hari`, `${h} days`),
+                  description: h <= 14 ? pick("Pengisian ulang", "Replenishment") : h <= 30 ? pick("Perencanaan bulanan", "Monthly planning") : pick("Persiapan musiman", "Seasonal build"),
                 })),
-                { value: "custom", label: "Khusus", description: "Masukkan nilai di bawah" },
+                { value: "custom", label: pick("Khusus", "Custom"), description: pick("Masukkan nilai di bawah", "Enter a value below") },
               ]}
             />
-            <Field className="mt-4 max-w-xs" label="Rentang khusus (hari)" htmlFor="h-custom" hint="1–180 hari. Nilai yang diizinkan masih perlu dikonfirmasi.">
+            <Field className="mt-4 max-w-xs" label={pick("Rentang khusus (hari)", "Custom horizon (days)")} htmlFor="h-custom" hint={pick("1–180 hari. Nilai yang diizinkan masih perlu dikonfirmasi.", "1–180 days. Allowed values need confirmation (backlog §93 item 6).")}>
               <Input id="h-custom" type="number" min={1} max={180} value={input.horizonDays} onChange={(e) => set("horizonDays", Math.max(1, Math.min(180, Number(e.target.value) || 1)))} />
             </Field>
           </WizardPanel>
@@ -268,8 +276,8 @@ export function CreateRunView() {
 
         {step === 3 && (
           <WizardPanel
-            title="Pilih Model"
-            description="Bandingkan model berdasarkan performa historis, bukan satu angka saja. Model kandidat sebaiknya ditinjau sebelum diterbitkan."
+            title={pick("Pilih Model", pick("Pilih model", "Select model"))}
+            description={pick("Bandingkan model berdasarkan performa historis, bukan satu angka saja. Model kandidat sebaiknya ditinjau sebelum diterbitkan.", "Compare models on historical performance, not a single score. Candidate models should be reviewed before publishing.")}
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
@@ -282,12 +290,12 @@ export function CreateRunView() {
             }
           >
             {models.isPending ? (
-              <p className="caption">Loading models…</p>
+              <p className="caption">{pick("Memuat model…", "Loading models…")}</p>
             ) : models.isError ? (
-              <ErrorState compact what="Model tidak dapat dimuat." error={models.error} onRetry={() => models.refetch()} />
+              <ErrorState compact what={pick("Model tidak dapat dimuat.", "Models could not be loaded.")} error={models.error} onRetry={() => models.refetch()} />
             ) : (
               <RadioCards
-                aria-label="Model"
+                aria-label={pick("Model", "Model")}
                 value={input.modelId}
                 onValueChange={(v) => set("modelId", v)}
                 options={(models.data ?? []).map((m: ForecastModel) => {
@@ -319,8 +327,8 @@ export function CreateRunView() {
 
         {step === 4 && (
           <WizardPanel
-            title="Periksa Data"
-            description="Pemeriksaan dijalankan pada cakupan, periode, dan model yang dipilih. Temuan yang menghambat harus diselesaikan sebelum dijalankan."
+            title={pick("Periksa Data", pick("Periksa data", "Validate data"))}
+            description={pick("Pemeriksaan dijalankan pada cakupan, periode, dan model yang dipilih. Temuan yang menghambat harus diselesaikan sebelum dijalankan.", "Checks run against the selected scope, window and model. Blocking results must be resolved before running.")}
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
@@ -337,15 +345,15 @@ export function CreateRunView() {
                 <Loader2 className="size-4 animate-spin" aria-hidden /> Running validation checks…
               </p>
             ) : validation.isError ? (
-              <ErrorState compact what="Pemeriksaan tidak dapat dijalankan." error={validation.error} onRetry={() => validation.refetch()} retryLabel="Coba periksa lagi" />
+              <ErrorState compact what={pick("Pemeriksaan tidak dapat dijalankan.", "Validation could not run.")} error={validation.error} onRetry={() => validation.refetch()} retryLabel={pick("Coba periksa lagi", "Retry validation")} />
             ) : (
               <>
                 {blocking.length > 0 ? (
-                  <InlineAlert tone="critical" title={`${pluralize(blocking.length, "temuan")} menghambat dan harus diselesaikan sebelum dijalankan.`} className="mb-4">
+                  <InlineAlert tone="critical" title={pick(`${pluralize(blocking.length, "temuan")} menghambat dan harus diselesaikan sebelum dijalankan.`, `${pluralize(blocking.length, "blocking issue")} must be resolved before running.`)} className="mb-4">
                     Ubah cakupan, periode, rentang, atau model, atau selesaikan masalah datanya lebih dulu.
                   </InlineAlert>
                 ) : (
-                  <InlineAlert tone={warnings.length ? "warning" : "success"} title={warnings.length ? `Siap dijalankan dengan ${pluralize(warnings.length, "peringatan")}.` : "Semua pemeriksaan lolos."} className="mb-4" />
+                  <InlineAlert tone={warnings.length ? "warning" : "success"} title={warnings.length ? pick(`Siap dijalankan dengan ${pluralize(warnings.length, "peringatan")}.`, `Ready to run with ${pluralize(warnings.length, "warning")}.`) : pick("Semua pemeriksaan lolos.", "All checks passed.")} className="mb-4" />
                 )}
                 <ul className="divide-y divide-border-subtle rounded-lg border border-border">
                   {checks.map((c) => (
@@ -359,14 +367,14 @@ export function CreateRunView() {
 
         {step === 5 && (
           <WizardPanel
-            title="Tinjau Perkiraan"
-            description="Periksa pengaturan sebelum dijalankan. Proses dapat dibatalkan selama masih berjalan."
+            title={pick("Tinjau Perkiraan", "Review configuration")}
+            description={pick("Periksa pengaturan sebelum dijalankan. Proses dapat dibatalkan selama masih berjalan.", "Check the configuration before starting. The run can be cancelled while it is processing.")}
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
                   {backLabel}
                 </Button>
-                <Button variant="primary" onClick={start} loading={create.isPending} loadingText="Menjalankan perkiraan" disabled={blocking.length > 0}>
+                <Button variant="primary" onClick={start} loading={create.isPending} loadingText={pick("Menjalankan perkiraan", "Starting forecast run")} disabled={blocking.length > 0}>
                   <Play aria-hidden /> Jalankan Perkiraan
                 </Button>
               </>
@@ -379,14 +387,14 @@ export function CreateRunView() {
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent
-          title="Jalankan perkiraan ini?"
-          description={`Proses ini akan membuat perkiraan untuk ${pluralize(scope.data?.skuCount ?? 0, "SKU")}.`}
+          title={pick("Jalankan perkiraan ini?", "Run this forecast?")}
+          description={pick(`Proses ini akan membuat perkiraan untuk ${pluralize(scope.data?.skuCount ?? 0, "SKU")}.`, `This run will generate forecasts for ${pluralize(scope.data?.skuCount ?? 0, "SKU")}.`)}
           footer={
             <>
               <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
                 Kembali ke pengaturan
               </Button>
-              <Button variant="primary" loading={create.isPending} loadingText="Menjalankan perkiraan" onClick={() => create.mutate(input)}>
+              <Button variant="primary" loading={create.isPending} loadingText={pick("Menjalankan perkiraan", "Starting forecast run")} onClick={() => create.mutate(input)}>
                 <Play aria-hidden /> Jalankan Perkiraan
               </Button>
             </>
@@ -394,12 +402,12 @@ export function CreateRunView() {
         >
           <ConsequenceSummary
             rows={[
-              { label: "SKU", value: formatNumber(scope.data?.skuCount ?? 0), emphasis: true },
-              { label: "Rentang historis", value: formatDateRange(input.historicalStart, input.historicalEnd) },
-              { label: "Rentang perkiraan", value: `${input.horizonDays} hari` },
-              { label: "Model", value: selectedModel ? `${selectedModel.name} ${selectedModel.version}` : "—" },
-              { label: "Peringatan", value: warnings.length ? warnings.map((w) => w.detail).join(" ") : "Tidak ada" },
-              { label: "Yang terjadi berikutnya", value: "Proses masuk antrean, diproses, lalu disimpan sebagai Selesai. Proses ini tidak menggantikan acuan perencanaan sampai diterbitkan." },
+              { label: pick("SKU", "SKUs"), value: formatNumber(scope.data?.skuCount ?? 0), emphasis: true },
+              { label: pick("Rentang historis", "Historical window"), value: formatDateRange(input.historicalStart, input.historicalEnd) },
+              { label: pick("Rentang perkiraan", "Forecast horizon"), value: pick(`${input.horizonDays} hari`, `${input.horizonDays} days`) },
+              { label: pick("Model", "Model"), value: selectedModel ? pick(`${selectedModel.name} ${selectedModel.version}`, pick(`${selectedModel.name} ${selectedModel.version}`, `${selectedModel.name} ${selectedModel.version}`)) : "—" },
+              { label: pick("Peringatan", "Warnings"), value: warnings.length ? warnings.map((w) => w.detail).join(" ") : pick("Tidak ada", "None") },
+              { label: pick("Yang terjadi berikutnya", "What happens next"), value: pick("Proses masuk antrean, diproses, lalu disimpan sebagai Selesai. Proses ini tidak menggantikan acuan perencanaan sampai diterbitkan.", "The run is queued, processed and saved as Completed. It does not replace the planning baseline until it is published.") },
             ]}
           />
         </DialogContent>
@@ -421,7 +429,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 function CheckRow({ check }: { check: ValidationCheck }) {
   const icon =
     check.result === "pass" ? <CheckCircle2 className="size-4 text-success" aria-hidden /> : check.result === "warning" ? <AlertTriangle className="size-4 text-warning" aria-hidden /> : <AlertOctagon className="size-4 text-critical" aria-hidden />;
-  const label = check.result === "pass" ? "Lolos" : check.result === "warning" ? "Peringatan" : "Menghambat";
+  const label = check.result === "pass" ? pick("Lolos", "Pass") : check.result === "warning" ? pick("Peringatan", "Warning") : pick("Menghambat", "Blocking");
   return (
     <li className="grid grid-cols-[1.25rem_minmax(8rem,12rem)_1fr_auto] items-start gap-3 px-4 py-3">
       <span className="mt-0.5">{icon}</span>

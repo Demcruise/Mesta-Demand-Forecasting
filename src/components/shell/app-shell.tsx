@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { usePreferences } from "@/lib/preferences";
-import { getActiveLocale, useI18n } from "@/lib/i18n";
+import { getActiveLocale, useI18n, pick } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Kbd } from "@/components/ui/controls";
 import { Tooltip } from "@/components/ui/overlay";
@@ -162,7 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <Breadcrumbs />
                   </div>
                   <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                    <Tooltip content={isId ? "Backend tiruan dengan data contoh. Perubahan hanya tersimpan di tab ini dan kembali semula saat halaman dimuat ulang." : "Mock backend with sample data. Changes persist in this tab only and reset on reload."}>
+                    <Tooltip content={isId ? pick("Backend tiruan dengan data contoh. Perubahan hanya tersimpan di tab ini dan kembali semula saat halaman dimuat ulang.", "Mock backend with sample data. Changes persist only in this tab and reset on reload.") : "Mock backend with sample data. Changes persist in this tab only and reset on reload."}>
                       <span tabIndex={0} className="hidden h-6 items-center rounded-sm border border-warning/30 bg-warning-subtle px-2 text-[0.6875rem] font-bold text-warning-fg md:inline-flex">
                         {isId ? "Data demo" : "Demo data"}
                       </span>

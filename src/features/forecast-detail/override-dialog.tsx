@@ -15,14 +15,15 @@ import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/overlay";
 import { InlineAlert, PermissionNotice } from "@/components/feedback/states";
 import { ConsequenceSummary } from "@/components/governance/audit";
+import { pick, localized } from "@/lib/i18n";
 
 export const OVERRIDE_REASONS: { value: OverrideReason; label: string }[] = [
-  { value: "promotion_not_in_model", label: "Promosi belum ada di model" },
-  { value: "supply_constraint", label: "Kendala pasokan atau alokasi" },
-  { value: "new_listing", label: "Produk baru atau perubahan rangkaian" },
-  { value: "known_event", label: "Acara lokal yang diketahui" },
-  { value: "data_issue", label: "Masalah data pada riwayat" },
-  { value: "other", label: "Lainnya (jelaskan di catatan)" },
+  { value: "promotion_not_in_model", label: pick("Promosi belum ada di model", pick("Promosi tidak ada di model", "Promotion not in the model")) },
+  { value: "supply_constraint", label: pick("Kendala pasokan atau alokasi", "Supply or allocation constraint") },
+  { value: "new_listing", label: pick("Produk baru atau perubahan rangkaian", "New listing or range change") },
+  { value: "known_event", label: pick("Acara lokal yang diketahui", "Known local event") },
+  { value: "data_issue", label: pick("Masalah data pada riwayat", "Data issue in history") },
+  { value: "other", label: pick("Lainnya (jelaskan di catatan)", "Other (explain in comment)") },
 ];
 
 /**
@@ -74,21 +75,32 @@ export function OverrideDialog({
   const valid = value.trim() !== "" && Number.isFinite(parsed);
   const newUnits = valid ? Math.max(0, Math.round(mode === "units" ? parsed : originalUnits * (1 + parsed / 100))) : originalUnits;
   const preview = valid ? previewOverride(ctx, { runId, productIds, newUnits }) : null;
-  const commentError = touched && comment.trim().length < 10 ? "Jelaskan perubahan manual minimal 10 karakter." : null;
-  const valueError = touched && !valid ? "Masukkan perkiraan baru." : touched && valid && newUnits === originalUnits ? "Nilai baru sama dengan perkiraan saat ini." : null;
+  const commentError = localized(touched && comment.trim().length < 10 ? pick("Jelaskan perubahan manual minimal 10 karakter.", "Explain the override in at least 10 characters.") : null, touched && comment.trim().length < 10 ? "Explain the override in at least 10 characters." : null);
+  const valueError = localized(touched && !valid ? pick("Masukkan perkiraan baru.", "Enter the new forecast.") : touched && valid && newUnits === originalUnits ? pick("Nilai baru sama dengan perkiraan saat ini.", "The new value is the same as the current forecast.") : null, touched && !valid ? "Enter the new forecast." : touched && valid && newUnits === originalUnits ? "The new value is the same as the current forecast." : null);
 
-  const mutation = useApiMutation((c, _v: void) => applyOverride(c, { runId, productIds, newUnits, reason, evidence, comment }), {
+  const mutation = localized(useApiMutation((c, _v: void) => applyOverride(c, { runId, productIds, newUnits, reason, evidence, comment }), {
     invalidate: [["forecast-rows"], ["forecast-detail"], ["run-result"], ["overview"], ["approvals"], ["nav-counts"], ["notifications"]],
-    success: (o) => (o.status === "applied" ? "Perubahan diterapkan" : "Perubahan dikirim untuk persetujuan"),
+    success: (o) => (o.status === "applied" ? pick("Perubahan diterapkan", "Override applied") : pick("Perubahan dikirim untuk persetujuan", "Override submitted for approval")),
     successDescription: (o) =>
-      o.status === "applied" ? `${label}: ${formatNumber(o.originalUnits)} → ${formatNumber(o.newUnits)} unit.` : "Acuan perencanaan berubah setelah Manajer menyetujuinya.",
-    failure: "Perubahan manual tidak tersimpan.",
+      o.status === "applied" ? `${label}: ${formatNumber(o.originalUnits)} → ${formatNumber(o.newUnits)} unit.` : pick("Acuan perencanaan berubah setelah Manajer menyetujuinya.", "The planning baseline changes once a Manager approves it."),
+    failure: pick("Perubahan manual tidak tersimpan.", "The override was not saved."),
     onSuccess: (o) => {
       track("override_applied", { pendingApproval: o.status !== "applied" });
       onOpenChange(false);
       onDone?.();
     },
-  });
+  }), useApiMutation((c, _v: void) => applyOverride(c, { runId, productIds, newUnits, reason, evidence, comment }), {
+    invalidate: [["forecast-rows"], ["forecast-detail"], ["run-result"], ["overview"], ["approvals"], ["nav-counts"], ["notifications"]],
+    success: (o) => (o.status === "applied" ? "Override applied" : "Override submitted for approval"),
+    successDescription: (o) =>
+      o.status === "applied" ? `${label}: ${formatNumber(o.originalUnits)} → ${formatNumber(o.newUnits)} units.` : "The planning baseline changes once a Manager approves it.",
+    failure: "The override was not saved.",
+    onSuccess: (o) => {
+      track("override_applied", { pendingApproval: o.status !== "applied" });
+      onOpenChange(false);
+      onDone?.();
+    },
+  }));
 
   const toConfirm = () => {
     setTouched(true);
@@ -100,7 +112,7 @@ export function OverrideDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         size="md"
-        title={step === "edit" ? `Ubah Perkiraan · ${label}` : preview?.needsApproval ? "Kirim perubahan untuk persetujuan?" : "Terapkan perubahan ini?"}
+        title={step === "edit" ? pick(`Ubah Perkiraan · ${label}`, `Override forecast · ${label}`) : preview?.needsApproval ? pick("Kirim perubahan untuk persetujuan?", "Submit override for approval?") : pick("Terapkan perubahan ini?", "Apply this override?")}
         description={step === "edit" ? `${horizonDays}-day forecast for ${pluralize(productIds.length, "SKU")}. Overrides are attributed to you and recorded in the audit log.` : undefined}
         footer={
           !can("forecast.override") ? (
@@ -122,7 +134,7 @@ export function OverrideDialog({
                 Back to edit
               </Button>
               <Button variant="primary" loading={mutation.isPending} onClick={() => mutation.mutate()}>
-                {preview?.needsApproval ? "Kirim untuk persetujuan" : "Terapkan Perubahan"}
+                {preview?.needsApproval ? pick("Kirim untuk persetujuan", "Submit for approval") : pick("Terapkan Perubahan", "Apply override")}
               </Button>
             </>
           )
@@ -134,28 +146,28 @@ export function OverrideDialog({
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-3 gap-3 rounded-lg border border-border bg-subtle p-3">
               <div>
-                <p className="caption">Perkiraan saat ini</p>
+                <p className="caption">{pick("Perkiraan saat ini", "Original forecast")}</p>
                 <p className="numeric-md">{formatNumber(originalUnits)}</p>
               </div>
               <div>
-                <p className="caption">Perkiraan baru</p>
+                <p className="caption">{pick("Perkiraan baru", "New forecast")}</p>
                 <p className="numeric-md">{valid ? formatNumber(newUnits) : "—"}</p>
               </div>
               <div>
-                <p className="caption">Perubahan</p>
+                <p className="caption">{pick("Perubahan", "Change")}</p>
                 <p className="numeric-md">{valid ? <><SignedPercent percent={preview?.pct ?? 0} /> ({formatDeltaNumber(preview?.delta ?? 0)})</> : "—"}</p>
               </div>
             </div>
             <Field
-              label={mode === "percent" ? "Perubahan dalam persen" : "Perkiraan baru dalam unit"}
+              label={mode === "percent" ? pick("Perubahan dalam persen", "Change in percent") : pick("Perkiraan baru dalam unit", "New forecast in units")}
               htmlFor="ovr-value"
               required
               error={valueError}
-              hint={mode === "percent" ? "Gunakan angka negatif untuk menurunkan, mis. −8." : `Total selama ${horizonDays} hari untuk SKU yang dipilih.`}
+              hint={mode === "percent" ? pick("Gunakan angka negatif untuk menurunkan, mis. −8.", "Use a negative number to reduce, e.g. −8.") : pick(`Total selama ${horizonDays} hari untuk SKU yang dipilih.`, `Total over ${horizonDays} days for the selected SKUs.`)}
               aside={
                 <Segmented
                   size="sm"
-                  aria-label="Masukkan perubahan sebagai"
+                  aria-label={pick("Masukkan perubahan sebagai", "Enter override as")}
                   value={mode}
                   onValueChange={(m) => {
                     setMode(m);
@@ -163,20 +175,20 @@ export function OverrideDialog({
                   }}
                   options={[
                     { value: "percent", label: "%" },
-                    { value: "units", label: "Unit" },
+                    { value: "units", label: pick("Unit", "Units") },
                   ]}
                 />
               }
             >
               <Input id="ovr-value" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value.replace("−", "-"))} placeholder={mode === "percent" ? "e.g. 6" : formatNumber(originalUnits)} aria-invalid={!!valueError} autoFocus />
             </Field>
-            <Field label="Alasan" htmlFor="ovr-reason" required>
+            <Field label={pick("Alasan", "Reason")} htmlFor="ovr-reason" required>
               <Select id="ovr-reason" value={reason} onValueChange={(v) => setReason(v as OverrideReason)} options={OVERRIDE_REASONS} />
             </Field>
-            <Field label="Bukti" htmlFor="ovr-evidence" optional hint="Sebutkan dokumen, ringkasan promosi, atau tiket terkait.">
+            <Field label={pick("Bukti", "Evidence")} htmlFor="ovr-evidence" optional hint={pick("Sebutkan dokumen, ringkasan promosi, atau tiket terkait.", "Reference a document, promotion brief or ticket.")}>
               <Input id="ovr-evidence" value={evidence} onChange={(e) => setEvidence(e.target.value)} placeholder="e.g. Trade promotion brief TPB-1142" />
             </Field>
-            <Field label="Catatan" htmlFor="ovr-comment" required error={commentError} hint="Hal yang belum diketahui model, dengan bahasa sederhana.">
+            <Field label={pick("Catatan", "Comment")} htmlFor="ovr-comment" required error={commentError} hint={pick("Hal yang belum diketahui model, dengan bahasa sederhana.", pick("Apa yang tidak diketahui model, dalam bahasa sederhana.", "What the model does not know, in plain language."))}>
               <Textarea id="ovr-comment" value={comment} onChange={(e) => setComment(e.target.value)} aria-invalid={!!commentError} rows={3} />
             </Field>
           </div>
@@ -184,16 +196,16 @@ export function OverrideDialog({
           <div className="flex flex-col gap-4">
             <ConsequenceSummary
               rows={[
-                { label: "Cakupan", value: `${label} · ${pluralize(productIds.length, "SKU")}` },
-                { label: "Perkiraan saat ini", value: `${formatNumber(originalUnits)} unit` },
-                { label: "Perkiraan baru", value: `${formatNumber(newUnits)} unit`, emphasis: true },
-                { label: "Perubahan", value: `${formatDeltaPercent(preview?.pct ?? 0)} (${formatDeltaNumber(preview?.delta ?? 0)} unit)`, emphasis: true },
-                { label: "Alasan", value: OVERRIDE_REASONS.find((r) => r.value === reason)?.label },
-                { label: "Catatan", value: comment },
-                { label: "Persetujuan", value: preview?.needsApproval ? `Diperlukan. ${preview.policy}` : "Tidak diperlukan menurut kebijakan saat ini." },
+                { label: pick("Cakupan", "Scope"), value: `${label} · ${pluralize(productIds.length, "SKU")}` },
+                { label: pick("Perkiraan saat ini", "Original forecast"), value: pick(`${formatNumber(originalUnits)} unit`, `${formatNumber(originalUnits)} units`) },
+                { label: pick("Perkiraan baru", "New forecast"), value: pick(`${formatNumber(newUnits)} unit`, `${formatNumber(newUnits)} units`), emphasis: true },
+                { label: pick("Perubahan", "Change"), value: pick(`${formatDeltaPercent(preview?.pct ?? 0)} (${formatDeltaNumber(preview?.delta ?? 0)} unit)`, `${formatDeltaPercent(preview?.pct ?? 0)} (${formatDeltaNumber(preview?.delta ?? 0)} units)`), emphasis: true },
+                { label: pick("Alasan", "Reason"), value: OVERRIDE_REASONS.find((r) => r.value === reason)?.label },
+                { label: pick("Catatan", "Comment"), value: comment },
+                { label: pick("Persetujuan", "Approval"), value: preview?.needsApproval ? pick(`Diperlukan. ${preview.policy}`, `Required. ${preview.policy}`) : pick("Tidak diperlukan menurut kebijakan saat ini.", "Not required under the current policy.") },
               ]}
             />
-            <InlineAlert tone={preview?.needsApproval ? "info" : "warning"} title={preview?.needsApproval ? "Acuan tidak berubah sampai Manajer menyetujuinya." : "Perubahan ini langsung memengaruhi acuan perencanaan."} />
+            <InlineAlert tone={preview?.needsApproval ? "info" : "warning"} title={preview?.needsApproval ? pick("Acuan tidak berubah sampai Manajer menyetujuinya.", "The baseline does not change until a Manager approves.") : pick("Perubahan ini langsung memengaruhi acuan perencanaan.", "This change will affect the planning baseline immediately.")} />
           </div>
         )}
       </DialogContent>

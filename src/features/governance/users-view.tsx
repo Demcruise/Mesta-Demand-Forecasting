@@ -22,6 +22,7 @@ import { StatusBadge, Tag, STATUS } from "@/components/feedback/status";
 import { EmptyState, InlineAlert, PermissionNotice } from "@/components/feedback/states";
 import { UserIdentity } from "@/components/entities/identity";
 import { ConsequenceSummary } from "@/components/governance/audit";
+import { pick } from "@/lib/i18n";
 
 const ROLES: Role[] = ["viewer", "planner", "manager", "analyst", "admin"];
 
@@ -42,25 +43,25 @@ export function UsersView() {
 
   const update = useApiMutation((c, v: { userId: string; role?: Role; status?: "active" | "suspended"; remove?: boolean; reason: string }) => updateMember(c, v.userId, v), {
     invalidate: [["members"]],
-    success: (_r, v) => (v.remove ? "Anggota dihapus" : v.role ? `Peran diubah ke ${ROLE_LABELS[v.role]}` : v.status === "suspended" ? "Akses ditangguhkan" : "Akses dipulihkan"),
-    failure: "Akses tidak dapat diubah.",
+    success: (_r, v) => (v.remove ? pick("Anggota dihapus", "Member removed") : v.role ? pick(`Peran diubah ke ${ROLE_LABELS[v.role]}`, `Role changed to ${ROLE_LABELS[v.role]}`) : v.status === "suspended" ? pick("Akses ditangguhkan", "Access suspended") : pick("Akses dipulihkan", "Access restored")),
+    failure: pick("Akses tidak dapat diubah.", "Access was not changed."),
     onSuccess: () => setAction(null),
   });
   const invite = useApiMutation((c, _v: void) => inviteMember(c, { email: inviteEmail, role: inviteRole }), {
     invalidate: [["members"]],
     success: `Invitation sent to ${inviteEmail}`,
-    successDescription: "Mereka masuk lewat SSO; perannya berlaku setelah menerima undangan.",
-    failure: "Undangan tidak terkirim.",
+    successDescription: pick("Mereka masuk lewat SSO; perannya berlaku setelah menerima undangan.", "They sign in with SSO; the role applies once they accept."),
+    failure: pick("Undangan tidak terkirim.", "The invitation was not sent."),
     onSuccess: () => setInviteOpen(false),
   });
 
   const columns = React.useMemo<ColumnDef<MemberRow, unknown>[]>(
     () => [
-      { id: "user", header: "Pengguna", meta: { width: "minmax(260px, 2.2fr)", sortKey: "name", pinned: true, label: "Pengguna" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.userId} secondary={row.original.email} size="md" /> },
-      { id: "title", header: "Jabatan", meta: { width: "minmax(160px, 1.2fr)", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.title}</span> },
-      { id: "role", header: "Peran", meta: { width: "140px", sortKey: "role" } satisfies ColumnMeta, cell: ({ row }) => <Tag tone={row.original.role === "admin" ? "primary" : "neutral"}>{ROLE_LABELS[row.original.role]}</Tag> },
+      { id: "user", header: pick("Pengguna", "User"), meta: { width: "minmax(260px, 2.2fr)", sortKey: "name", pinned: true, label: pick("Pengguna", "User") } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.userId} secondary={row.original.email} size="md" /> },
+      { id: "title", header: pick("Jabatan", "Title"), meta: { width: "minmax(160px, 1.2fr)", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.title}</span> },
+      { id: "role", header: pick("Peran", "Role"), meta: { width: "140px", sortKey: "role" } satisfies ColumnMeta, cell: ({ row }) => <Tag tone={row.original.role === "admin" ? "primary" : "neutral"}>{ROLE_LABELS[row.original.role]}</Tag> },
       { id: "status", header: "Status", meta: { width: "120px", sortKey: "status" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
-      { id: "active", header: "Terakhir aktif", meta: { width: "130px", sortKey: "lastActiveAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.lastActiveAt ? formatRelative(row.original.lastActiveAt) : "Belum pernah"}</span> },
+      { id: "active", header: pick("Terakhir aktif", "Last active"), meta: { width: "130px", sortKey: "lastActiveAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.lastActiveAt ? formatRelative(row.original.lastActiveAt) : pick("Belum pernah", "Never")}</span> },
       { id: "ws", header: "Ruang kerja", meta: { width: "110px", numeric: true, hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => row.original.workspaces },
       {
         id: "actions",
@@ -77,11 +78,11 @@ export function UsersView() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onSelect={() => { setRole(m.role); setReason(""); setAction({ kind: "role", member: m }); }}>Ubah peran</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { setRole(m.role); setReason(""); setAction({ kind: "role", member: m }); }}>{pick("Ubah peran", "Change role")}</DropdownMenuItem>
                 {m.status === "suspended" ? (
-                  <DropdownMenuItem onSelect={() => { setReason(""); setAction({ kind: "reactivate", member: m }); }}>Pulihkan akses</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => { setReason(""); setAction({ kind: "reactivate", member: m }); }}>{pick("Pulihkan akses", "Restore access")}</DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem onSelect={() => { setReason(""); setAction({ kind: "suspend", member: m }); }}>Tangguhkan akses</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => { setReason(""); setAction({ kind: "suspend", member: m }); }}>{pick("Tangguhkan akses", "Suspend access")}</DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem destructive onSelect={() => { setReason(""); setAction({ kind: "remove", member: m }); }}>
@@ -101,7 +102,7 @@ export function UsersView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Pengguna & Akses"
+        title={pick("Pengguna & Akses", "Users & roles")}
         description={`Who can access ${workspace.name} · ${workspace.environment} and what they can do. Identities come from your identity provider; roles are managed here.`}
         actions={
           manage ? (
@@ -111,7 +112,7 @@ export function UsersView() {
           ) : undefined
         }
       />
-      {!manage && <PermissionNotice permission="users.manage" compact message="Anda dapat melihat siapa yang punya akses, tetapi tidak mengubahnya." />}
+      {!manage && <PermissionNotice permission="users.manage" compact message={pick("Anda dapat melihat siapa yang punya akses, tetapi tidak mengubahnya.", "You can see who has access but cannot change it.")} />}
       <Tabs defaultValue="members">
         <TabsList>
           <TabsTrigger value="members" count={q.data?.total}>
@@ -128,31 +129,31 @@ export function UsersView() {
             isLoading={q.isPending}
             error={q.error}
             onRetry={() => q.refetch()}
-            errorWhat="Anggota tidak dapat dimuat."
+            errorWhat={pick("Anggota tidak dapat dimuat.", "Members could not be loaded.")}
             sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
             pagination={{ page: q.data?.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.total ?? 0, onPageChange: state.setPage }}
             hideDensityToggle
             toolbarStart={
               <FilterBar
                 state={state}
-                searchPlaceholder="Cari nama, email, atau jabatan"
+                searchPlaceholder={pick("Cari nama, email, atau jabatan", "Search name, email or title")}
                 facets={[
-                  { key: "role", label: "Peran", primary: true, options: ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] })) },
+                  { key: "role", label: pick("Peran", "Role"), primary: true, options: ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] })) },
                   { key: "status", label: "Status", primary: true, options: (["active", "invited", "suspended"] as StatusKey[]).map((s) => ({ value: s, label: STATUS[s].label })) },
                 ]}
               />
             }
-            empty={<EmptyState icon={Users} title="Tidak ada anggota yang cocok dengan filter." />}
+            empty={<EmptyState icon={Users} title={pick("Tidak ada anggota yang cocok dengan filter.", "No members match the current filters.")} />}
           />
         </TabsContent>
         <TabsContent value="roles" className="pt-4">
-          <InlineAlert tone="info" title="Model peran yang diusulkan." className="mb-4">
+          <InlineAlert tone="info" title={pick("Model peran yang diusulkan.", "Suggested role model.")} className="mb-4">
             Role names and permissions need approval by the business (backlog §93 items 2 and 18). Administrators cannot approve business changes or apply overrides.
           </InlineAlert>
           <Panel flush>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[44rem] border-collapse text-[0.8125rem]">
-                <caption className="sr-only">Izin per peran</caption>
+                <caption className="sr-only">{pick("Izin per peran", "Permissions by role")}</caption>
                 <thead className="bg-subtle">
                   <tr>
                     <th scope="col" className="border-b border-border px-4 py-2.5 text-left text-xs font-semibold text-fg-secondary">
@@ -173,7 +174,7 @@ export function UsersView() {
                       </th>
                       {ROLES.map((r) => (
                         <td key={r} className="px-3 py-2 text-center">
-                          {roleCan(r, p) ? <Check className="mx-auto size-4 text-success" aria-label="Diizinkan" /> : <Minus className="mx-auto size-4 text-fg-disabled" aria-label="Tidak diizinkan" />}
+                          {roleCan(r, p) ? <Check className="mx-auto size-4 text-success" aria-label={pick("Diizinkan", "Allowed")} /> : <Minus className="mx-auto size-4 text-fg-disabled" aria-label={pick("Tidak diizinkan", "Not allowed")} />}
                         </td>
                       ))}
                     </tr>
@@ -223,14 +224,14 @@ export function UsersView() {
                     })
                   }
                 >
-                  {action.kind === "role" ? "Ubah peran" : action.kind === "suspend" ? "Tangguhkan akses" : action.kind === "reactivate" ? "Pulihkan akses" : "Hapus anggota"}
+                  {action.kind === "role" ? pick("Ubah peran", "Change role") : action.kind === "suspend" ? pick("Tangguhkan akses", "Suspend access") : action.kind === "reactivate" ? pick("Pulihkan akses", "Restore access") : "Hapus anggota"}
                 </Button>
               </>
             }
           >
             <div className="flex flex-col gap-4">
               {action.kind === "role" && (
-                <Field label="Peran baru" htmlFor="new-role" hint={ROLE_DESCRIPTIONS[role]}>
+                <Field label={pick("Peran baru", "New role")} htmlFor="new-role" hint={ROLE_DESCRIPTIONS[role]}>
                   <Select id="new-role" value={role} onValueChange={(v) => setRole(v as Role)} options={ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
                 </Field>
               )}
@@ -245,15 +246,15 @@ export function UsersView() {
                       action.kind === "role"
                         ? `${ROLE_LABELS[action.member.role]} → ${ROLE_LABELS[role]}. Takes effect at their next request.`
                         : action.kind === "suspend"
-                          ? "Mereka dikeluarkan dan tidak dapat masuk ke ruang kerja ini. Riwayatnya tetap disimpan."
+                          ? pick("Mereka dikeluarkan dan tidak dapat masuk ke ruang kerja ini. Riwayatnya tetap disimpan.", "They are removed and cannot sign in to this workspace. Their history is retained.")
                           : action.kind === "reactivate"
                             ? `They can sign in again with the ${ROLE_LABELS[action.member.role]} role.`
-                            : "Mereka kehilangan akses ke ruang kerja ini. Riwayat aktivitas tetap menyimpan tindakan mereka sebelumnya.",
+                            : pick("Mereka kehilangan akses ke ruang kerja ini. Riwayat aktivitas tetap menyimpan tindakan mereka sebelumnya.", "They lose access to this workspace. The audit log keeps their previous actions."),
                   },
-                  { label: "Izin yang diperlukan", value: "Mengelola pengguna dan akses (Administrator)" },
+                  { label: pick("Izin yang diperlukan", "Required permission"), value: pick("Mengelola pengguna dan akses (Administrator)", "Manage users and access (Administrator)") },
                 ]}
               />
-              <Field label="Alasan" htmlFor="access-reason" required hint="Tercatat di riwayat aktivitas. Minimal 5 karakter.">
+              <Field label="Alasan" htmlFor="access-reason" required hint={pick("Tercatat di riwayat aktivitas. Minimal 5 karakter.", "Recorded in the audit log. At least 5 characters.")}>
                 <Textarea id="access-reason" value={reason} onChange={(e) => setReason(e.target.value)} />
               </Field>
             </div>
@@ -264,8 +265,8 @@ export function UsersView() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent
           size="sm"
-          title="Undang pengguna"
-          description="Pengguna yang diundang masuk lewat SSO organisasi Anda. Tidak ada kata sandi yang dibuat."
+          title={pick("Undang pengguna", "Invite user")}
+          description={pick("Pengguna yang diundang masuk lewat SSO organisasi Anda. Tidak ada kata sandi yang dibuat.", "Invited users sign in through your organisation's SSO. No password is created.")}
           footer={
             <>
               <Button variant="ghost" onClick={() => setInviteOpen(false)}>
@@ -278,7 +279,7 @@ export function UsersView() {
           }
         >
           <div className="flex flex-col gap-4">
-            <Field label="Email kantor" htmlFor="invite-email" required hint="Harus memakai domain yang diizinkan untuk ruang kerja ini.">
+            <Field label="Email kantor" htmlFor="invite-email" required hint={pick("Harus memakai domain yang diizinkan untuk ruang kerja ini.", "Must use an allowed domain for this workspace.")}>
               <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="name@mesta.click" autoFocus />
             </Field>
             <Field label="Role" htmlFor="invite-role" hint={ROLE_DESCRIPTIONS[inviteRole]}>

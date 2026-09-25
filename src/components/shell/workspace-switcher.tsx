@@ -8,7 +8,7 @@ import { ROLE_LABELS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger, Tooltip } from "@/components/ui/overlay";
 import { Tag } from "@/components/feedback/status";
-import { getActiveLocale } from "@/lib/i18n";
+import { getActiveLocale, pick } from "@/lib/i18n";
 
 const ENV_TONE = { Production: "primary", Staging: "info", Sandbox: "neutral" } as const;
 const ENV_LABELS: Record<Workspace["environment"], string> = new Proxy({} as Record<Workspace["environment"], string>, {
@@ -116,7 +116,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
             );
           })}
         </ul>
-        <p className="border-t border-border px-3 py-2 caption">Beralih ruang kerja mengatur ulang filter dan memuat ulang data.</p>
+        <p className="border-t border-border px-3 py-2 caption">{pick("Beralih ruang kerja mengatur ulang filter dan memuat ulang data.", "Switching workspace resets filters and reloads data.")}</p>
       </PopoverContent>
     </Popover>
   );
@@ -129,8 +129,8 @@ export function WorkspaceContextBanner() {
   return (
     <div className={cn("flex items-center justify-center gap-2 border-b px-4 py-1.5 text-xs font-semibold", tone)} role="status">
       {workspace.status === "degraded"
-        ? `${workspace.name} · ${ENV_LABELS[workspace.environment]} sedang menurun: sebagian sumber data terlambat. Perkiraan dapat memakai data lama.`
-        : `Anda bekerja di ${workspace.name} · ${ENV_LABELS[workspace.environment]}. Perubahan di sini tidak memengaruhi Produksi.`}
+        ? pick(`${workspace.name} · ${ENV_LABELS[workspace.environment]} sedang menurun: sebagian sumber data terlambat. Perkiraan dapat memakai data lama.`, `${workspace.name} · ${ENV_LABELS[workspace.environment]} is degraded: some data sources are late. Forecasts may use stale data.`)
+        : pick(`Anda bekerja di ${workspace.name} · ${ENV_LABELS[workspace.environment]}. Perubahan di sini tidak memengaruhi Produksi.`, `You are working in ${workspace.name} · ${ENV_LABELS[workspace.environment]}. Changes here do not affect Production.`)}
     </div>
   );
 }

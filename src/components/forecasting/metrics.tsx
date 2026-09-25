@@ -4,6 +4,7 @@ import * as React from "react";
 import { formatDeltaNumber, formatDeltaPercent, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/overlay";
+import { pick } from "@/lib/i18n/core";
 
 /**
  * Colour for a signed value. Sign is the only thing that decides it: increases are
@@ -52,8 +53,8 @@ export function ForecastDelta({
         deltaToneClass(percent),
         className,
       )}
-      title={emphasised ? "Di atas batas tinjauan 15%" : undefined}
-      aria-label={`${flat ? "Tanpa perubahan" : percent > 0 ? "Naik" : "Turun"} ${formatDeltaPercent(percent)}${emphasised ? ", di atas batas tinjauan" : ""}`}
+      title={emphasised ? pick("Di atas batas tinjauan 15%", "Above the 15% review threshold") : undefined}
+      aria-label={pick(`${flat ? "Tanpa perubahan" : percent > 0 ? "Naik" : "Turun"} ${formatDeltaPercent(percent)}${emphasised ? ", di atas batas tinjauan" : ""}`, `${flat ? "No change" : percent > 0 ? "Up" : "Down"} ${formatDeltaPercent(percent)}${emphasised ? ", above the review threshold" : ""}`)}
     >
       <Icon className={size === "sm" ? "size-3.5" : "size-4"} aria-hidden />
       {formatDeltaPercent(percent)}

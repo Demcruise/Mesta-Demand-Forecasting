@@ -24,16 +24,17 @@ import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
 import { ApiAccessSection } from "./api-access";
 import { NotificationRulesSection } from "./notification-rules";
 import type { SectionKey } from "./sections";
+import { pick } from "@/lib/i18n";
 
 
 const SECTIONS: { key: SectionKey; label: string; icon: React.ComponentType<{ className?: string }>; group: "Personal" | "Workspace administration" }[] = [
   { key: "personal", label: "Pribadi", icon: UserRound, group: "Personal" },
   { key: "notifications", label: "Notifikasi", icon: Bell, group: "Personal" },
   { key: "workspace", label: "Ruang Kerja", icon: Building2, group: "Workspace administration" },
-  { key: "forecasting", label: "Perkiraan", icon: Workflow, group: "Workspace administration" },
-  { key: "data", label: "Data & Integrasi", icon: Database, group: "Workspace administration" },
-  { key: "approvals", label: "Persetujuan", icon: ShieldCheck, group: "Workspace administration" },
-  { key: "roles", label: "Pengguna & Akses", icon: Users, group: "Workspace administration" },
+  { key: "forecasting", label: pick("Perkiraan", "Forecast"), icon: Workflow, group: "Workspace administration" },
+  { key: "data", label: pick("Data & Integrasi", "Data & integrations"), icon: Database, group: "Workspace administration" },
+  { key: "approvals", label: pick("Persetujuan", "Approval"), icon: ShieldCheck, group: "Workspace administration" },
+  { key: "roles", label: pick("Pengguna & Akses", "Users & roles"), icon: Users, group: "Workspace administration" },
   { key: "audit", label: "Audit & Retensi", icon: ScrollText, group: "Workspace administration" },
   { key: "security", label: "Keamanan", icon: Lock, group: "Workspace administration" },
   { key: "api", label: "API", icon: KeyRound, group: "Workspace administration" },
@@ -49,9 +50,9 @@ export function SettingsView({ section }: { section: SectionKey }) {
   const groups = ["Personal", "Workspace administration"] as const;
   return (
     <PageContainer>
-      <PageHeader title="Pengaturan" description="Preferensi pribadi hanya berlaku untuk Anda. Pengaturan ruang kerja berlaku untuk semua orang dan tercatat di riwayat aktivitas." />
+      <PageHeader title={pick("Pengaturan", "Configuration")} description={pick("Preferensi pribadi hanya berlaku untuk Anda. Pengaturan ruang kerja berlaku untuk semua orang dan tercatat di riwayat aktivitas.", "Personal preferences apply only to you. Workspace settings apply to everyone and are recorded in the audit log.")} />
       <div className="grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <nav aria-label="Bagian pengaturan" className="lg:sticky lg:top-[calc(var(--topbar-h)+1.5rem)] lg:self-start">
+        <nav aria-label={pick("Bagian pengaturan", "Settings section")} className="lg:sticky lg:top-[calc(var(--topbar-h)+1.5rem)] lg:self-start">
           {groups.map((g) => (
             <div key={g} className="mb-4">
               <p className="mb-1 px-2 metadata">{g}</p>
@@ -100,18 +101,18 @@ function PersonalSection() {
   const isId = locale === "id";
   return (
     <div className="flex flex-col gap-4">
-      <Panel title={isId ? "Profil" : "Profile"} description={isId ? "Dikelola oleh penyedia identitas Anda." : "Managed by your identity provider."}>
+      <Panel title={isId ? "Profil" : "Profile"} description={isId ? pick("Dikelola oleh penyedia identitas Anda.", "Managed by your identity provider.") : "Managed by your identity provider."}>
         <DescriptionList
           columns={2}
           items={[
             { label: isId ? "Nama" : "Name", value: session.name },
             { label: isId ? "Email" : "Email", value: session.email },
-            { label: isId ? "Peran di ruang kerja ini" : "Role in this workspace", value: ROLE_LABELS[session.role] },
+            { label: isId ? pick("Peran di ruang kerja ini", "Roles in this workspace") : "Role in this workspace", value: ROLE_LABELS[session.role] },
             { label: isId ? "Masuk melalui" : "Signed in via", value: session.idp },
           ]}
         />
       </Panel>
-      <Panel title={isId ? "Tampilan" : "Appearance"} description={isId ? "Hanya tersimpan di peramban ini." : "Saved in this browser only."}>
+      <Panel title={isId ? "Tampilan" : "Appearance"} description={isId ? pick("Hanya tersimpan di peramban ini.", "Stored in this browser only.") : "Saved in this browser only."}>
         <div className="flex flex-col gap-5">
           <Field label={isId ? "Bahasa" : "Language"} htmlFor="locale" hint={isId ? "Pilih bahasa tampilan antarmuka Mesta." : "Choose the interface display language for Mesta."}>
             <RadioCards
@@ -150,19 +151,19 @@ function PersonalSection() {
               ]}
             />
           </Field>
-          <SwitchField id="sidebar" label={isId ? "Tutup bilah samping" : "Collapse sidebar"} description={isId ? "Tampilkan ikon saja agar tabel lebih lega." : "Show icons only to give tables more room."} checked={sidebarCollapsed} onCheckedChange={(v) => setPreference("sidebarCollapsed", v)} />
+          <SwitchField id="sidebar" label={isId ? pick("Tutup bilah samping", "Collapse the sidebar") : "Collapse sidebar"} description={isId ? pick("Tampilkan ikon saja agar tabel lebih lega.", "Show icons only to give tables more room.") : "Show icons only to give tables more room."} checked={sidebarCollapsed} onCheckedChange={(v) => setPreference("sidebarCollapsed", v)} />
         </div>
       </Panel>
       <Panel title={isId ? "Format" : "Formats"}>
         <DescriptionList
           columns={3}
           items={[
-            { label: isId ? "Tanggal" : "Dates", value: formatDate("2026-09-25") },
+            { label: isId ? "Tanggal" : "Dates", value: formatDate(pick("2026-09-25", "25 Sep 2026")) },
             { label: isId ? "Angka" : "Numbers", value: formatNumber(12440) },
-            { label: isId ? "Perubahan" : "Changes", value: `${formatDeltaPercent(0.045)} / ${formatDeltaPercent(-0.032)}` },
+            { label: isId ? pick("Perubahan", "Change") : "Changes", value: `${formatDeltaPercent(0.045)} / ${formatDeltaPercent(-0.032)}` },
           ]}
         />
-        <p className="mt-3 caption">{isId ? "Format angka dan tanggal otomatis mengikuti bahasa yang dipilih." : "Number and date formats automatically follow your selected language."}</p>
+        <p className="mt-3 caption">{isId ? pick("Format angka dan tanggal otomatis mengikuti bahasa yang dipilih.", "One product-wide convention (backlog §65), so exports and screenshots read the same for everyone.") : pick("Number and date formats automatically follow your selected language.", "Roles & permissions")}</p>
       </Panel>
     </div>
   );
@@ -170,7 +171,7 @@ function PersonalSection() {
 
 function RolesSection() {
   return (
-    <Panel title="Pengguna & Akses">
+    <Panel title={pick("Pengguna & Akses", "Users & roles")}>
       <p className="body-sm text-fg-secondary">Role assignments and the permission matrix are managed on the Users & roles page.</p>
       <Link href="/administration/users" className={cn(buttonVariants({ variant: "secondary" }), "mt-3")}>
         Open users & roles
@@ -202,11 +203,11 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
       await updateSettings(c, settingsKey, draft[settingsKey] as never, v.reason);
       if (secondaryKey) await updateSettings(c, secondaryKey, draft[secondaryKey] as never, v.reason);
     },
-    { invalidate: [["settings"], ["notifications"]], success: "Pengaturan tersimpan", successDescription: "Perubahan tercatat di riwayat aktivitas.", failure: "Pengaturan tidak tersimpan.", onSuccess: () => setConfirm(false) },
+    { invalidate: [["settings"], ["notifications"]], success: pick("Pengaturan tersimpan", "Settings saved"), successDescription: pick("Perubahan tercatat di riwayat aktivitas.", "The change is recorded in the audit log."), failure: pick("Pengaturan tidak tersimpan.", "Settings were not saved."), onSuccess: () => setConfirm(false) },
   );
 
   if (q.isPending || !draft) return <PageSkeleton />;
-  if (q.isError) return <ErrorState what="Pengaturan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />;
+  if (q.isError) return <ErrorState what={pick("Pengaturan tidak dapat dimuat.", "Settings could not be loaded.")} error={q.error} onRetry={() => q.refetch()} />;
   const saved = q.data.settings;
   const diffs = diffSettings(saved, draft, [settingsKey, secondaryKey].filter(Boolean) as (keyof WorkspaceSettings)[]);
   const dirty = diffs.length > 0;
@@ -215,7 +216,7 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
   const footer =
     settingsKey && editable ? (
       <>
-        <span className="caption">{dirty ? `${diffs.length} perubahan belum disimpan` : "Tidak ada perubahan belum disimpan"}</span>
+        <span className="caption">{dirty ? pick(`${diffs.length} perubahan belum disimpan`, `${diffs.length} unsaved change${diffs.length === 1 ? "" : "s"}`) : pick("Tidak ada perubahan belum disimpan", "No unsaved changes")}</span>
         <div className="flex gap-2">
           <Button variant="ghost" disabled={!dirty} onClick={() => setDraft(structuredClone(saved))}>
             Discard changes
@@ -229,40 +230,40 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
 
   return (
     <div className="flex flex-col gap-4">
-      {!editable && <PermissionNotice permission="settings.workspace" message="Pengaturan ini hanya baca untuk peran Anda." />}
+      {!editable && <PermissionNotice permission="settings.workspace" message={pick("Pengaturan ini hanya baca untuk peran Anda.", "These settings are read-only for your role.")} />}
       {section === "workspace" && (
-        <Panel title="Ruang Kerja">
+        <Panel title={pick("Ruang Kerja", "Workspace")}>
           <DescriptionList
             columns={2}
             items={[
-              { label: "Nama", value: workspace.name },
-              { label: "Lingkungan", value: <Tag tone={workspace.environment === "Production" ? "primary" : "info"}>{workspace.environment}</Tag> },
-              { label: "Organisasi", value: workspace.organization },
-              { label: "Wilayah", value: workspace.region },
-              { label: "Status", value: workspace.status === "active" ? "Aktif" : workspace.status === "degraded" ? "Menurun" : "Pemeliharaan" },
+              { label: pick("Nama", "Name"), value: workspace.name },
+              { label: pick("Lingkungan", "Environment"), value: <Tag tone={workspace.environment === "Production" ? "primary" : "info"}>{workspace.environment}</Tag> },
+              { label: pick("Organisasi", "Organisation"), value: workspace.organization },
+              { label: pick("Wilayah", "Region"), value: workspace.region },
+              { label: "Status", value: workspace.status === "active" ? pick("Aktif", "Active") : workspace.status === "degraded" ? pick("Menurun", "Degraded") : pick("Pemeliharaan", "Maintenance") },
             ]}
           />
-          <p className="mt-3 caption">Identitas ruang kerja disediakan oleh dukungan Mesta. Hubungi mereka untuk mengganti nama atau memindahkan ruang kerja.</p>
+          <p className="mt-3 caption">{pick("Identitas ruang kerja disediakan oleh dukungan Mesta. Hubungi mereka untuk mengganti nama atau memindahkan ruang kerja.", "Workspace identity is provisioned by Mesta support. Contact them to rename or move a workspace.")}</p>
         </Panel>
       )}
       {section === "data" && (
-        <Panel title="Data & Integrasi" footer={<Link href="/administration/integrations" className="text-xs font-semibold text-primary hover:underline">Kelola integrasi →</Link>}>
+        <Panel title={pick("Data & Integrasi", "Data & integrations")} footer={<Link href="/administration/integrations" className="text-xs font-semibold text-primary hover:underline">{pick("Kelola integrasi →", "Manage integrations →")}</Link>}>
           <p className="body-sm text-fg-secondary">Sources, schedules and field mappings are managed in Integrations. Data freshness thresholds are set in Forecasting.</p>
         </Panel>
       )}
       {section === "forecasting" && (
-        <Panel title="Bawaan perkiraan" description="Diterapkan saat seseorang membuat proses perkiraan baru. Proses yang sudah ada tidak berubah." footer={footer}>
+        <Panel title={pick("Bawaan perkiraan", "Forecasting defaults")} description={pick("Diterapkan saat seseorang membuat proses perkiraan baru. Proses yang sudah ada tidak berubah.", "Applied when someone creates a new forecast run. Existing runs are unchanged.")} footer={footer}>
           <fieldset disabled={!editable} className="grid gap-5 sm:grid-cols-2">
-            <Field label="Rentang bawaan" htmlFor="def-h">
+            <Field label={pick("Rentang bawaan", "Default horizon")} htmlFor="def-h">
               <Select id="def-h" value={String(draft.forecasting.defaultHorizonDays)} onValueChange={(v) => set("forecasting", { defaultHorizonDays: Number(v) })} options={[7, 14, 28, 30, 60, 90].map((d) => ({ value: String(d), label: `${d} days` }))} disabled={!editable} />
             </Field>
-            <Field label="Frekuensi bawaan" htmlFor="def-f">
-              <Select id="def-f" value={draft.forecasting.defaultFrequency} onValueChange={(v) => set("forecasting", { defaultFrequency: v as "daily" | "weekly" })} options={[{ value: "daily", label: "Harian" }, { value: "weekly", label: "Mingguan" }]} disabled={!editable} />
+            <Field label={pick("Frekuensi bawaan", "Default frequency")} htmlFor="def-f">
+              <Select id="def-f" value={draft.forecasting.defaultFrequency} onValueChange={(v) => set("forecasting", { defaultFrequency: v as "daily" | "weekly" })} options={[{ value: "daily", label: pick("Harian", "Daily") }, { value: "weekly", label: pick("Mingguan", "Weekly") }]} disabled={!editable} />
             </Field>
-            <Field label="Rentang historis bawaan" htmlFor="def-w" hint="Jumlah hari riwayat yang dipakai secara bawaan.">
+            <Field label={pick("Rentang historis bawaan", "Default history window")} htmlFor="def-w" hint={pick("Jumlah hari riwayat yang dipakai secara bawaan.", "Days of history used by default.")}>
               <Select id="def-w" value={String(draft.forecasting.historyWindowDays)} onValueChange={(v) => set("forecasting", { historyWindowDays: Number(v) })} options={[180, 365, 730].map((d) => ({ value: String(d), label: `${d} days` }))} disabled={!editable} />
             </Field>
-            <Field label="Model bawaan" htmlFor="def-m" hint="Mengubah model bawaan memerlukan persetujuan Manajer.">
+            <Field label={pick("Model bawaan", "Default model")} htmlFor="def-m" hint={pick("Mengubah model bawaan memerlukan persetujuan Manajer.", "Changing the default model requires Manager approval.")}>
               <div className="flex items-center gap-2">
                 <Input id="def-m" readOnly value={q.data.models.find((m) => m.id === draft.forecasting.defaultModelId)?.name + " " + (q.data.models.find((m) => m.id === draft.forecasting.defaultModelId)?.version ?? "")} />
                 <Link href="/models" className={buttonVariants({ size: "sm", variant: "ghost" })}>
@@ -271,15 +272,15 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
               </div>
             </Field>
           </fieldset>
-          <h4 className="mb-3 mt-6 card-title">Batas tinjauan</h4>
+          <h4 className="mb-3 mt-6 card-title">{pick("Batas tinjauan", "Exception thresholds")}</h4>
           <fieldset disabled={!editable} className="grid gap-5 sm:grid-cols-3">
-            <Field label="Perubahan perkiraan" htmlFor="th-delta" hint="Tandai untuk ditinjau bila perubahannya melebihi nilai ini dibanding proses sebelumnya.">
+            <Field label={pick("Perubahan perkiraan", "Forecast change")} htmlFor="th-delta" hint={pick("Tandai untuk ditinjau bila perubahannya melebihi nilai ini dibanding proses sebelumnya.", "Raise an exception above this change vs the previous run.")}>
               <Select id="th-delta" value={String(draft.exceptions.deltaThreshold)} onValueChange={(v) => set("exceptions", { deltaThreshold: Number(v) })} options={[0.1, 0.15, 0.2, 0.25].map((d) => ({ value: String(d), label: formatPercent(d, 0) }))} disabled={!editable} />
             </Field>
-            <Field label="Lebar rentang" htmlFor="th-width" hint="Lebar relatif rentang 80%.">
+            <Field label={pick("Lebar rentang", "Interval width")} htmlFor="th-width" hint={pick("Lebar relatif rentang 80%.", "Relative width of the 80% interval.")}>
               <Select id="th-width" value={String(draft.exceptions.intervalWidthThreshold)} onValueChange={(v) => set("exceptions", { intervalWidthThreshold: Number(v) })} options={[0.6, 0.75, 0.9, 1.2].map((d) => ({ value: String(d), label: formatPercent(d, 0) }))} disabled={!editable} />
             </Field>
-            <Field label="Pembaruan data" htmlFor="th-fresh" hint="Berapa jam sebelum data dianggap terlambat.">
+            <Field label={pick("Pembaruan data", pick("Kebaruan data", "Data freshness"))} htmlFor="th-fresh" hint={pick("Berapa jam sebelum data dianggap terlambat.", pick("Jam sebelum data dianggap terlambat.", "Hours before data counts as delayed."))}>
               <Select id="th-fresh" value={String(draft.exceptions.freshnessHours)} onValueChange={(v) => set("exceptions", { freshnessHours: Number(v) })} options={[6, 12, 24, 48].map((d) => ({ value: String(d), label: `${d} hours` }))} disabled={!editable} />
             </Field>
           </fieldset>
@@ -287,48 +288,48 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
         </Panel>
       )}
       {section === "approvals" && (
-        <Panel title="Kebijakan persetujuan" description="Perubahan mana yang perlu orang kedua sebelum berlaku." footer={footer}>
+        <Panel title={pick("Kebijakan persetujuan", "Approval policies")} description={pick("Perubahan mana yang perlu orang kedua sebelum berlaku.", "Which changes need a second person before they take effect.")} footer={footer}>
           <fieldset disabled={!editable} className="grid gap-5 sm:grid-cols-2">
-            <Field label="Batas perubahan manual (persen)" htmlFor="ap-pct" hint="Perubahan manual di atas nilai ini perlu persetujuan.">
-              <Select id="ap-pct" value={String(draft.approvals.overrideDeltaThreshold)} onValueChange={(v) => set("approvals", { overrideDeltaThreshold: Number(v) })} options={[0, 0.02, 0.05, 0.1].map((d) => ({ value: String(d), label: d === 0 ? "Setiap perubahan" : formatPercent(d, 0) }))} disabled={!editable} />
+            <Field label={pick("Batas perubahan manual (persen)", "Override threshold (change)")} htmlFor="ap-pct" hint={pick("Perubahan manual di atas nilai ini perlu persetujuan.", "Overrides above this change need approval.")}>
+              <Select id="ap-pct" value={String(draft.approvals.overrideDeltaThreshold)} onValueChange={(v) => set("approvals", { overrideDeltaThreshold: Number(v) })} options={[0, 0.02, 0.05, 0.1].map((d) => ({ value: String(d), label: d === 0 ? pick("Setiap perubahan", "Every override") : formatPercent(d, 0) }))} disabled={!editable} />
             </Field>
-            <Field label="Batas perubahan manual (unit)" htmlFor="ap-units" hint="Perubahan manual di atas jumlah unit ini perlu persetujuan.">
+            <Field label={pick("Batas perubahan manual (unit)", "Override threshold (units)")} htmlFor="ap-units" hint={pick("Perubahan manual di atas jumlah unit ini perlu persetujuan.", "Overrides above this many units need approval.")}>
               <Select id="ap-units" value={String(draft.approvals.overrideUnitsThreshold)} onValueChange={(v) => set("approvals", { overrideUnitsThreshold: Number(v) })} options={[1000, 5000, 10000, 50000].map((d) => ({ value: String(d), label: `${d.toLocaleString("en-US")} units` }))} disabled={!editable} />
             </Field>
-            <Field label="Peran penyetuju" htmlFor="ap-role" hint="Administrator tidak dapat menyetujui perubahan bisnis.">
-              <Select id="ap-role" value={draft.approvals.approverRole} onValueChange={() => undefined} options={[{ value: "manager", label: "Manajer" }]} disabled />
+            <Field label={pick("Peran penyetuju", "Approver role")} htmlFor="ap-role" hint={pick("Administrator tidak dapat menyetujui perubahan bisnis.", "Administrators cannot approve business changes.")}>
+              <Select id="ap-role" value={draft.approvals.approverRole} onValueChange={() => undefined} options={[{ value: "manager", label: pick("Manajer", "Manager") }]} disabled />
             </Field>
           </fieldset>
-          <SwitchField id="ap-plan" label="Rencana perlu persetujuan sebelum diterbitkan" description="Mematikan ini membuat perencana dapat menerbitkan rencana langsung." checked={draft.approvals.planPublishRequiresApproval} onCheckedChange={(v) => set("approvals", { planPublishRequiresApproval: v })} disabled={!editable} />
+          <SwitchField id="ap-plan" label={pick("Rencana perlu persetujuan sebelum diterbitkan", "Plans need approval before publication")} description={pick("Mematikan ini membuat perencana dapat menerbitkan rencana langsung.", "Turning this off lets planners publish plans directly.")} checked={draft.approvals.planPublishRequiresApproval} onCheckedChange={(v) => set("approvals", { planPublishRequiresApproval: v })} disabled={!editable} />
         </Panel>
       )}
       {section === "audit" && (
-        <Panel title="Audit & Retensi" description="Catatan aktivitas tidak dapat diubah dari alur kerja biasa." footer={footer}>
+        <Panel title={pick("Audit & Retensi", "Audit & retention")} description={pick("Catatan aktivitas tidak dapat diubah dari alur kerja biasa.", "Audit events are immutable from normal workflows.")} footer={footer}>
           <fieldset disabled={!editable} className="grid gap-5 sm:grid-cols-2">
-            <Field label="Periode retensi" htmlFor="au-ret" hint="Catatan yang lebih lama dari ini akan diarsipkan. Konfirmasi dengan tim kepatuhan.">
+            <Field label={pick("Periode retensi", "Retention period")} htmlFor="au-ret" hint={pick("Catatan yang lebih lama dari ini akan diarsipkan. Konfirmasi dengan tim kepatuhan.", "Events older than this are archived. Confirm with compliance (backlog §93 item 19).")}>
               <Select id="au-ret" value={String(draft.audit.retentionDays)} onValueChange={(v) => set("audit", { retentionDays: Number(v) })} options={[90, 180, 365, 730, 2555].map((d) => ({ value: String(d), label: d === 2555 ? "7 years" : `${d} days` }))} disabled={!editable} />
             </Field>
           </fieldset>
-          <SwitchField id="au-exp" label="Izinkan ekspor riwayat aktivitas" description="Manajer, analis, dan administrator dapat mengunduh riwayat aktivitas sebagai CSV." checked={draft.audit.exportEnabled} onCheckedChange={(v) => set("audit", { exportEnabled: v })} disabled={!editable} />
+          <SwitchField id="au-exp" label={pick("Izinkan ekspor riwayat aktivitas", "Allow audit export")} description={pick("Manajer, analis, dan administrator dapat mengunduh riwayat aktivitas sebagai CSV.", "Managers, analysts and administrators can download the audit log as CSV.")} checked={draft.audit.exportEnabled} onCheckedChange={(v) => set("audit", { exportEnabled: v })} disabled={!editable} />
         </Panel>
       )}
       {section === "security" && (
-        <Panel title="Keamanan" description="Autentikasi ditangani penyedia identitas Anda. Pengaturan ini mengatur sesi di Mesta." footer={footer}>
+        <Panel title={pick("Keamanan", "Security")} description={pick("Autentikasi ditangani penyedia identitas Anda. Pengaturan ini mengatur sesi di Mesta.", "Authentication is handled by your identity provider. These settings control sessions in Mesta.")} footer={footer}>
           <fieldset disabled={!editable} className="grid gap-5 sm:grid-cols-2">
-            <Field label="Durasi sesi" htmlFor="se-len" hint="Pengguna harus masuk lagi setelah periode ini.">
+            <Field label="Durasi sesi" htmlFor="se-len" hint={pick("Pengguna harus masuk lagi setelah periode ini.", "Users must sign in again after this period.")}>
               <Select id="se-len" value={String(draft.security.sessionHours)} onValueChange={(v) => set("security", { sessionHours: Number(v) })} options={[4, 8, 12, 24].map((d) => ({ value: String(d), label: `${d} hours` }))} disabled={!editable} />
             </Field>
-            <Field label="Domain email yang diizinkan" htmlFor="se-dom" hint="Dipisahkan koma. Hanya domain ini yang dapat diundang.">
+            <Field label={pick("Domain email yang diizinkan", "Allowed email domains")} htmlFor="se-dom" hint={pick("Dipisahkan koma. Hanya domain ini yang dapat diundang.", "Comma separated. Only these domains can be invited.")}>
               <Input id="se-dom" value={draft.security.allowedDomains.join(", ")} onChange={(e) => set("security", { allowedDomains: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} disabled={!editable} />
             </Field>
           </fieldset>
-          <SwitchField id="se-sso" label="Wajibkan single sign-on" description="Masuk dengan kata sandi tidak tersedia. Mematikan ini tidak didukung." checked={draft.security.enforceSso} onCheckedChange={() => undefined} disabled />
+          <SwitchField id="se-sso" label="Wajibkan single sign-on" description={pick("Masuk dengan kata sandi tidak tersedia. Mematikan ini tidak didukung.", "Password sign-in is not available. Disabling this is not supported.")} checked={draft.security.enforceSso} onCheckedChange={() => undefined} disabled />
         </Panel>
       )}
 
       <Dialog open={confirm} onOpenChange={setConfirm}>
         <DialogContent
-          title="Simpan pengaturan ruang kerja?"
+          title={pick("Simpan pengaturan ruang kerja?", "Save workspace settings?")}
           description={`Applies to everyone in ${workspace.name} · ${workspace.environment}.`}
           footer={
             <>
@@ -342,7 +343,7 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
           }
         >
           <ConsequenceSummary rows={diffs.map((d) => ({ label: d.label, value: `${d.from} → ${d.to}`, emphasis: true }))} />
-          <InlineAlert tone="info" title="Tercatat di riwayat aktivitas bersama nama dan alasan Anda." className="mt-4" />
+          <InlineAlert tone="info" title={pick("Tercatat di riwayat aktivitas bersama nama dan alasan Anda.", "Recorded in the audit log with your name and reason.")} className="mt-4" />
           <Field className="mt-4" label="Alasan" htmlFor="set-reason" required hint="Minimal 5 karakter.">
             <Textarea id="set-reason" value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
           </Field>
@@ -356,12 +357,12 @@ const LABELS: Record<string, string> = {
   defaultHorizonDays: "Rentang bawaan",
   defaultFrequency: "Frekuensi bawaan",
   historyWindowDays: "Rentang historis bawaan",
-  deltaThreshold: "Batas perubahan perkiraan",
+  deltaThreshold: pick("Batas perubahan perkiraan", "Forecast change limit"),
   intervalWidthThreshold: "Batas lebar rentang",
   freshnessHours: "Batas pembaruan data",
-  overrideDeltaThreshold: "Batas perubahan manual (persen)",
-  overrideUnitsThreshold: "Batas perubahan manual (unit)",
-  planPublishRequiresApproval: "Rencana perlu persetujuan",
+  overrideDeltaThreshold: pick("Batas perubahan manual (persen)", "Override threshold (change)"),
+  overrideUnitsThreshold: pick("Batas perubahan manual (unit)", "Override threshold (units)"),
+  planPublishRequiresApproval: pick("Rencana perlu persetujuan", "Plans need approval"),
   retentionDays: "Audit retention",
   exportEnabled: "Audit export",
   sessionHours: "Session length",

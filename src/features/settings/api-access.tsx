@@ -20,14 +20,15 @@ import { EmptyState, ErrorState, InlineAlert, PermissionNotice, TableSkeleton } 
 import { UserIdentity } from "@/components/entities/identity";
 import { ChartDataTable } from "@/components/charts/chart-frame";
 import { TypedConfirmDialog } from "@/components/governance/typed-confirm";
+import { pick } from "@/lib/i18n";
 
 /** Settings › API & access (PLAT-001, PLAT-002). Administrator only; every change is audited. */
 export function ApiAccessSection() {
   const { can } = useSession();
-  if (!can("api.manage")) return <PermissionNotice permission="api.manage" message="API key dan webhook dikelola oleh administrator." />;
+  if (!can("api.manage")) return <PermissionNotice permission="api.manage" message={pick("API key dan webhook dikelola oleh administrator.", "API keys and webhooks are managed by administrators.")} />;
   return (
     <div className="flex flex-col gap-4">
-      <InlineAlert tone="info" title="Akses programatik bertindak atas nama ruang kerja.">
+      <InlineAlert tone="info" title={pick("Akses programatik bertindak atas nama ruang kerja.", "Programmatic access acts on behalf of the workspace.")}>
         Give each system its own key with the narrowest scopes it needs, set an expiry, and rotate keys when people with access leave.
       </InlineAlert>
       <ApiKeysPanel />
@@ -40,7 +41,7 @@ function SecretReveal({ secret, onDone }: { secret: string; onDone: () => void }
   const [copied, setCopied] = React.useState(false);
   return (
     <div className="flex flex-col gap-3">
-      <InlineAlert tone="warning" title="Salin key ini sekarang. Key tidak akan ditampilkan lagi.">
+      <InlineAlert tone="warning" title={pick("Salin key ini sekarang. Key tidak akan ditampilkan lagi.", "Copy this key now. It will not be shown again.")}>
         Store it in your secrets manager. If it is lost, rotate the key to issue a new one.
       </InlineAlert>
       <div className="flex items-center gap-2 rounded-md border border-border bg-subtle p-2">
@@ -58,7 +59,7 @@ function SecretReveal({ secret, onDone }: { secret: string; onDone: () => void }
           }}
         >
           {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
-          {copied ? "Tersalin" : "Salin key"}
+          {copied ? pick("Tersalin", "Copied") : pick("Salin key", "Copy key")}
         </Button>
       </div>
       <div className="flex justify-end">
@@ -83,21 +84,21 @@ function ApiKeysPanel() {
   const create = useApiMutation((c, _v: void) => createApiKey(c, { name, scopes, expiresInDays: expiry === "never" ? null : Number(expiry) }), {
     invalidate: inv,
     success: (r) => `Key “${r.key.name}” created`,
-    failure: "Key tidak dapat dibuat.",
+    failure: pick("Key tidak dapat dibuat.", "The key was not created."),
     onSuccess: (r) => setSecret(r.secret),
   });
   const rotate = useApiMutation((c, id: string) => rotateApiKey(c, id), {
     invalidate: inv,
     success: (r) => `Key “${r.key.name}” rotated`,
-    successDescription: "Rahasia sebelumnya langsung tidak berlaku.",
-    failure: "Key tidak dapat diputar.",
+    successDescription: pick("Rahasia sebelumnya langsung tidak berlaku.", "The previous secret stops working immediately."),
+    failure: pick("Key tidak dapat diputar.", "The key was not rotated."),
     onSuccess: (r) => {
       setRotating(null);
       setSecret(r.secret);
       setCreateOpen(true);
     },
   });
-  const revoke = useApiMutation((c, id: string) => revokeApiKey(c, id), { invalidate: inv, success: (k) => `Key “${k.name}” dicabut`, failure: "Key tidak dapat dicabut.", onSuccess: () => setRevoking(null) });
+  const revoke = useApiMutation((c, id: string) => revokeApiKey(c, id), { invalidate: inv, success: (k) => pick(`Key “${k.name}” dicabut`, `Key “${k.name}” revoked`), failure: pick("Key tidak dapat dicabut.", "The key was not revoked."), onSuccess: () => setRevoking(null) });
 
   const openCreate = () => {
     setName("");
@@ -109,8 +110,8 @@ function ApiKeysPanel() {
 
   return (
     <Panel
-      title="API key"
-      description="Key untuk sistem yang membaca perkiraan atau mengirim data. Hanya prefiksnya yang disimpan setelah dibuat."
+      title={pick("API key", "API keys")}
+      description={pick("Key untuk sistem yang membaca perkiraan atau mengirim data. Hanya prefiksnya yang disimpan setelah dibuat.", pick("Key untuk sistem yang membaca perkiraan atau mengirim data. Hanya awalan yang disimpan setelah dibuat.", "Keys for systems that read forecasts or push data. Only the prefix is stored after creation."))}
       actions={
         <Button size="sm" variant="primary" onClick={openCreate}>
           <Plus aria-hidden /> Create key
@@ -121,9 +122,9 @@ function ApiKeysPanel() {
       {q.isPending ? (
         <TableSkeleton rows={3} columns={5} />
       ) : q.isError ? (
-        <ErrorState compact what="API key tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />
+        <ErrorState compact what={pick("API key tidak dapat dimuat.", "API keys could not be loaded.")} error={q.error} onRetry={() => q.refetch()} />
       ) : q.data.length === 0 ? (
-        <EmptyState compact icon={KeyRound} title="Belum ada API key." description="Buat key untuk setiap sistem yang memerlukan akses programatik." />
+        <EmptyState compact icon={KeyRound} title={pick("Belum ada API key.", "No API keys yet.")} description={pick("Buat key untuk setiap sistem yang memerlukan akses programatik.", "Create a key for each system that needs programmatic access.")} />
       ) : (
         <ul>
           {q.data.map((k) => (
@@ -138,21 +139,21 @@ function ApiKeysPanel() {
                 ))}
               </span>
               <span className="hidden text-right text-xs text-fg-secondary sm:block">
-                <span className="block">{k.lastUsedAt ? `Dipakai ${formatRelative(k.lastUsedAt)}` : "Belum pernah dipakai"}</span>
+                <span className="block">{k.lastUsedAt ? pick(`Dipakai ${formatRelative(k.lastUsedAt)}`, `Used ${formatRelative(k.lastUsedAt)}`) : pick("Belum pernah dipakai", "Never used")}</span>
                 <span className={cn("block", k.status === "active" && k.expiresAt && new Date(k.expiresAt).getTime() - Date.now() < 30 * 86_400_000 && "font-semibold text-warning-fg")}>
-                  {k.expiresAt ? `${k.status === "expired" ? "Kedaluwarsa" : "Berakhir"} ${formatDate(k.expiresAt)}` : "Tanpa kedaluwarsa"}
+                  {k.expiresAt ? pick(`${k.status === "expired" ? "Kedaluwarsa" : "Berakhir"} ${formatDate(k.expiresAt)}`, `${k.status === "expired" ? "Expired" : "Expires"} ${formatDate(k.expiresAt)}`) : pick("Tanpa kedaluwarsa", "No expiry")}
                 </span>
               </span>
               <span className="flex items-center justify-end gap-1">
                 <StatusBadge status={k.status === "active" ? "active" : k.status === "expired" ? "stale" : "cancelled"} label={k.status === "active" ? "Active" : k.status === "expired" ? "Expired" : "Revoked"} size="sm" />
                 {k.status === "active" && (
                   <>
-                    <Tooltip content="Putar key">
+                    <Tooltip content={pick("Putar key", "Rotate key")}>
                       <Button size="icon-sm" variant="ghost" aria-label={`Rotate ${k.name}`} onClick={() => setRotating(k)}>
                         <RefreshCw aria-hidden />
                       </Button>
                     </Tooltip>
-                    <Tooltip content="Cabut key">
+                    <Tooltip content={pick("Cabut key", "Revoke key")}>
                       <Button size="icon-sm" variant="ghost" aria-label={`Revoke ${k.name}`} onClick={() => setRevoking(k)}>
                         <Trash2 aria-hidden />
                       </Button>
@@ -168,8 +169,8 @@ function ApiKeysPanel() {
       <Dialog open={createOpen} onOpenChange={(o) => { if (!o) { setCreateOpen(false); setSecret(null); } }}>
         <DialogContent
           size="md"
-          title={secret ? "API key baru Anda" : "Buat API key"}
-          description={secret ? undefined : "Beri nama key sesuai sistem yang memakainya, agar dapat ditelusuri di riwayat aktivitas."}
+          title={secret ? pick("API key baru Anda", "Your new API key") : pick("Buat API key", "Create API key")}
+          description={secret ? undefined : pick("Beri nama key sesuai sistem yang memakainya, agar dapat ditelusuri di riwayat aktivitas.", "Name the key after the system that uses it, so it can be traced in the audit log.")}
           footer={
             secret ? undefined : (
               <>
@@ -191,15 +192,15 @@ function ApiKeysPanel() {
                 <Input id="key-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Replenishment system" autoFocus />
               </Field>
               <fieldset>
-                <legend className="mb-2 label">Cakupan izin</legend>
+                <legend className="mb-2 label">{pick("Cakupan izin", "Permission scope")}</legend>
                 <div className="flex flex-col gap-2.5">
                   {API_SCOPES.map((s) => (
                     <CheckboxField key={s.value} id={`scope-${s.value}`} label={`${s.label} (${s.value})`} description={s.description} checked={scopes.includes(s.value)} onCheckedChange={(v) => setScopes((prev) => (v ? [...prev, s.value] : prev.filter((x) => x !== s.value)))} />
                   ))}
                 </div>
               </fieldset>
-              <Field label="Kedaluwarsa" htmlFor="key-exp" hint="Key berumur pendek membatasi dampak bila bocor.">
-                <Select id="key-exp" value={expiry} onValueChange={setExpiry} options={[{ value: "30", label: "30 hari" }, { value: "90", label: "90 hari" }, { value: "365", label: "1 tahun" }, { value: "never", label: "Tanpa kedaluwarsa (tidak disarankan)" }]} />
+              <Field label="Kedaluwarsa" htmlFor="key-exp" hint={pick("Key berumur pendek membatasi dampak bila bocor.", "Short-lived keys limit the blast radius if leaked.")}>
+                <Select id="key-exp" value={expiry} onValueChange={setExpiry} options={[{ value: "30", label: pick("30 hari", "30 days") }, { value: "90", label: pick("90 hari", "90 days") }, { value: "365", label: "1 tahun" }, { value: "never", label: pick("Tanpa kedaluwarsa (tidak disarankan)", "No expiry (not recommended)") }]} />
               </Field>
             </div>
           )}
@@ -215,7 +216,7 @@ function ApiKeysPanel() {
         loading={rotate.isPending}
         onConfirm={() => rotating && rotate.mutate(rotating.id)}
         consequences={[
-          { label: "Dampak", value: "Rahasia saat ini langsung tidak berlaku. Integrasi yang memakainya akan gagal sampai diperbarui.", emphasis: true },
+          { label: "Dampak", value: pick("Rahasia saat ini langsung tidak berlaku. Integrasi yang memakainya akan gagal sampai diperbarui.", "The current secret stops working immediately. Integrations using it fail until updated."), emphasis: true },
           { label: "Next", value: "A new secret is shown once. Update the system that uses this key." },
         ]}
       />
@@ -229,8 +230,8 @@ function ApiKeysPanel() {
         onConfirm={() => revoking && revoke.mutate(revoking.id)}
         consequences={[
           { label: "Scopes", value: revoking?.scopes.join(", ") },
-          { label: "Terakhir dipakai", value: revoking?.lastUsedAt ? formatDateTime(revoking.lastUsedAt) : "Belum pernah" },
-          { label: "Dampak", value: "Permintaan dengan key ini akan ditolak. Tindakan ini tidak dapat dibatalkan.", emphasis: true },
+          { label: pick("Terakhir dipakai", "Last used"), value: revoking?.lastUsedAt ? formatDateTime(revoking.lastUsedAt) : pick("Belum pernah", "Never") },
+          { label: "Dampak", value: pick("Permintaan dengan key ini akan ditolak. Tindakan ini tidak dapat dibatalkan.", "Requests with this key will be rejected. This cannot be undone."), emphasis: true },
         ]}
       />
     </Panel>
@@ -246,16 +247,16 @@ function WebhooksPanel() {
   const [openId, setOpenId] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState<Webhook | null>(null);
   const inv = [["webhooks"], ["audit"]] as const;
-  const create = useApiMutation((c, _v: void) => createWebhook(c, { url, description, events }), { invalidate: inv, success: "Endpoint ditambahkan", successDescription: "Kirim kejadian uji untuk memastikan endpoint menerima pengiriman.", failure: "Endpoint tidak dapat ditambahkan.", onSuccess: () => setCreateOpen(false) });
-  const toggle = useApiMutation((c, v: { id: string; enabled: boolean }) => setWebhookEnabled(c, v.id, v.enabled), { invalidate: inv, failure: "Endpoint tidak dapat diubah." });
-  const remove = useApiMutation((c, id: string) => deleteWebhook(c, id), { invalidate: inv, success: "Endpoint dihapus", failure: "Endpoint tidak dapat dihapus.", onSuccess: () => { setDeleting(null); setOpenId(null); } });
+  const create = useApiMutation((c, _v: void) => createWebhook(c, { url, description, events }), { invalidate: inv, success: "Endpoint ditambahkan", successDescription: pick("Kirim kejadian uji untuk memastikan endpoint menerima pengiriman.", "Send a test event to confirm the endpoint accepts deliveries."), failure: pick("Endpoint tidak dapat ditambahkan.", "The endpoint could not be added."), onSuccess: () => setCreateOpen(false) });
+  const toggle = useApiMutation((c, v: { id: string; enabled: boolean }) => setWebhookEnabled(c, v.id, v.enabled), { invalidate: inv, failure: pick("Endpoint tidak dapat diubah.", "The endpoint could not be updated.") });
+  const remove = useApiMutation((c, id: string) => deleteWebhook(c, id), { invalidate: inv, success: "Endpoint dihapus", failure: pick("Endpoint tidak dapat dihapus.", "The endpoint could not be deleted."), onSuccess: () => { setDeleting(null); setOpenId(null); } });
   const toast = useToast();
   const test = useApiMutation((c, id: string) => testWebhook(c, id), {
     invalidate: inv,
     success: (d) => (d.status < 300 ? `Test delivered (HTTP ${d.status})` : null),
-    failure: "Kejadian uji tidak terkirim.",
+    failure: pick("Kejadian uji tidak terkirim.", "The test event could not be sent."),
     onSuccess: (d) => {
-      if (d.status >= 300) toast({ tone: "critical", title: `Pengiriman uji gagal (HTTP ${d.status})`, description: "Endpoint tidak menerima kejadian. Pastikan endpoint dapat dijangkau dan mengembalikan 2xx." });
+      if (d.status >= 300) toast({ tone: "critical", title: `Pengiriman uji gagal (HTTP ${d.status})`, description: pick("Endpoint tidak menerima kejadian. Pastikan endpoint dapat dijangkau dan mengembalikan 2xx.", "The endpoint did not accept the event. Check it is reachable and returns 2xx.") });
     },
   });
   const open = q.data?.find((w) => w.id === openId) ?? null;
@@ -270,7 +271,7 @@ function WebhooksPanel() {
   return (
     <Panel
       title="Webhook"
-      description="Endpoint yang menerima kejadian bertanda tangan saat proses, persetujuan, atau rencana berubah."
+      description={pick("Endpoint yang menerima kejadian bertanda tangan saat proses, persetujuan, atau rencana berubah.", "Endpoints that receive signed events when runs, approvals or plans change.")}
       actions={
         <Button size="sm" variant="primary" onClick={() => { setUrl(""); setDescription(""); setEvents(["forecast_run.published"]); setCreateOpen(true); }}>
           <Plus aria-hidden /> Add endpoint
@@ -281,9 +282,9 @@ function WebhooksPanel() {
       {q.isPending ? (
         <TableSkeleton rows={2} columns={4} />
       ) : q.isError ? (
-        <ErrorState compact what="Webhook tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />
+        <ErrorState compact what={pick("Webhook tidak dapat dimuat.", "Webhooks could not be loaded.")} error={q.error} onRetry={() => q.refetch()} />
       ) : q.data.length === 0 ? (
-        <EmptyState compact icon={WebhookIcon} title="Belum ada endpoint webhook." description="Tambahkan endpoint untuk mengirim kejadian ke sistem pengisian ulang atau peringatan." />
+        <EmptyState compact icon={WebhookIcon} title={pick("Belum ada endpoint webhook.", "No webhook endpoints yet.")} description={pick("Tambahkan endpoint untuk mengirim kejadian ke sistem pengisian ulang atau peringatan.", "Add an endpoint to deliver events to replenishment or alerting systems.")} />
       ) : (
         <ul>
           {q.data.map((w) => {
@@ -309,7 +310,7 @@ function WebhooksPanel() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent
           title="Tambah endpoint webhook"
-          description="Kejadian dikirim sebagai JSON dengan header tanda tangan HMAC."
+          description={pick("Kejadian dikirim sebagai JSON dengan header tanda tangan HMAC.", "Events are delivered as JSON with an HMAC signature header.")}
           footer={
             <>
               <Button variant="ghost" onClick={() => setCreateOpen(false)}>
@@ -326,7 +327,7 @@ function WebhooksPanel() {
               <Input id="wh-url" type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/hooks/mesta" autoFocus />
             </Field>
             <Field label="Deskripsi" htmlFor="wh-desc" optional>
-              <Input id="wh-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Untuk apa endpoint ini" />
+              <Input id="wh-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={pick("Untuk apa endpoint ini", "What this endpoint is for")} />
             </Field>
             <fieldset>
               <legend className="mb-2 label">Kejadian</legend>
@@ -369,7 +370,7 @@ function WebhooksPanel() {
                 </InlineAlert>
               )}
               <section>
-                <h3 className="mb-2 card-title">Kejadian yang diikuti</h3>
+                <h3 className="mb-2 card-title">{pick("Kejadian yang diikuti", "Subscribed events")}</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {open.events.map((e) => (
                     <Tag key={e}>{e}</Tag>

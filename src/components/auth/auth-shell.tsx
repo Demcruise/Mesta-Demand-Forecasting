@@ -1,5 +1,6 @@
 import * as React from "react";
 import { MestaMark } from "@/components/shell/app-sidebar";
+import { pick } from "@/lib/i18n/core";
 
 /** AuthShell: enterprise sign-in frame. No marketing hero, no signup. */
 export function AuthShell({ children, footer }: { children: React.ReactNode; footer?: React.ReactNode }) {
@@ -20,9 +21,9 @@ export function AuthShell({ children, footer }: { children: React.ReactNode; foo
       <footer className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-6 py-5 caption">
         {footer ?? (
           <>
-            <span>Akses dikelola oleh penyedia identitas organisasi Anda.</span>
+            <span>{pick("Akses dikelola oleh penyedia identitas organisasi Anda.", "Access is managed by your organisation's identity provider.")}</span>
             <span aria-hidden>·</span>
-            <span>Butuh akses? Hubungi administrator ruang kerja Anda.</span>
+            <span>{pick("Butuh akses? Hubungi administrator ruang kerja Anda.", "Need access? Contact your workspace administrator.")}</span>
           </>
         )}
       </footer>

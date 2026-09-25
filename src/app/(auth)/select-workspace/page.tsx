@@ -10,6 +10,7 @@ import { findUser, WORKSPACES } from "@/lib/mock/directory";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { AuthCard, AuthShell } from "@/components/auth/auth-shell";
 import { Tag } from "@/components/feedback/status";
+import { pick } from "@/lib/i18n";
 
 function readSession() {
   const raw = document.cookie
@@ -56,7 +57,7 @@ function SelectWorkspace() {
 
   return (
     <AuthShell>
-      <AuthCard title="Pilih Ruang Kerja" description={`Masuk sebagai ${session.email}. Anda dapat mengganti ruang kerja nanti dari bilah samping.`}>
+      <AuthCard title={pick("Pilih Ruang Kerja", "Choose a workspace")} description={pick(`Masuk sebagai ${session.email}. Anda dapat mengganti ruang kerja nanti dari bilah samping.`, `Signed in as ${session.email}. You can switch workspace later from the sidebar.`)}>
         <ul className="flex flex-col gap-2">
           {workspaces.map((w) => (
             <li key={w.id}>
@@ -72,7 +73,7 @@ function SelectWorkspace() {
                   <span className="flex flex-wrap items-center gap-1.5">
                     <span className="body-sm font-semibold text-fg">{w.name}</span>
                     <Tag tone={w.environment === "Production" ? "primary" : w.environment === "Staging" ? "info" : "neutral"}>{w.environment}</Tag>
-                    {w.status !== "active" && <Tag tone="warning">{w.status === "degraded" ? "Menurun" : "Pemeliharaan"}</Tag>}
+                    {w.status !== "active" && <Tag tone="warning">{w.status === "degraded" ? pick("Menurun", "Degraded") : pick("Pemeliharaan", "Maintenance")}</Tag>}
                   </span>
                   <span className="caption">
                     {w.region} · Peran Anda: {ROLE_LABELS[session.role]}

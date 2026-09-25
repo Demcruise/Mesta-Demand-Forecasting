@@ -14,6 +14,7 @@ import { PageContainer, PageHeader, Panel } from "@/components/page/page";
 import { ErrorState, InlineAlert, PageSkeleton } from "@/components/feedback/states";
 import { StatusBadge } from "@/components/feedback/status";
 import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
+import { pick } from "@/lib/i18n";
 
 const INVALIDATE = [["onboarding"], ["sources"], ["overview"], ["dq"], ["nav-counts"], ["runs"]] as const;
 
@@ -22,12 +23,12 @@ const INVALIDATE = [["onboarding"], ["sources"], ["overview"], ["dq"], ["nav-cou
  * derived from the workspace, and the guide can be hidden; it is never forced.
  */
 export function OnboardingView() {
-  useBreadcrumbLeaf("Persiapan Ruang Kerja");
+  useBreadcrumbLeaf(pick("Persiapan Ruang Kerja", "Workspace setup"));
   const q = useApiQuery(["onboarding"], getOnboarding, { refetchInterval: 5000 });
-  const dismiss = useApiMutation((c, v: boolean) => setOnboardingDismissed(c, v), { invalidate: INVALIDATE, failure: "Panduan persiapan tidak dapat diperbarui." });
+  const dismiss = useApiMutation((c, v: boolean) => setOnboardingDismissed(c, v), { invalidate: INVALIDATE, failure: pick("Panduan persiapan tidak dapat diperbarui.", "The setup guide was not updated.") });
 
   if (q.isPending) return <PageContainer width="narrow"><PageSkeleton /></PageContainer>;
-  if (q.isError) return <PageContainer width="narrow"><PageHeader title="Persiapan Ruang Kerja" /><Panel><ErrorState what="Panduan persiapan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} /></Panel></PageContainer>;
+  if (q.isError) return <PageContainer width="narrow"><PageHeader title={pick("Persiapan Ruang Kerja", "Workspace setup")} /><Panel><ErrorState what={pick("Panduan persiapan tidak dapat dimuat.", "The setup guide could not be loaded.")} error={q.error} onRetry={() => q.refetch()} /></Panel></PageContainer>;
   const d = q.data;
   const required = d.steps.filter((s) => !s.optional);
   const requiredDone = required.filter((s) => s.done).length;
@@ -38,8 +39,8 @@ export function OnboardingView() {
     <PageContainer width="narrow">
       <PageHeader
         eyebrow={`${d.workspace.name} · ${d.workspace.environment}`}
-        title={d.complete ? "Persiapan selesai" : `Siapkan ${d.workspace.name}`}
-        description={d.complete ? "Ruang kerja ini sudah memiliki data dan acuan terbit. Bagian lain Mesta kini memakai angka yang nyata." : "Lima langkah membawa ruang kerja ini dari katalog kosong sampai acuan perencanaan yang diterbitkan. Tiap langkah diperbarui begitu pekerjaannya selesai, di mana pun Anda mengerjakannya."}
+        title={d.complete ? pick("Persiapan selesai", "Setup complete") : pick(`Siapkan ${d.workspace.name}`, `Set up ${d.workspace.name}`)}
+        description={d.complete ? pick("Ruang kerja ini sudah memiliki data dan acuan terbit. Bagian lain Mesta kini memakai angka yang nyata.", "This workspace has data and a published baseline. The rest of Mesta now works with real numbers.") : pick("Lima langkah membawa ruang kerja ini dari katalog kosong sampai acuan perencanaan yang diterbitkan. Tiap langkah diperbarui begitu pekerjaannya selesai, di mana pun Anda mengerjakannya.", "Five steps take this workspace from an empty catalogue to a published planning baseline. Each step updates as soon as the work is done, wherever you do it.")}
         actions={
           !d.dismissed ? (
             <Button variant="ghost" loading={dismiss.isPending} onClick={() => dismiss.mutate(true)}>
@@ -49,7 +50,7 @@ export function OnboardingView() {
         }
       />
       <div className="flex items-center gap-3" aria-live="polite">
-        <div role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Progres persiapan" className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+        <div role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={pick("Progres persiapan", "Setup progress")} className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
           <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${percent}%` }} />
         </div>
         <p className="shrink-0 caption tabular">
@@ -60,7 +61,7 @@ export function OnboardingView() {
       {d.complete && (
         <InlineAlert
           tone="success"
-          title="Ruang kerja sudah siap."
+          title={pick("Ruang kerja sudah siap.", "The workspace is ready.")}
           action={
             <Link href="/overview" className={buttonVariants({ variant: "primary", size: "sm" })}>
               <PartyPopper aria-hidden /> Go to overview
@@ -71,7 +72,7 @@ export function OnboardingView() {
         </InlineAlert>
       )}
 
-      <ol className="flex flex-col gap-3" aria-label="Langkah persiapan">
+      <ol className="flex flex-col gap-3" aria-label={pick("Langkah persiapan", "Setup steps")}>
         {d.steps.map((step, i) => (
           <StepCard key={step.key} step={step} index={i} current={step.key === nextKey} nextRunId={d.nextRunId} />
         ))}
@@ -91,14 +92,14 @@ function StepCard({ step, index, current, nextRunId }: { step: OnboardingStep; i
     >
       <div className="flex items-start gap-3">
         <span className="mt-0.5 shrink-0">
-          {step.done ? <CheckCircle2 className="size-5 text-success" aria-label="Selesai" /> : <Circle className={cn("size-5", current ? "text-primary" : "text-border-strong")} aria-label="Belum selesai" />}
+          {step.done ? <CheckCircle2 className="size-5 text-success" aria-label={pick("Selesai", "Done")} /> : <Circle className={cn("size-5", current ? "text-primary" : "text-border-strong")} aria-label={pick("Belum selesai", "Not done")} />}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className={cn("card-title", step.done && "text-fg-secondary")}>
               {index + 1}. {step.title}
             </h2>
-            {step.optional && <span className="caption">Opsional</span>}
+            {step.optional && <span className="caption">{pick("Opsional", "Optional")}</span>}
           </div>
           <p className="mt-0.5 body-sm text-fg-secondary">{step.description}</p>
           {step.detail && <p className="mt-1 caption font-semibold">{step.detail}</p>}
@@ -119,19 +120,19 @@ function StepCard({ step, index, current, nextRunId }: { step: OnboardingStep; i
 }
 
 function StepAction({ step, nextRunId }: { step: OnboardingStep; nextRunId: string | null }) {
-  const confirm = useApiMutation((c, _v: void) => confirmWorkspace(c), { invalidate: INVALIDATE, success: "Detail ruang kerja dikonfirmasi", failure: "Ruang kerja tidak dapat dikonfirmasi." });
+  const confirm = useApiMutation((c, _v: void) => confirmWorkspace(c), { invalidate: INVALIDATE, success: pick("Detail ruang kerja dikonfirmasi", "Workspace details confirmed"), failure: pick("Ruang kerja tidak dapat dikonfirmasi.", "The workspace was not confirmed.") });
   const checks = useApiMutation((c, _v: void) => runReadinessChecks(c), {
     invalidate: INVALIDATE,
-    success: (r) => (r.blocking ? `${r.blocking} temuan menghambat` : "Tidak ada temuan yang menghambat"),
-    successDescription: (r) => (r.warnings ? `${r.warnings} warning to review in Data quality. It does not block forecasting.` : undefined),
-    failure: "Pemeriksaan data tidak berjalan.",
+    success: (r) => (r.blocking ? pick(`${r.blocking} temuan menghambat`, `${r.blocking} blocking issues found`) : pick("Tidak ada temuan yang menghambat", "No blocking issues found")),
+    successDescription: (r) => (r.warnings ? pick(`${r.warnings} peringatan untuk ditinjau di Kualitas Data. Tidak menghambat perkiraan.`, pick(`${r.warnings} peringatan untuk ditinjau di Kualitas Data. Tidak menghambat perkiraan.`, `${r.warnings} warning to review in Data quality. It does not block forecasting.`)) : undefined),
+    failure: pick("Pemeriksaan data tidak berjalan.", "Data checks did not run."),
   });
   const sources = useApiQuery(["sources"], listSources, { enabled: step.key === "source" });
   const connect = useApiMutation((c, id: string) => setSourceConnection(c, id, true), {
     invalidate: INVALIDATE,
     success: (s) => `${s.name} connected`,
-    successDescription: "Permintaan historis sedang diisi ulang.",
-    failure: "Sumber tidak dapat disambungkan.",
+    successDescription: pick("Permintaan historis sedang diisi ulang.", "Historical demand is being backfilled."),
+    failure: pick("Sumber tidak dapat disambungkan.", "The source was not connected."),
   });
 
   switch (step.key) {
@@ -171,7 +172,7 @@ function StepAction({ step, nextRunId }: { step: OnboardingStep; nextRunId: stri
     case "readiness":
       return (
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" size="sm" loading={checks.isPending} loadingText="Menjalankan pemeriksaan" onClick={() => checks.mutate()}>
+          <Button variant="primary" size="sm" loading={checks.isPending} loadingText={pick("Menjalankan pemeriksaan", "Running checks")} onClick={() => checks.mutate()}>
             Run data checks
           </Button>
           <Link href="/demand-data/quality" className={buttonVariants({ size: "sm", variant: "ghost" })}>

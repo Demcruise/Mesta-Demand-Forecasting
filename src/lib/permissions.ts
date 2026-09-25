@@ -1,5 +1,5 @@
 import type { Role } from "@/types/domain";
-import { getActiveLocale, getTranslations } from "./i18n";
+import { getActiveLocale, getTranslations, localizedRecord, pick } from "./i18n/core";
 
 /**
  * Proposed RBAC model (backlog §44). Roles and grants require stakeholder approval
@@ -134,34 +134,58 @@ export function rolesWith(permission: Permission): Role[] {
   return (Object.keys(GRANTS) as Role[]).filter((r) => GRANTS[r].includes(permission));
 }
 
-export const PERMISSION_LABELS: Record<Permission, string> = {
-  "forecast.run.create": "membuat proses perkiraan",
-  "forecast.run.cancel": "membatalkan proses perkiraan",
-  "forecast.run.publish": "menerbitkan proses perkiraan",
-  "forecast.run.archive": "mengarsipkan proses perkiraan",
-  "forecast.override": "mengubah perkiraan",
-  "scenario.create": "membuat dan mengubah skenario",
-  "scenario.submit": "mengirim skenario untuk ditinjau",
-  "plan.edit": "mengubah keputusan perencanaan",
-  "plan.publish": "menerbitkan rencana",
-  "exception.update": "memperbarui item yang perlu ditinjau",
-  "approval.decide": "menyetujui atau menolak permintaan",
-  "model.manage": "mengelola model",
-  "backtest.run": "menjalankan uji model",
-  "data.manage": "menyelesaikan masalah kualitas data",
-  "integration.manage": "mengelola integrasi",
-  "users.manage": "mengelola pengguna dan akses",
-  "settings.workspace": "mengubah pengaturan ruang kerja",
-  "audit.view": "melihat riwayat aktivitas",
-  "api.manage": "mengelola API key dan webhook",
-  export: "mengekspor data",
-};
+export const PERMISSION_LABELS: Record<Permission, string> = localizedRecord<Permission>(
+  {
+    "forecast.run.create": "membuat proses perkiraan",
+    "forecast.run.cancel": "membatalkan proses perkiraan",
+    "forecast.run.publish": "menerbitkan proses perkiraan",
+    "forecast.run.archive": "mengarsipkan proses perkiraan",
+    "forecast.override": "mengubah perkiraan",
+    "scenario.create": "membuat dan mengubah skenario",
+    "scenario.submit": "mengirim skenario untuk ditinjau",
+    "plan.edit": "mengubah keputusan perencanaan",
+    "plan.publish": "menerbitkan rencana",
+    "exception.update": "memperbarui item yang perlu ditinjau",
+    "approval.decide": "menyetujui atau menolak permintaan",
+    "model.manage": "mengelola model",
+    "backtest.run": "menjalankan uji model",
+    "data.manage": "menyelesaikan masalah kualitas data",
+    "integration.manage": "mengelola integrasi",
+    "users.manage": "mengelola pengguna dan akses",
+    "settings.workspace": "mengubah pengaturan ruang kerja",
+    "audit.view": "melihat riwayat aktivitas",
+    "api.manage": "mengelola API key dan webhook",
+    export: "mengekspor data",
+  },
+  {
+    "forecast.run.create": "create forecast runs",
+    "forecast.run.cancel": "cancel forecast runs",
+    "forecast.run.publish": "publish forecast runs",
+    "forecast.run.archive": "archive forecast runs",
+    "forecast.override": "apply forecast overrides",
+    "scenario.create": "create and edit scenarios",
+    "scenario.submit": "submit scenarios for review",
+    "plan.edit": "edit planning decisions",
+    "plan.publish": "publish plans",
+    "exception.update": "update exceptions",
+    "approval.decide": "approve or reject requests",
+    "model.manage": "manage models",
+    "backtest.run": "run backtests",
+    "data.manage": "resolve data quality issues",
+    "integration.manage": "manage integrations",
+    "users.manage": "manage users and roles",
+    "settings.workspace": "change workspace settings",
+    "audit.view": "view the audit log",
+    "api.manage": "manage API keys and webhooks",
+    export: "export data",
+  },
+);
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS) as Permission[];
 
 export class PermissionError extends Error {
   constructor(public permission: Permission) {
-    super(`Anda tidak memiliki izin untuk ${PERMISSION_LABELS[permission]}.`);
+    super(pick(`Anda tidak memiliki izin untuk ${PERMISSION_LABELS[permission]}.`, `You do not have permission to ${PERMISSION_LABELS[permission]}.`));
     this.name = "PermissionError";
   }
 }

@@ -27,6 +27,7 @@ import { Sparkline } from "@/components/charts/small-charts";
 import { Tooltip } from "@/components/ui/overlay";
 import { OverrideDialog } from "@/features/forecast-detail/override-dialog";
 import { ForecastDrawer } from "./forecast-drawer";
+import { pick } from "@/lib/i18n";
 
 const FILTER_KEYS = ["category", "status", "exceptions", "delta", "lifecycle"] as const;
 
@@ -48,15 +49,15 @@ export function ExplorerView() {
   React.useEffect(() => setSelection({}), [runParam]);
 
   const exportMutation = useApiMutation(async (c, format: ExportFormat) => ({ format, ...(await exportForecastRows(c, runParam, state.query)) }), {
-    failure: "Ekspor gagal.",
-    success: (r) => `Mengekspor ${formatNumber(r.rows.length)} baris`,
-    successDescription: "Filter dan urutan yang aktif diterapkan.",
+    failure: pick("Ekspor gagal.", "Export failed."),
+    success: (r) => pick(`Mengekspor ${formatNumber(r.rows.length)} baris`, `Exported ${formatNumber(r.rows.length)} rows`),
+    successDescription: pick("Filter dan urutan yang aktif diterapkan.", "Current filters and sort were applied."),
     onSuccess: (r) => {
       track("export_requested", { rows: r.rows.length, surface: "explorer", format: r.format });
       downloadExport(
         r.format,
         `forecast-${r.run.id}`,
-        ["Proses", "SKU", "Produk", "Kategori", "Perkiraan", "Ubah manual", "Perkiraan sebelumnya", "Aktual periode sebelumnya", "Perubahan %", "Batas bawah 80%", "Batas atas 80%", "Status", "Perlu ditinjau"],
+        [pick("Proses", "Run"), "SKU", pick("Produk", "Product"), pick("Kategori", "Category"), pick("Perkiraan", "Forecast"), "Ubah manual", pick("Perkiraan sebelumnya", "Previous run"), "Aktual periode sebelumnya", pick("Perubahan %", "Change %"), "Batas bawah 80%", "Batas atas 80%", "Status", "Perlu ditinjau"],
         r.rows.map((x) => [r.run.id, x.product.sku, x.product.name, x.product.category, x.forecast, x.overrideUnits, x.previousForecast, x.actualLastPeriod, Number((x.deltaPercent * 100).toFixed(1)), x.lowerBound, x.upperBound, x.status, x.exceptionCount]),
         r.run.id,
       );
@@ -70,20 +71,20 @@ export function ExplorerView() {
     () => [
       {
         id: "product",
-        header: "Produk",
-        meta: { width: "minmax(260px, 2.4fr)", sortKey: "product", pinned: true, label: "Produk" } satisfies ColumnMeta,
+        header: pick("Produk", "Product"),
+        meta: { width: "minmax(260px, 2.4fr)", sortKey: "product", pinned: true, label: pick("Produk", "Product") } satisfies ColumnMeta,
         cell: ({ row }) => <ProductIdentity product={row.original.product} />,
       },
       {
         id: "forecast",
         header: "Forecast",
-        meta: { width: "120px", numeric: true, sortKey: "forecast", description: "Total perkiraan selama periode perkiraan. Nilai yang diubah manual menampilkan hasil ubahannya." } satisfies ColumnMeta,
+        meta: { width: "120px", numeric: true, sortKey: "forecast", description: pick("Total perkiraan selama periode perkiraan. Nilai yang diubah manual menampilkan hasil ubahannya.", "Total forecast over the run horizon. Overridden values show the override.") } satisfies ColumnMeta,
         cell: ({ row }) => {
           const r = row.original;
           return r.overrideUnits != null ? (
-            <Tooltip content={`Model forecast ${formatNumber(r.forecast)}; override ${formatNumber(r.overrideUnits)}`}>
+            <Tooltip content={pick(`Perkiraan model ${formatNumber(r.forecast)}; perubahan manual ${formatNumber(r.overrideUnits)}`, `Model forecast ${formatNumber(r.forecast)}; override ${formatNumber(r.overrideUnits)}`)}>
               <span tabIndex={0} className="inline-flex items-center gap-1 font-semibold">
-                <Pencil className="size-3 text-primary" aria-label="Diubah manual" />
+                <Pencil className="size-3 text-primary" aria-label={pick("Diubah manual", "Overridden")} />
                 {formatNumber(r.overrideUnits)}
               </span>
             </Tooltip>
@@ -94,32 +95,32 @@ export function ExplorerView() {
       },
       {
         id: "previous",
-        header: "Sebelumnya",
-        meta: { width: "110px", numeric: true, sortKey: "previous", hideBelow: "md", description: "Perkiraan dari proses terbit sebelumnya untuk periode yang sama." } satisfies ColumnMeta,
+        header: pick("Sebelumnya", "Previous"),
+        meta: { width: "110px", numeric: true, sortKey: "previous", hideBelow: "md", description: pick("Perkiraan dari proses terbit sebelumnya untuk periode yang sama.", "Forecast from the previous published run for the same horizon.") } satisfies ColumnMeta,
         cell: ({ row }) => <span className="text-fg-secondary">{formatNumber(row.original.previousForecast)}</span>,
       },
       {
         id: "actual",
-        header: "Aktual (sebelumnya)",
-        meta: { width: "120px", numeric: true, sortKey: "actual", hideBelow: "lg", description: "Permintaan aktual pada jumlah hari yang sama tepat sebelum periode perkiraan." } satisfies ColumnMeta,
+        header: pick("Aktual (sebelumnya)", "Actual (prior)"),
+        meta: { width: "120px", numeric: true, sortKey: "actual", hideBelow: "lg", description: pick("Permintaan aktual pada jumlah hari yang sama tepat sebelum periode perkiraan.", "Actual demand over the same number of days immediately before the forecast period.") } satisfies ColumnMeta,
         cell: ({ row }) => <span className="text-fg-secondary">{formatNumber(row.original.actualLastPeriod)}</span>,
       },
       {
         id: "delta",
-        header: "Perubahan",
-        meta: { width: "100px", numeric: true, sortKey: "deltaPercent", description: "Perubahan dibanding perkiraan sebelumnya. Ditandai bila melewati batas tinjauan 15%." } satisfies ColumnMeta,
+        header: pick("Perubahan", "Change"),
+        meta: { width: "100px", numeric: true, sortKey: "deltaPercent", description: pick("Perubahan dibanding perkiraan sebelumnya. Ditandai bila melewati batas tinjauan 15%.", "Change versus the previous run. Highlighted above the 15% review threshold.") } satisfies ColumnMeta,
         cell: ({ row }) => <ForecastDelta percent={row.original.deltaPercent} size="sm" />,
       },
       {
         id: "trend",
-        header: "Tren",
-        meta: { width: "112px", hideBelow: "lg", description: "Permintaan mingguan: 8 minggu aktual, lalu minggu perkiraan." } satisfies ColumnMeta,
+        header: pick("Tren", "Trend"),
+        meta: { width: "112px", hideBelow: "lg", description: pick("Permintaan mingguan: 8 minggu aktual, lalu minggu perkiraan.", "Weekly demand: 8 weeks of actuals, then forecast weeks.") } satisfies ColumnMeta,
         cell: ({ row }) => <Sparkline values={row.original.trend} forecastFrom={8} />,
       },
       {
         id: "interval",
-        header: "Rentang 80%",
-        meta: { width: "150px", numeric: true, sortKey: "width", hideBelow: "xl", description: "Rentang yang diperkirakan memuat permintaan aktual 80% dari waktu." } satisfies ColumnMeta,
+        header: pick("Rentang 80%", "80% interval"),
+        meta: { width: "150px", numeric: true, sortKey: "width", hideBelow: "xl", description: pick("Rentang yang diperkirakan memuat permintaan aktual 80% dari waktu.", "Range expected to contain actual demand 80% of the time.") } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="text-xs text-fg-secondary tabular">
             {formatNumber(row.original.lowerBound)}–{formatNumber(row.original.upperBound)}
@@ -134,7 +135,7 @@ export function ExplorerView() {
       },
       {
         id: "exceptions",
-        header: "Perlu Ditinjau",
+        header: pick("Perlu Ditinjau", "Exceptions"),
         meta: { width: "100px", numeric: true, sortKey: "exceptions", hideBelow: "md" } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.exceptionCount > 0 ? (
@@ -142,7 +143,7 @@ export function ExplorerView() {
               {row.original.exceptionCount} terbuka
             </Link>
           ) : (
-            <span className="text-fg-tertiary">Tidak ada</span>
+            <span className="text-fg-tertiary">{pick("Tidak ada", "None")}</span>
           ),
       },
     ],
@@ -152,7 +153,7 @@ export function ExplorerView() {
   const bulkBar = (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <p className="body-sm font-semibold text-fg">
-        {pluralize(selectedRows.length, "perkiraan")} dipilih · {formatNumber(selectedUnits)} unit
+        {pluralize(selectedRows.length, pick("perkiraan", "forecast"))} dipilih · {formatNumber(selectedUnits)} unit
       </p>
       <div className="flex flex-wrap items-center gap-2">
         {can("forecast.override") && (
@@ -170,32 +171,32 @@ export function ExplorerView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Perkiraan Permintaan"
-        description="Bandingkan perkiraan produk dan lihat perubahan yang perlu ditinjau."
+        title={pick("Perkiraan Permintaan", "Forecast explorer")}
+        description={pick("Bandingkan perkiraan produk dan lihat perubahan yang perlu ditinjau.", "Scan forecasts across products, find unusual changes and open any product to investigate.")}
         meta={
           run ? (
             <>
               <span className="text-xs font-medium text-fg-secondary">
-                {run.status === "published" ? "Acuan perencanaan" : "Belum diterbitkan"} · {scopeLabel(run)} · periode {run.horizonDays} hari sejak {formatDate(run.completedAt)}
+                {run.status === "published" ? pick("Acuan perencanaan", "Planning baseline") : pick("Belum diterbitkan", "Unpublished run")} · {scopeLabel(run)} · periode {run.horizonDays} hari sejak {formatDate(run.completedAt)}
               </span>
-              <FreshnessIndicator timestamp={run.completedAt} label="Dibuat" />
+              <FreshnessIndicator timestamp={run.completedAt} label={pick("Dibuat", "Generated")} />
             </>
           ) : undefined
         }
         actions={
           <Select
             className="w-[min(26rem,90vw)]"
-            aria-label="Proses perkiraan"
+            aria-label={pick("Proses perkiraan", "Forecast run")}
             prefix="Run:"
             value={run?.id}
             onValueChange={(v) => state.setParams({ run: v, id: null }, { resetPage: true })}
-            placeholder="Perkiraan terbit terakhir"
-            options={(runs.data?.items ?? []).map((r) => ({ value: r.id, label: `${r.id} · ${r.name}`, description: `${r.status === "published" ? "Diterbitkan" : "Selesai, belum diterbitkan"} · ${formatDateTime(r.completedAt)}` }))}
+            placeholder={pick("Perkiraan terbit terakhir", "Latest published run")}
+            options={(runs.data?.items ?? []).map((r) => ({ value: r.id, label: `${r.id} · ${r.name}`, description: pick(`${r.status === "published" ? "Diterbitkan" : "Selesai, belum diterbitkan"} · ${formatDateTime(r.completedAt)}`, `${r.status === "published" ? "Published" : "Completed, not published"} · ${formatDateTime(r.completedAt)}`) }))}
           />
         }
       />
       {run && run.status !== "published" && (
-        <InlineAlert tone="info" title="Anda melihat proses yang belum diterbitkan.">
+        <InlineAlert tone="info" title={pick("Anda melihat proses yang belum diterbitkan.", "You are viewing an unpublished run.")}>
           Perubahan manual hanya dapat diterapkan pada acuan perencanaan yang sudah diterbitkan.{" "}
           <Link href={`/forecasting/runs/${run.id}`} className="font-semibold text-primary hover:underline">
             Open run
@@ -203,7 +204,7 @@ export function ExplorerView() {
         </InlineAlert>
       )}
       <DataTable
-        label="Perkiraan per produk"
+        label={pick("Perkiraan per produk", "Forecasts by product")}
         columns={columns}
         data={q.data?.page.items}
         getRowId={(r) => r.id}
@@ -211,7 +212,7 @@ export function ExplorerView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Perkiraan tidak dapat dimuat."
+        errorWhat={pick("Perkiraan tidak dapat dimuat.", "Forecasts could not be loaded.")}
         storageKey="explorer"
         maxHeight="min(70vh, 44rem)"
         pageSizeOptions={[25, 50, 100, 250]}
@@ -225,57 +226,57 @@ export function ExplorerView() {
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.page.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
         onExport={can("export") ? (format) => exportMutation.mutate(format) : undefined}
-        exportLabel={exportMutation.isPending ? "Mengekspor…" : `Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`}
+        exportLabel={exportMutation.isPending ? pick("Mengekspor…", "Exporting…") : pick(`Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`, pick(`Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`, pick(`Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`, `Export ${q.data ? formatNumber(q.data.page.total) : ""} rows`)))}
         toolbarEnd={<SavedViewsMenu surface="explorer" />}
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Cari produk, SKU, atau merek"
+            searchPlaceholder={pick("Cari produk, SKU, atau merek", "Search product, SKU or brand")}
             sortOptions={[
-              { value: "forecast:desc", label: "Perkiraan terbesar", dir: "desc" },
-              { value: "deltaPercent:desc", label: "Kenaikan terbesar", dir: "desc" },
-              { value: "deltaPercent:asc", label: "Penurunan terbesar", dir: "asc" },
-              { value: "width:desc", label: "Rentang terlebar", dir: "desc" },
-              { value: "exceptions:desc", label: "Paling banyak ditinjau", dir: "desc" },
-              { value: "product:asc", label: "Produk A–Z", dir: "asc" },
+              { value: "forecast:desc", label: pick("Perkiraan terbesar", "Largest forecast"), dir: "desc" },
+              { value: "deltaPercent:desc", label: pick("Kenaikan terbesar", "Largest increase"), dir: "desc" },
+              { value: "deltaPercent:asc", label: pick("Penurunan terbesar", "Largest decrease"), dir: "asc" },
+              { value: "width:desc", label: pick("Rentang terlebar", "Widest interval"), dir: "desc" },
+              { value: "exceptions:desc", label: pick("Paling banyak ditinjau", "Most exceptions"), dir: "desc" },
+              { value: "product:asc", label: pick("Produk A–Z", "Product A–Z"), dir: "asc" },
             ]}
             facets={[
-              { key: "category", label: "Kategori", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
+              { key: "category", label: pick("Kategori", "Category"), primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
               {
                 key: "status",
                 label: "Status",
                 primary: true,
                 options: [
-                  { value: "needs_review", label: "Perlu ditinjau" },
-                  { value: "overridden", label: "Diubah manual" },
-                  { value: "normal", label: "Tidak ada masalah" },
+                  { value: "needs_review", label: pick("Perlu ditinjau", "Needs review") },
+                  { value: "overridden", label: pick("Diubah manual", "Overridden") },
+                  { value: "normal", label: pick("Tidak ada masalah", "No issues") },
                 ],
               },
               {
                 key: "delta",
-                label: "Perubahan vs sebelumnya",
+                label: pick("Perubahan vs sebelumnya", "Change vs previous"),
                 options: [
-                  { value: "increase", label: "Naik lebih dari 5%" },
-                  { value: "decrease", label: "Turun lebih dari 5%" },
-                  { value: "stable", label: "Dalam ±5%" },
+                  { value: "increase", label: pick("Naik lebih dari 5%", "Increase over 5%") },
+                  { value: "decrease", label: pick("Turun lebih dari 5%", "Decrease over 5%") },
+                  { value: "stable", label: pick("Dalam ±5%", "Within ±5%") },
                 ],
               },
               {
                 key: "exceptions",
-                label: "Perlu Ditinjau",
+                label: pick("Perlu Ditinjau", "Exceptions"),
                 options: [
-                  { value: "with", label: "Ada yang terbuka" },
-                  { value: "without", label: "Tidak ada yang terbuka" },
+                  { value: "with", label: pick("Ada yang terbuka", "Has open exceptions") },
+                  { value: "without", label: pick("Tidak ada yang terbuka", "No open exceptions") },
                 ],
               },
               {
                 key: "lifecycle",
-                label: "Siklus produk",
+                label: pick("Siklus produk", "Lifecycle"),
                 options: [
-                  { value: "new", label: "Baru" },
-                  { value: "core", label: "Inti" },
-                  { value: "seasonal", label: "Musiman" },
-                  { value: "end-of-life", label: "Akhir masa" },
+                  { value: "new", label: pick("Baru", "New") },
+                  { value: "core", label: pick("Inti", "Core") },
+                  { value: "seasonal", label: pick("Musiman", "Seasonal") },
+                  { value: "end-of-life", label: pick("Akhir masa", "End of life") },
                 ],
               },
             ]}
@@ -284,8 +285,8 @@ export function ExplorerView() {
         empty={
           <EmptyState
             icon={TableProperties}
-            title="Tidak ada perkiraan yang cocok dengan filter."
-            description="Coba kata kunci lain atau hapus filter untuk melihat semua produk pada proses ini."
+            title={pick("Tidak ada perkiraan yang cocok dengan filter.", "No forecasts match the current filters.")}
+            description={pick("Coba kata kunci lain atau hapus filter untuk melihat semua produk pada proses ini.", "Try a different search or clear filters to see all products in this run.")}
             action={
               <Button variant="secondary" onClick={state.clearFilters}>
                 Clear filters

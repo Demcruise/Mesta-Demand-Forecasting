@@ -2,11 +2,12 @@ import type { Alert, AuditEvent, ListQuery, Role, ServiceHealth } from "@/types/
 import { audit, baselineRun, getDb, nextId, runResult, type WorkspaceSettings } from "@/lib/mock/db";
 import { actorName, findUser, USERS } from "@/lib/mock/directory";
 import { can, ROLE_LABELS } from "@/lib/permissions";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatNumber } from "@/lib/format";
 import { aggregateInterval } from "@/lib/mock/series";
 import { DAY_MS, HOUR_MS, iso, MINUTE_MS } from "@/lib/mock/time";
 import { applyAll, applyList, ApiError, read, write, type ApiContext, type ListSpec } from "./client";
 import { syncRuns } from "./forecasting";
+import { pick } from "@/lib/i18n/core";
 
 /* ── Session events ────────────────────────────────────────────────── */
 
@@ -380,7 +381,7 @@ export function getMonitoring(ctx: ApiContext) {
     ];
     const alerts: Alert[] = [
       { id: "al_1", severity: "critical", title: "Promotions calendar sync failing", detail: "3 consecutive failures (HTTP 401).", href: "/demand-data/sources?id=src_promo", raisedAt: iso(db.today + 5 * HOUR_MS + 2 * MINUTE_MS), acknowledged: false },
-      { id: "al_2", severity: "warning", title: "Model bias drift · Frozen", detail: "Bias above +5% for 14 days on model 2.4.", href: "/models/performance", raisedAt: iso(now - 2 * DAY_MS), acknowledged: true },
+      { id: "al_2", severity: "warning", title: pick("Penyimpangan bias model · Beku", "Model bias drift · Frozen"), detail: pick("Bias di atas +5% selama 14 hari pada model 2.4.", "Bias above +5% for 14 days on model 2.4."), href: "/models/performance", raisedAt: iso(now - 2 * DAY_MS), acknowledged: true },
       { id: "al_3", severity: "warning", title: "Missing POS data · Sulawesi", detail: "No records for 3 stores for 6 days.", href: "/demand-data/quality?id=dq_001", raisedAt: iso(now - 26 * HOUR_MS), acknowledged: true },
     ];
     const jobs = db.runs.slice(0, 10);
@@ -454,15 +455,15 @@ export function getLineage(ctx: ApiContext, productId: string | null) {
     const approval = db.approvals.find((a) => a.type === "plan_publish") ?? null;
     const pos = db.sources.find((s) => s.id === "src_pos");
     const nodes: LineageNode[] = [
-      { key: "data", label: "Data", title: `${db.sources.filter((s) => s.status !== "disconnected").length} sources`, detail: `POS as of ${pos?.lastSuccessAt ? formatDateTime(pos.lastSuccessAt) : "unknown"}`, href: "/demand-data/sources", state: db.sources.some((s) => s.status === "failed") ? "warning" : "ok" },
-      { key: "quality", label: "Quality", title: openDq.length ? `${openDq.length} open issue${openDq.length === 1 ? "" : "s"}` : "No open issues", detail: openDq.some((i) => i.severity === "blocking") ? "Blocking issue present" : "No blocking issues", href: "/demand-data/quality", state: openDq.some((i) => i.severity === "blocking") ? "critical" : openDq.length ? "warning" : "ok" },
-      { key: "model", label: "Model", title: model ? `${model.name} ${model.version}` : "—", detail: model ? `WAPE ${(model.metrics.wape * 100).toFixed(1)}%` : "", href: model ? `/models/${model.id}` : null, state: model ? "ok" : "none" },
-      { key: "run", label: "Forecast run", title: run?.id ?? "—", detail: run ? run.name : "No published run", href: run ? `/forecasting/runs/${run.id}` : null, state: run ? "ok" : "none" },
-      { key: "forecast", label: "Forecast", title: product ? product.name : "All products", detail: product ? product.sku : `${db.products.length.toLocaleString("en-US")} SKUs`, href: product ? `/forecasting/detail/${product.id}` : "/forecasting/explorer", state: "ok" },
-      { key: "scenario", label: "Scenario", title: scenario?.name ?? "None applied", detail: scenario ? scenario.status.replace("_", " ") : "Baseline only", href: scenario ? `/scenarios/${scenario.id}` : "/scenarios", state: scenario ? (scenario.status === "approved" ? "ok" : "pending") : "none" },
-      { key: "plan", label: "Planning decision", title: db.plan.name, detail: `${db.plan.lines.length} lines · ${db.plan.status.replace("_", " ")}`, href: "/planning", state: db.plan.status === "published" ? "ok" : "pending" },
-      { key: "approval", label: "Approval", title: approval ? approval.status.replace("_", " ") : "Not requested", detail: approval ? `Requested by ${actorName(approval.requestedBy)}` : "", href: approval ? `/planning/approvals?id=${approval.id}` : "/planning/approvals", state: approval?.status === "approved" ? "ok" : approval ? "pending" : "none" },
-      { key: "published", label: "Published plan", title: db.plan.status === "published" ? "Published" : "Not published", detail: db.plan.status === "published" ? "Sent to replenishment" : "Waiting for approval", href: "/planning", state: db.plan.status === "published" ? "ok" : "none" },
+      { key: "data", label: pick("Data", "Data"), title: pick(`${db.sources.filter((s) => s.status !== "disconnected").length} sumber`, `${db.sources.filter((s) => s.status !== "disconnected").length} sources`), detail: pick(`POS per ${pos?.lastSuccessAt ? formatDateTime(pos.lastSuccessAt) : "tidak diketahui"}`, `POS as of ${pos?.lastSuccessAt ? formatDateTime(pos.lastSuccessAt) : "unknown"}`), href: "/demand-data/sources", state: db.sources.some((s) => s.status === "failed") ? "warning" : "ok" },
+      { key: "quality", label: pick("Kualitas", "Quality"), title: openDq.length ? pick(`${openDq.length} masalah terbuka`, `${openDq.length} open issue${openDq.length === 1 ? "" : "s"}`) : pick("Tidak ada masalah terbuka", "No open issues"), detail: openDq.some((i) => i.severity === "blocking") ? pick("Ada masalah menghambat", "Blocking issue present") : pick("Tidak ada masalah menghambat", "No blocking issues"), href: "/demand-data/quality", state: openDq.some((i) => i.severity === "blocking") ? "critical" : openDq.length ? "warning" : "ok" },
+      { key: "model", label: pick("Model", "Model"), title: model ? `${model.name} ${model.version}` : "—", detail: model ? `WAPE ${(model.metrics.wape * 100).toFixed(1)}%` : "", href: model ? `/models/${model.id}` : null, state: model ? "ok" : "none" },
+      { key: "run", label: pick("Proses perkiraan", "Forecast run"), title: run?.id ?? "—", detail: run ? run.name : pick("Belum ada proses terbit", "No published run"), href: run ? `/forecasting/runs/${run.id}` : null, state: run ? "ok" : "none" },
+      { key: "forecast", label: pick("Perkiraan", "Forecast"), title: product ? product.name : pick("Semua produk", "All products"), detail: product ? product.sku : `${formatNumber(db.products.length)} SKUs`, href: product ? `/forecasting/detail/${product.id}` : "/forecasting/explorer", state: "ok" },
+      { key: "scenario", label: pick("Skenario", "Scenario"), title: scenario?.name ?? pick("Tidak ada yang dipakai", "None applied"), detail: scenario ? pick({ draft: "draf", in_review: "dalam tinjauan", simulated: "disimulasikan", approved: "disetujui", rejected: "ditolak", archived: "diarsipkan" }[scenario.status] ?? scenario.status, scenario.status.replace("_", " ")) : pick("Hanya acuan", "Baseline only"), href: scenario ? `/scenarios/${scenario.id}` : "/scenarios", state: scenario ? (scenario.status === "approved" ? "ok" : "pending") : "none" },
+      { key: "plan", label: pick("Keputusan perencanaan", "Planning decision"), title: db.plan.name, detail: pick(`${db.plan.lines.length} baris · ${{ draft: "draf", in_review: "dalam tinjauan", published: "diterbitkan" }[db.plan.status]}`, `${db.plan.lines.length} lines · ${db.plan.status.replace("_", " ")}`), href: "/planning", state: db.plan.status === "published" ? "ok" : "pending" },
+      { key: "approval", label: pick("Persetujuan", "Approval"), title: approval ? pick({ pending: "menunggu", approved: "disetujui", rejected: "ditolak", revision_requested: "perlu revisi" }[approval.status], approval.status.replace("_", " ")) : pick("Belum diminta", "Not requested"), detail: approval ? pick(`Diminta oleh ${actorName(approval.requestedBy)}`, `Requested by ${actorName(approval.requestedBy)}`) : "", href: approval ? `/planning/approvals?id=${approval.id}` : "/planning/approvals", state: approval?.status === "approved" ? "ok" : approval ? "pending" : "none" },
+      { key: "published", label: pick("Rencana terbit", "Published plan"), title: db.plan.status === "published" ? pick("Diterbitkan", "Published") : pick("Belum diterbitkan", "Not published"), detail: db.plan.status === "published" ? pick("Dikirim ke pengisian ulang", "Sent to replenishment") : pick("Menunggu persetujuan", "Waiting for approval"), href: "/planning", state: db.plan.status === "published" ? "ok" : "none" },
       { key: "audit", label: "Audit", title: `${db.audit.length} events`, detail: "Every step above is recorded", href: "/administration/audit", state: "ok" },
     ];
     return nodes;

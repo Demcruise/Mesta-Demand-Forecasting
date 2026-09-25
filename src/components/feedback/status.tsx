@@ -26,7 +26,7 @@ import {
 import type { Severity, StatusKey } from "@/types/domain";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/overlay";
-import { getActiveLocale, getTranslations, type Locale } from "@/lib/i18n";
+import { getActiveLocale, getTranslations, type Locale } from "@/lib/i18n/core";
 
 /**
  * Status system (STATUS-001). Every status carries label + icon + semantic colour +

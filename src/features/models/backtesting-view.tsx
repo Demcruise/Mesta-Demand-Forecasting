@@ -24,6 +24,7 @@ import { ChartDataTable, ChartFrame } from "@/components/charts/chart-frame";
 import { Histogram } from "@/components/charts/small-charts";
 import { METRIC_DEFINITIONS, type MetricKey } from "./metric-definitions";
 import { metricValue } from "./model-detail-view";
+import { pick } from "@/lib/i18n";
 
 /** PAGE-BACKTESTING: select model → window → frequency → run → review → compare versions. */
 export function BacktestingView() {
@@ -41,8 +42,8 @@ export function BacktestingView() {
   const run = useApiMutation((c, _v: void) => runBacktest(c, { modelId, windowDays: Number(windowDays), frequency }), {
     invalidate: [["backtests"]],
     success: (b) => `Backtest ${b.id} started`,
-    successDescription: "Hasil muncul di bawah setelah selesai.",
-    failure: "Uji model tidak dimulai.",
+    successDescription: pick("Hasil muncul di bawah setelah selesai.", "Results appear below when it completes."),
+    failure: pick("Uji model tidak dimulai.", "The backtest did not start."),
     onSuccess: (b) => {
       track("forecast_run_started", { kind: "backtest" });
       state.setParams({ id: b.id });
@@ -57,14 +58,14 @@ export function BacktestingView() {
 
   const columns = React.useMemo<ColumnDef<Backtest, unknown>[]>(
     () => [
-      { id: "id", header: "Uji Model", meta: { width: "110px", pinned: true, label: "Uji Model" } satisfies ColumnMeta, cell: ({ row }) => <span className="mono-id text-fg">{row.original.id}</span> },
-      { id: "model", header: "Model", meta: { width: "minmax(200px, 2fr)" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate font-semibold">{modelName(row.original.modelId)}</span> },
-      { id: "window", header: "Periode", meta: { width: "200px", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateRange(row.original.windowStart, row.original.windowEnd)} · {row.original.frequency === "daily" ? "harian" : "mingguan"}</span> },
+      { id: "id", header: pick("Uji Model", "Backtest"), meta: { width: "110px", pinned: true, label: pick("Uji Model", "Backtest") } satisfies ColumnMeta, cell: ({ row }) => <span className="mono-id text-fg">{row.original.id}</span> },
+      { id: "model", header: pick("Model", "Model"), meta: { width: "minmax(200px, 2fr)" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate font-semibold">{modelName(row.original.modelId)}</span> },
+      { id: "window", header: pick("Periode", "Window"), meta: { width: "200px", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateRange(row.original.windowStart, row.original.windowEnd)} · {row.original.frequency === "daily" ? "harian" : "mingguan"}</span> },
       { id: "status", header: "Status", meta: { width: "130px" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
       { id: "wape", header: "WAPE", meta: { width: "90px", numeric: true } satisfies ColumnMeta, cell: ({ row }) => (row.original.metrics ? formatPercent(row.original.metrics.wape) : "—") },
       { id: "bias", header: "Bias", meta: { width: "90px", numeric: true, hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => (row.original.metrics ? <SignedPercent percent={row.original.metrics.bias} /> : "—") },
-      { id: "coverage", header: "Cakupan", meta: { width: "100px", numeric: true, hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => (row.original.metrics ? formatPercent(row.original.metrics.coverage80, 0) : "—") },
-      { id: "by", header: "Dijalankan oleh", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.createdBy} secondary={formatRelative(row.original.createdAt)} /> },
+      { id: "coverage", header: pick("Cakupan", "Coverage"), meta: { width: "100px", numeric: true, hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => (row.original.metrics ? formatPercent(row.original.metrics.coverage80, 0) : "—") },
+      { id: "by", header: pick("Dijalankan oleh", "Run by"), meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.createdBy} secondary={formatRelative(row.original.createdAt)} /> },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [models.data],
@@ -72,40 +73,40 @@ export function BacktestingView() {
 
   return (
     <PageContainer>
-      <PageHeader title="Uji Model" description="Bandingkan hasil model dengan data historis untuk melihat seberapa dekat perkiraannya." />
-      <Panel title="Jalankan Uji Model">
+      <PageHeader title={pick("Uji Model", "Backtesting")} description={pick("Bandingkan hasil model dengan data historis untuk melihat seberapa dekat perkiraannya.", pick("Putar ulang model pada periode lalu dan bandingkan perkiraannya dengan yang benar-benar terjadi.", "Replay a model over past periods and compare its forecasts with what actually happened."))} />
+      <Panel title={pick("Jalankan Uji Model", "Run a backtest")}>
         {!can("backtest.run") ? (
           <PermissionNotice permission="backtest.run" compact />
         ) : (
           <div className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
-            <Field label="Model" htmlFor="bt-model">
+            <Field label={pick("Model", "Model")} htmlFor="bt-model">
               <Select id="bt-model" value={modelId} onValueChange={setModelId} options={(models.data ?? []).filter((m) => m.status !== "archived").map((m) => ({ value: m.id, label: `${m.name} ${m.version}`, description: m.status }))} />
             </Field>
-            <Field label="Periode historis" htmlFor="bt-window">
+            <Field label={pick("Periode historis", "Historical window")} htmlFor="bt-window">
               <Select id="bt-window" value={windowDays} onValueChange={setWindowDays} options={["28", "56", "91", "180"].map((d) => ({ value: d, label: `Last ${d} days` }))} />
             </Field>
-            <Field label="Frekuensi evaluasi" htmlFor="bt-freq">
-              <Select id="bt-freq" value={frequency} onValueChange={(v) => setFrequency(v as Frequency)} options={[{ value: "daily", label: "Harian" }, { value: "weekly", label: "Mingguan" }]} />
+            <Field label={pick("Frekuensi evaluasi", "Evaluation frequency")} htmlFor="bt-freq">
+              <Select id="bt-freq" value={frequency} onValueChange={(v) => setFrequency(v as Frequency)} options={[{ value: "daily", label: pick("Harian", "Daily") }, { value: "weekly", label: pick("Mingguan", "Weekly") }]} />
             </Field>
-            <Button variant="primary" loading={run.isPending} loadingText="Memulai uji model" onClick={() => run.mutate()}>
+            <Button variant="primary" loading={run.isPending} loadingText={pick("Memulai uji model", "Starting backtest")} onClick={() => run.mutate()}>
               <Play aria-hidden /> Run backtest
             </Button>
           </div>
         )}
       </Panel>
       <DataTable
-        label="Uji model"
+        label={pick("Uji model", "Backtests")}
         columns={columns}
         data={q.data}
         getRowId={(b) => b.id}
         isLoading={q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Uji model tidak dapat dimuat."
+        errorWhat={pick("Uji model tidak dapat dimuat.", "Backtests could not be loaded.")}
         activeRowId={selected?.id}
         onRowClick={(b) => state.setParams({ id: b.id })}
         hideDensityToggle
-        empty={<EmptyState icon={FlaskConical} title="Belum ada uji model di ruang kerja ini." description="Jalankan uji model untuk melihat performa sebuah model." />}
+        empty={<EmptyState icon={FlaskConical} title={pick("Belum ada uji model di ruang kerja ini.", "No backtests have been run in this workspace.")} description={pick("Jalankan uji model untuk melihat performa sebuah model.", pick("Jalankan uji model untuk melihat bagaimana model akan tampil.", "Run a backtest to see how a model would have performed."))} />}
       />
       {selected && selected.status === "completed" && selected.metrics && (
         <PageSection
@@ -115,24 +116,24 @@ export function BacktestingView() {
             <Select
               size="sm"
               className="w-auto min-w-56"
-              aria-label="Bandingkan dengan"
-              prefix="Bandingkan dengan:"
+              aria-label={pick("Bandingkan dengan", "Compare with")}
+              prefix={pick("Bandingkan dengan:", "Compare with:")}
               value={compare?.id ?? "none"}
               onValueChange={(v) => state.setParams({ compare: v === "none" ? null : v })}
-              options={[{ value: "none", label: "Tanpa pembanding" }, ...(q.data ?? []).filter((b) => b.id !== selected.id && b.status === "completed").map((b) => ({ value: b.id, label: `${b.id} · ${modelName(b.modelId)}` }))]}
+              options={[{ value: "none", label: pick("Tanpa pembanding", "No comparison") }, ...(q.data ?? []).filter((b) => b.id !== selected.id && b.status === "completed").map((b) => ({ value: b.id, label: pick(`${b.id} · ${modelName(b.modelId)}`, pick(`${b.id} · ${modelName(b.modelId)}`, `${b.id} · ${modelName(b.modelId)}`)) }))]}
             />
           }
         >
           <Panel flush>
             <div className="p-4">
               <ChartDataTable
-                caption="Metrik uji model"
+                caption={pick("Metrik uji model", "Backtest metrics")}
                 maxHeight="none"
                 columns={[
-                  { key: "metric", label: "Metrik" },
+                  { key: "metric", label: pick("Metrik", "Metric") },
                   { key: "a", label: selected.id, numeric: true },
-                  ...(compare?.metrics ? [{ key: "b", label: compare.id, numeric: true }, { key: "diff", label: "Selisih", numeric: true }] : []),
-                  { key: "def", label: "Penjelasan" },
+                  ...(compare?.metrics ? [{ key: "b", label: compare.id, numeric: true }, { key: "diff", label: pick("Selisih", "Difference"), numeric: true }] : []),
+                  { key: "def", label: pick("Penjelasan", "Definition") },
                 ]}
                 rows={(Object.keys(METRIC_DEFINITIONS) as MetricKey[]).map((k) => {
                   const a = selected.metrics!;
@@ -148,36 +149,36 @@ export function BacktestingView() {
                 })}
               />
               {compare && compare.windowStart !== selected.windowStart && (
-                <p className="mt-2 text-xs font-semibold text-warning-fg">The two backtests use different windows. Differences may reflect the period, not the model.</p>
+                <p className="mt-2 text-xs font-semibold text-warning-fg">{pick("Kedua uji model memakai periode berbeda. Perbedaannya mungkin mencerminkan periode, bukan modelnya.", "The two backtests use different windows. Differences may reflect the period, not the model.")}</p>
               )}
             </div>
           </Panel>
           <ForecastChart
-            title="Perkiraan vs aktual"
-            question="Di mana model meleset, dan apakah aktual tetap berada di dalam rentang?"
+            title={pick("Perkiraan vs aktual", "Forecast vs actual")}
+            question={pick("Di mana model meleset, dan apakah aktual tetap berada di dalam rentang?", pick("Di mana model meleset, dan apakah aktual tetap dalam rentang?", "Where did the model miss, and did actuals stay inside the interval?"))}
             points={selected.points}
-            unit={`units per ${selected.frequency === "weekly" ? "week" : "day"}`}
+            unit={pick(`unit per ${selected.frequency === "weekly" ? "minggu" : "hari"}`, pick(`unit per ${selected.frequency === "weekly" ? "minggu" : "hari"}`, `units per ${selected.frequency === "weekly" ? "week" : "day"}`))}
             source={`Backtest ${selected.id}`}
             summary={`${formatPercent(selected.metrics.coverage80, 0)} of ${selected.frequency === "weekly" ? "weeks" : "days"} fell inside the 80% interval (target 80%). Bias ${formatDeltaPercent(selected.metrics.bias)}.`}
             height={260}
           />
           <div className="grid gap-4 xl:grid-cols-2">
             <ChartFrame
-              title="Sebaran selisih"
-              question="Berapa banyak SKU dengan selisih besar?"
+              title={pick("Sebaran selisih", "Error distribution")}
+              question={pick("Berapa banyak SKU dengan selisih besar?", "How many SKUs have large errors?")}
               unit="SKUs"
               timeframe={formatDateRange(selected.windowStart, selected.windowEnd)}
               summary={`${formatNumber(selected.errorBuckets.filter((b) => ["40–50%", "50–60%", "60%+"].includes(b.bucket)).reduce((s, b) => s + b.count, 0))} SKUs had WAPE of 40% or more (highlighted).`}
               chart={<Histogram rows={selected.errorBuckets} label="SKUs" highlight={(b) => ["40–50%", "50–60%", "60%+"].includes(b)} />}
-              table={<ChartDataTable caption="SKU per kelompok WAPE" columns={[{ key: "bucket", label: "WAPE" }, { key: "count", label: "SKU", numeric: true }]} rows={selected.errorBuckets.map((b) => ({ bucket: b.bucket, count: formatNumber(b.count) }))} />}
+              table={<ChartDataTable caption={pick("SKU per kelompok WAPE", "SKUs by WAPE bucket")} columns={[{ key: "bucket", label: "WAPE" }, { key: "count", label: pick("SKU", "SKUs"), numeric: true }]} rows={selected.errorBuckets.map((b) => ({ bucket: b.bucket, count: formatNumber(b.count) }))} />}
             />
-            <Panel title="Performa per segmen" flush>
+            <Panel title={pick("Performa per segmen", "Segment performance")} flush>
               <div className="p-4">
                 <ChartDataTable
-                  caption="Performa per segmen"
+                  caption={pick("Performa per segmen", "Segment performance")}
                   maxHeight="none"
                   columns={[
-                    { key: "s", label: "Kategori" },
+                    { key: "s", label: pick("Kategori", "Category") },
                     { key: "v", label: "Volume", numeric: true },
                     { key: "w", label: "WAPE", numeric: true },
                     { key: "b", label: "Bias", numeric: true },

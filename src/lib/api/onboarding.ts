@@ -3,6 +3,7 @@ import { audit, getDb, nextId } from "@/lib/mock/db";
 import { iso } from "@/lib/mock/time";
 import { ApiError, read, write, type ApiContext } from "./client";
 import { syncRuns } from "./forecasting";
+import { pick } from "@/lib/i18n/core";
 
 /**
  * ONBOARDING-001: Welcome → Workspace → Data source → Data readiness → First forecast.
@@ -64,7 +65,7 @@ export function getOnboarding(ctx: ApiContext) {
       {
         key: "forecast",
         title: "Run the first forecast",
-        description: "Create a forecast run for the whole catalogue with the default model.",
+        description: pick("Buat proses perkiraan untuk seluruh katalog dengan model bawaan.", "Create a forecast run for the whole catalogue with the default model."),
         done: !!anyRun,
         optional: false,
         permission: "forecast.run.create",

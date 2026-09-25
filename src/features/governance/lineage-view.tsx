@@ -10,14 +10,21 @@ import { cn } from "@/lib/utils";
 import { PageContainer, PageHeader, Panel } from "@/components/page/page";
 import { ErrorState, PageSkeleton } from "@/components/feedback/states";
 import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
+import { pick, localized } from "@/lib/i18n";
 
-const STATE: Record<LineageNode["state"], { icon: React.ComponentType<{ className?: string }>; cls: string; label: string }> = {
-  ok: { icon: CheckCircle2, cls: "text-success", label: "Sudah siap" },
+const STATE: Record<LineageNode["state"], { icon: React.ComponentType<{ className?: string }>; cls: string; label: string }> = localized({
+  ok: { icon: CheckCircle2, cls: "text-success", label: pick("Sudah siap", "In place") },
   warning: { icon: AlertTriangle, cls: "text-warning", label: "Perlu perhatian" },
   critical: { icon: AlertOctagon, cls: "text-critical", label: "Masalah menghambat" },
   pending: { icon: Clock, cls: "text-info", label: "Menunggu" },
-  none: { icon: Circle, cls: "text-fg-disabled", label: "Belum dimulai" },
-};
+  none: { icon: Circle, cls: "text-fg-disabled", label: pick("Belum dimulai", "Not started") },
+}, {
+  ok: { icon: CheckCircle2, cls: "text-success", label: "In place" },
+  warning: { icon: AlertTriangle, cls: "text-warning", label: "Needs attention" },
+  critical: { icon: AlertOctagon, cls: "text-critical", label: "Blocking issue" },
+  pending: { icon: Clock, cls: "text-info", label: "Pending" },
+  none: { icon: Circle, cls: "text-fg-disabled", label: "Not started" },
+});
 
 /**
  * LINEAGE-001: Data → Quality → Model → Run → Forecast → Scenario → Plan → Approval →
@@ -26,14 +33,14 @@ const STATE: Record<LineageNode["state"], { icon: React.ComponentType<{ classNam
 export function LineageView() {
   const params = useSearchParams();
   const productId = params.get("product");
-  useBreadcrumbLeaf("Sumber Keputusan");
+  useBreadcrumbLeaf(pick("Sumber Keputusan", "Decision lineage"));
   const q = useApiQuery(["lineage", productId], (c) => getLineage(c, productId));
   if (q.isPending) return <PageContainer><PageSkeleton /></PageContainer>;
-  if (q.isError) return <PageContainer><PageHeader title="Sumber Keputusan" /><Panel><ErrorState what="Sumber keputusan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} /></Panel></PageContainer>;
+  if (q.isError) return <PageContainer><PageHeader title={pick("Sumber Keputusan", "Decision lineage")} /><Panel><ErrorState what={pick("Sumber keputusan tidak dapat dimuat.", "Lineage could not be loaded.")} error={q.error} onRetry={() => q.refetch()} /></Panel></PageContainer>;
   return (
     <PageContainer width="narrow">
-      <PageHeader title="Sumber Keputusan" description={`Bagaimana keputusan perencanaan ${productId ? "produk ini" : "hari ini"} dihasilkan, dari data sumber sampai riwayat aktivitas. Setiap langkah tertaut ke catatannya.`} />
-      <ol className="flex flex-col" aria-label="Sumber keputusan">
+      <PageHeader title={pick("Sumber Keputusan", "Decision lineage")} description={pick(`Bagaimana keputusan perencanaan ${productId ? "produk ini" : "hari ini"} dihasilkan, dari data sumber sampai riwayat aktivitas. Setiap langkah tertaut ke catatannya.`, pick(`Bagaimana keputusan perencanaan ${productId ? "produk ini" : "hari ini"} dihasilkan, dari data sumber sampai riwayat aktivitas. Setiap langkah tertaut ke catatannya.`, pick(`Bagaimana keputusan perencanaan ${productId ? "produk ini" : "hari ini"} dihasilkan, dari data sumber sampai riwayat aktivitas. Setiap langkah tertaut ke catatannya.`, `How ${productId ? "this product's" : "today's"} planning decision was produced, from source data to audit. Each step links to its record.`)))} />
+      <ol className="flex flex-col" aria-label={pick("Sumber keputusan", "Decision lineage")}>
         {q.data.map((n, i) => {
           const s = STATE[n.state];
           const Icon = s.icon;

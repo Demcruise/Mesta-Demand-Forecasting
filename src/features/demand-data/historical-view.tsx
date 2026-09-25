@@ -21,6 +21,7 @@ import { FreshnessIndicator } from "@/components/feedback/freshness";
 import { Tag } from "@/components/feedback/status";
 import { ProductIdentity } from "@/components/entities/identity";
 import { Tooltip } from "@/components/ui/overlay";
+import { pick } from "@/lib/i18n";
 
 type Row = DemandRecord & { product: Product | undefined };
 
@@ -40,33 +41,33 @@ export function HistoricalView() {
 
   const columns = React.useMemo<ColumnDef<Row, unknown>[]>(
     () => [
-      { id: "date", header: "Tanggal", meta: { width: "120px", sortKey: "date" } satisfies ColumnMeta, cell: ({ row }) => <span className="tabular whitespace-nowrap">{formatDate(row.original.date)}</span> },
-      { id: "product", header: "Produk", meta: { width: "minmax(260px, 2.5fr)", pinned: true, label: "Produk" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original.product} href={`/forecasting/detail/${row.original.productId}`} /> },
+      { id: "date", header: pick("Tanggal", "Date"), meta: { width: "120px", sortKey: "date" } satisfies ColumnMeta, cell: ({ row }) => <span className="tabular whitespace-nowrap">{formatDate(row.original.date)}</span> },
+      { id: "product", header: pick("Produk", "Product"), meta: { width: "minmax(260px, 2.5fr)", pinned: true, label: pick("Produk", "Product") } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original.product} href={`/forecasting/detail/${row.original.productId}`} /> },
       {
         id: "units",
-        header: "Permintaan",
-        meta: { width: "110px", numeric: true, description: "Unit terjual (POS) atau dipesan (ERP) pada hari itu." } satisfies ColumnMeta,
+        header: pick("Permintaan", "Demand"),
+        meta: { width: "110px", numeric: true, description: pick("Unit terjual (POS) atau dipesan (ERP) pada hari itu.", "Units sold (POS) or ordered (ERP) on the day.") } satisfies ColumnMeta,
         cell: ({ row }) => <span className="font-semibold">{formatNumber(row.original.units)}</span>,
       },
-      { id: "unit", header: "Satuan", meta: { width: "90px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.product?.unit}</span> },
-      { id: "location", header: "Lokasi", meta: { width: "minmax(140px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: () => <span className="truncate text-fg-secondary">{q.data?.location?.name ?? "Semua lokasi"}</span> },
-      { id: "source", header: "Sumber", meta: { width: "90px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{SOURCE_LABELS[row.original.sourceId] ?? row.original.sourceId}</Tag> },
+      { id: "unit", header: pick("Satuan", "Unit"), meta: { width: "90px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.product?.unit}</span> },
+      { id: "location", header: pick("Lokasi", "Location"), meta: { width: "minmax(140px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: () => <span className="truncate text-fg-secondary">{q.data?.location?.name ?? pick("Semua lokasi", "All locations")}</span> },
+      { id: "source", header: pick("Sumber", "Source"), meta: { width: "90px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{SOURCE_LABELS[row.original.sourceId] ?? row.original.sourceId}</Tag> },
       {
         id: "quality",
-        header: "Kualitas",
-        meta: { width: "120px", description: "Hasil pemeriksaan kualitas data untuk catatan ini." } satisfies ColumnMeta,
+        header: pick("Kualitas", "Quality"),
+        meta: { width: "120px", description: pick("Hasil pemeriksaan kualitas data untuk catatan ini.", "Result of data quality checks for this record.") } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.quality === "ok" ? (
-            <span className="text-xs text-fg-tertiary">Lolos</span>
+            <span className="text-xs text-fg-tertiary">{pick("Lolos", "Passed")}</span>
           ) : (
-            <Tooltip content={row.original.quality === "blocking" ? "Data hilang: tidak ada data POS untuk hari ini (DQ-001)." : "Terkena peringatan kualitas data yang masih terbuka."}>
+            <Tooltip content={row.original.quality === "blocking" ? pick("Data hilang: tidak ada data POS untuk hari ini (DQ-001).", pick("Catatan hilang: tidak ada data POS yang diterima untuk hari ini (DQ-001).", "Missing record: no POS data received for this day (DQ-001).")) : pick("Terkena peringatan kualitas data yang masih terbuka.", pick("Terdampak peringatan kualitas data yang terbuka.", "Affected by an open data quality warning."))}>
               <span tabIndex={0}>
-                <Tag tone={row.original.quality === "blocking" ? "critical" : "warning"}>{row.original.quality === "blocking" ? "Hilang" : "Peringatan"}</Tag>
+                <Tag tone={row.original.quality === "blocking" ? "critical" : "warning"}>{row.original.quality === "blocking" ? pick("Hilang", "Missing") : pick("Peringatan", "Warning")}</Tag>
               </span>
             </Tooltip>
           ),
       },
-      { id: "updated", header: "Diperbarui", meta: { width: "150px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateTime(row.original.updatedAt)}</span> },
+      { id: "updated", header: pick("Diperbarui", "Updated"), meta: { width: "150px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateTime(row.original.updatedAt)}</span> },
     ],
     [q.data?.location],
   );
@@ -74,22 +75,22 @@ export function HistoricalView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Permintaan Historis"
-        description="Permintaan harian per produk, seperti yang dipakai model perkiraan. Catatan diambil per halaman dari penyimpanan permintaan."
+        title={pick("Permintaan Historis", "Historical demand")}
+        description={pick("Permintaan harian per produk, seperti yang dipakai model perkiraan. Catatan diambil per halaman dari penyimpanan permintaan.", "Daily demand by product, as used by the forecasting models. Records are queried page by page from the demand store.")}
         meta={
           <>
             {q.data && <span className="text-xs font-medium text-fg-secondary">History available from {formatDate(q.data.window.earliest)}</span>}
-            <FreshnessIndicator timestamp={q.data?.page.asOf} label="Data POS diperbarui" source="Transaksi POS" />
+            <FreshnessIndicator timestamp={q.data?.page.asOf} label={pick("Data POS diperbarui", "POS data updated")} source={pick("Transaksi POS", "POS transactions")} />
           </>
         }
       />
       {state.query.filters?.quality?.length ? (
-        <InlineAlert tone="info" title="Filter kualitas memeriksa maksimal 5.000 catatan.">
+        <InlineAlert tone="info" title={pick("Filter kualitas memeriksa maksimal 5.000 catatan.", "Quality filter scans at most 5,000 records.")}>
           Narrow the date range or category for complete results.
         </InlineAlert>
       ) : null}
       <DataTable
-        label="Catatan permintaan historis"
+        label={pick("Catatan permintaan historis", "Historical demand records")}
         columns={columns}
         data={rows}
         getRowId={(r) => r.id}
@@ -97,7 +98,7 @@ export function HistoricalView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Permintaan historis tidak dapat dimuat."
+        errorWhat={pick("Permintaan historis tidak dapat dimuat.", "Historical demand could not be loaded.")}
         storageKey="historical"
         maxHeight="min(70vh, 44rem)"
         pageSizeOptions={[25, 50, 100, 250]}
@@ -108,17 +109,17 @@ export function HistoricalView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Cari produk atau SKU"
+            searchPlaceholder={pick("Cari produk atau SKU", "Search product or SKU")}
             facets={[
-              { key: "category", label: "Kategori", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
+              { key: "category", label: pick("Kategori", "Category"), primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
               {
                 key: "quality",
-                label: "Kualitas",
+                label: pick("Kualitas", "Quality"),
                 primary: true,
                 options: [
-                  { value: "blocking", label: "Hilang" },
-                  { value: "warning", label: "Peringatan" },
-                  { value: "ok", label: "Lolos" },
+                  { value: "blocking", label: pick("Hilang", "Missing") },
+                  { value: "warning", label: pick("Peringatan", "Warning") },
+                  { value: "ok", label: pick("Lolos", "Passed") },
                 ],
               },
             ]}
@@ -133,19 +134,19 @@ export function HistoricalView() {
             <Select
               size="sm"
               className="w-auto min-w-44"
-              aria-label="Lokasi"
-              prefix="Lokasi:"
+              aria-label={pick("Lokasi", "Location")}
+              prefix={pick("Lokasi:", "Location:")}
               value={locationId || "all"}
               onValueChange={(v) => state.setParams({ location: v === "all" ? null : v }, { resetPage: true })}
-              options={[{ value: "all", label: "Semua lokasi" }, ...facets.locations.map((l) => ({ value: l.id, label: l.name, description: l.region }))]}
+              options={[{ value: "all", label: pick("Semua lokasi", "All locations") }, ...facets.locations.map((l) => ({ value: l.id, label: l.name, description: l.region }))]}
             />
           </FilterBar>
         }
         empty={
           <EmptyState
             icon={History}
-            title="Tidak ada catatan permintaan yang cocok dengan filter."
-            description="Rentang tanggal mungkin di luar riwayat yang dimuat, atau tidak ada produk yang cocok dengan pencarian."
+            title={pick("Tidak ada catatan permintaan yang cocok dengan filter.", "No demand records match the current filters.")}
+            description={pick("Rentang tanggal mungkin di luar riwayat yang dimuat, atau tidak ada produk yang cocok dengan pencarian.", "The date range may be outside the loaded history, or no product matches the search.")}
             action={
               <Button variant="secondary" onClick={state.clearFilters}>
                 Clear filters

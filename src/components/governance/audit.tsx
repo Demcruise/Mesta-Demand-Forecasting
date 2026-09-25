@@ -10,34 +10,64 @@ import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/entities/identity";
 import { Tooltip } from "@/components/ui/overlay";
 import { EmptyState } from "@/components/feedback/states";
+import { localizedRecord, pick } from "@/lib/i18n";
 
-export const ACTION_LABELS: Record<AuditAction, string> = {
-  sign_in: "Masuk",
-  sign_out: "Keluar",
-  workspace_switch: "Ganti ruang kerja",
-  create_forecast_run: "Proses perkiraan",
-  cancel_forecast_run: "Membatalkan proses perkiraan",
-  retry_forecast_run: "Menjalankan ulang proses perkiraan",
-  publish_forecast_run: "Menerbitkan proses perkiraan",
-  archive_forecast_run: "Mengarsipkan proses perkiraan",
-  approve: "Menyetujui",
-  reject: "Menolak",
-  request_revision: "Meminta revisi",
-  override: "Menerapkan perubahan manual",
-  create_scenario: "Membuat skenario",
-  edit_scenario: "Mengubah skenario",
-  simulate_scenario: "Menyimulasikan skenario",
-  submit_scenario: "Mengirim skenario",
-  publish_plan: "Menerbitkan rencana",
-  update_plan: "Memperbarui rencana",
-  resolve_exception: "Menyelesaikan item",
-  update_exception: "Memperbarui item",
-  change_settings: "Mengubah pengaturan",
-  change_permissions: "Mengubah akses",
-  integration_update: "Integrasi diperbarui",
-  run_backtest: "Menjalankan uji model",
-  set_default_model: "Perubahan model",
-};
+export const ACTION_LABELS: Record<AuditAction, string> = localizedRecord(
+  {
+    sign_in: "Masuk",
+    sign_out: "Keluar",
+    workspace_switch: "Ganti ruang kerja",
+    create_forecast_run: "Proses perkiraan",
+    cancel_forecast_run: "Membatalkan proses perkiraan",
+    retry_forecast_run: "Menjalankan ulang proses perkiraan",
+    publish_forecast_run: "Menerbitkan proses perkiraan",
+    archive_forecast_run: "Mengarsipkan proses perkiraan",
+    approve: "Menyetujui",
+    reject: "Menolak",
+    request_revision: "Meminta revisi",
+    override: "Menerapkan perubahan manual",
+    create_scenario: "Membuat skenario",
+    edit_scenario: "Mengubah skenario",
+    simulate_scenario: "Menyimulasikan skenario",
+    submit_scenario: "Mengirim skenario",
+    publish_plan: "Menerbitkan rencana",
+    update_plan: "Memperbarui rencana",
+    resolve_exception: "Menyelesaikan item",
+    update_exception: "Memperbarui item",
+    change_settings: "Mengubah pengaturan",
+    change_permissions: "Mengubah akses",
+    integration_update: "Integrasi diperbarui",
+    run_backtest: "Menjalankan uji model",
+    set_default_model: "Perubahan model",
+  },
+  {
+    sign_in: "Signed in",
+    sign_out: "Signed out",
+    workspace_switch: "Switched workspace",
+    create_forecast_run: "Forecast run",
+    cancel_forecast_run: "Cancelled forecast run",
+    retry_forecast_run: "Retried forecast run",
+    publish_forecast_run: "Published forecast run",
+    archive_forecast_run: "Archived forecast run",
+    approve: "Approved",
+    reject: "Rejected",
+    request_revision: "Requested revision",
+    override: "Applied override",
+    create_scenario: "Created scenario",
+    edit_scenario: "Edited scenario",
+    simulate_scenario: "Simulated scenario",
+    submit_scenario: "Submitted scenario",
+    publish_plan: "Published plan",
+    update_plan: "Updated plan",
+    resolve_exception: "Resolved exception",
+    update_exception: "Updated exception",
+    change_settings: "Changed setting",
+    change_permissions: "Changed access",
+    integration_update: "Integration updated",
+    run_backtest: "Ran backtest",
+    set_default_model: "Model change",
+  },
+);
 
 /** Where an audited entity lives, so every event links back to its source (LINEAGE-001). */
 export function entityHref(e: Pick<AuditEvent, "entityType" | "entityId">): string | null {
@@ -69,10 +99,10 @@ export function entityHref(e: Pick<AuditEvent, "entityType" | "entityId">): stri
 
 function describe(e: AuditEvent) {
   if (e.action === "create_forecast_run") {
-    if (e.newState === "completed") return "Forecast run completed";
-    return "Created forecast run";
+    if (e.newState === "completed") return pick("Proses perkiraan selesai", "Forecast run completed");
+    return pick("Membuat proses perkiraan", "Created forecast run");
   }
-  if (e.action === "publish_forecast_run" && e.newState === "superseded") return "Baseline superseded";
+  if (e.action === "publish_forecast_run" && e.newState === "superseded") return pick("Acuan digantikan", "Baseline superseded");
   return ACTION_LABELS[e.action];
 }
 
@@ -123,10 +153,10 @@ export function AuditEventItem({ event, showEntity = true }: { event: AuditEvent
   );
 }
 
-export function AuditTimeline({ events, emptyText = "Belum ada aktivitas tercatat.", className }: { events: AuditEvent[]; emptyText?: string; className?: string }) {
-  if (events.length === 0) return <EmptyState compact title={emptyText} description="Tindakan penting seperti proses, perubahan manual, dan persetujuan dicatat di sini." />;
+export function AuditTimeline({ events, emptyText, className }: { events: AuditEvent[]; emptyText?: string; className?: string }) {
+  if (events.length === 0) return <EmptyState compact title={emptyText ?? pick("Belum ada aktivitas tercatat.", "No activity recorded yet.")} description={pick("Tindakan penting seperti proses, perubahan manual, dan persetujuan dicatat di sini.", "Consequential actions such as runs, overrides and approvals are recorded here.")} />;
   return (
-    <ol className={cn("relative", className)} aria-label="Activity">
+    <ol className={cn("relative", className)} aria-label={pick("Aktivitas", "Activity")}>
       {events.map((e) => (
         <AuditEventItem key={e.eventId} event={e} />
       ))}
@@ -135,7 +165,7 @@ export function AuditTimeline({ events, emptyText = "Belum ada aktivitas tercata
 }
 
 export function ActivityList({ items, className }: { items: ActivityItem[]; className?: string }) {
-  if (items.length === 0) return <p className="caption">No activity yet.</p>;
+  if (items.length === 0) return <p className="caption">{pick("Belum ada aktivitas.", "No activity yet.")}</p>;
   return (
     <ol className={cn("flex flex-col", className)}>
       {items.map((a, i) => (

@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/overlay";
 import { Avatar } from "@/components/entities/identity";
+import { pick } from "@/lib/i18n";
 
 export function UserMenu() {
   const { session, workspace, signOut } = useSession();
@@ -66,7 +67,7 @@ export function UserMenu() {
           {isId ? "Preferensi pribadi" : "Personal preferences"}
         </DropdownMenuItem>
         <DropdownMenuItem icon={<Settings />} onSelect={() => router.push("/administration/settings")}>
-          {isId ? "Pengaturan" : "Settings"}
+          {isId ? pick("Pengaturan", "Settings") : "Settings"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>{isId ? "Bahasa" : "Language"}</DropdownMenuLabel>

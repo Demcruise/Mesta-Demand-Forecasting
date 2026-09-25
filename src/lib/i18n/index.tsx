@@ -1,30 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { en } from "./en";
-import { id } from "./id";
 import type { Locale, Translations } from "./types";
-import { setFormatLocale } from "@/lib/format";
+import {
+  getActiveLocale,
+  getTranslations,
+  setActiveLocale,
+} from "./core";
 
 export * from "./types";
-
-const DICTIONARIES: Record<Locale, Translations> = { en, id };
-
-let currentActiveLocale: Locale = "en";
-
-export function getActiveLocale(): Locale {
-  return currentActiveLocale;
-}
-
-export function setActiveLocale(l: Locale) {
-  currentActiveLocale = l;
-  setFormatLocale(l);
-  if (typeof document !== "undefined") document.documentElement.lang = l;
-}
-
-export function getTranslations(locale: Locale = getActiveLocale()): Translations {
-  return DICTIONARIES[locale] ?? DICTIONARIES.en;
-}
+export {
+  getActiveLocale,
+  getTranslations,
+  localized,
+  localizedRecord,
+  pick,
+  setActiveLocale,
+} from "./core";
 
 export type I18nContextValue = {
   locale: Locale;
@@ -38,10 +30,11 @@ export function useI18n(): I18nContextValue {
   const ctx = React.useContext(I18nContext);
   if (!ctx) {
     // Graceful fallback for components outside provider
+    const l = getActiveLocale();
     return {
-      locale: currentActiveLocale,
+      locale: l,
       setLocale: setActiveLocale,
-      t: getTranslations(currentActiveLocale),
+      t: getTranslations(l),
     };
   }
   return ctx;

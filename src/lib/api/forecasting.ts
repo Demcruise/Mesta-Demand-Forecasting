@@ -17,6 +17,7 @@ import { advanceRun, pendingSteps } from "@/lib/mock/runs";
 import { aggregateInterval, simulate, summarise, toPoints } from "@/lib/mock/series";
 import { addDays, DAY_MS, iso, isoDate } from "@/lib/mock/time";
 import { applyAll, applyList, ApiError, read, write, type ApiContext, type ListSpec } from "./client";
+import { pick } from "@/lib/i18n/core";
 
 /* ── Run lifecycle ─────────────────────────────────────────────────── */
 
@@ -139,12 +140,12 @@ function checksFor(db: WorkspaceDb, input: RunInput): ValidationCheck[] {
   const demandSources = db.sources.filter((s) => (s.type === "POS" || s.type === "ERP") && s.status !== "disconnected");
   checks.push({
     key: "source",
-    label: "Sumber data permintaan",
+    label: pick("Sumber data permintaan", "Demand source"),
     result: demandSources.length === 0 ? "blocking" : "pass",
     detail:
       demandSources.length === 0
-        ? "Belum ada sumber data permintaan yang terhubung. Sambungkan data POS atau ERP di Integrasi lebih dulu."
-        : `Permintaan berasal dari ${demandSources.map((s) => s.name).join(" dan ")}.`,
+        ? pick("Belum ada sumber data permintaan yang terhubung. Sambungkan data POS atau ERP di Integrasi lebih dulu.", "No demand source is connected. Connect POS or ERP data in Integrations first.")
+        : pick(`Permintaan berasal dari ${demandSources.map((s) => s.name).join(" dan ")}.`, `Demand from ${demandSources.map((s) => s.name).join(" and ")}.`),
   });
   const start = new Date(input.historicalStart).getTime();
   const end = new Date(input.historicalEnd).getTime();
@@ -155,69 +156,69 @@ function checksFor(db: WorkspaceDb, input: RunInput): ValidationCheck[] {
   const windowCoversGap = end >= db.today - 9 * DAY_MS;
   checks.push({
     key: "availability",
-    label: "Ketersediaan data",
+    label: pick("Ketersediaan data", "Data availability"),
     result: days < 90 ? "blocking" : days < 180 ? "warning" : "pass",
     detail:
       days < 90
-        ? `Hanya ${days} hari riwayat yang dipilih. Minimal 90 hari diperlukan.`
+        ? pick(`Hanya ${days} hari riwayat yang dipilih. Minimal 90 hari diperlukan.`, `Only ${days} days of history selected. At least 90 days are required.`)
         : days < 180
-          ? `${days} hari riwayat. Pola musiman kurang andal bila di bawah 180 hari.`
-          : `${days} hari riwayat tersedia untuk ${scoped.length.toLocaleString("id-ID")} SKU.`,
+          ? pick(`${days} hari riwayat. Pola musiman kurang andal bila di bawah 180 hari.`, `${days} days of history. Seasonality is estimated less reliably below 180 days.`)
+          : pick(`${days} hari riwayat tersedia untuk ${scoped.length.toLocaleString("id-ID")} SKU.`, `${days} days of history available for ${scoped.length.toLocaleString("en-US")} SKUs.`),
   });
   checks.push({
     key: "missing",
-    label: "Data belum lengkap",
+    label: pick("Data belum lengkap", "Missing records"),
     result: missingInScope > 0 && windowCoversGap ? (input.horizonDays > 60 ? "blocking" : "warning") : "pass",
     detail:
       missingInScope > 0 && windowCoversGap
-        ? `${missingInScope} SKU tidak memiliki permintaan harian selama 6 hari (DQ-001).${input.horizonDays > 60 ? " Rentang di atas 60 hari memerlukan riwayat terbaru yang lengkap." : " Data yang kosong akan diisi dengan interpolasi."}`
-        : "Tidak ada data yang kosong pada periode yang dipilih.",
+        ? pick(`${missingInScope} SKU tidak memiliki permintaan harian selama 6 hari (DQ-001).${input.horizonDays > 60 ? " Rentang di atas 60 hari memerlukan riwayat terbaru yang lengkap." : " Data yang kosong akan diisi dengan interpolasi."}`, `${missingInScope} SKUs are missing daily demand for 6 days (DQ-001).${input.horizonDays > 60 ? " Horizons over 60 days require complete recent history." : " They will use interpolated history."}`)
+        : pick("Tidak ada data yang kosong pada periode yang dipilih.", "No missing records in the selected window."),
   });
   const dup = db.dqIssues.find((i) => i.type === "duplicate_records" && i.status !== "resolved");
   checks.push({
     key: "duplicates",
-    label: "Data duplikat",
+    label: pick("Data duplikat", "Duplicate records"),
     result: dup ? "warning" : "pass",
-    detail: dup ? `${dup.description} Data duplikat dihapus sebelum pemodelan.` : "Tidak ada data duplikat.",
+    detail: dup ? pick(`${dup.description} Data duplikat dihapus sebelum pemodelan.`, pick(`${dup.description} Duplikat dibuang sebelum pemodelan.`, pick(`${dup.description} Duplikat dibuang sebelum pemodelan.`, `${dup.description} Duplicates are removed before modelling.`))) : pick("Tidak ada data duplikat.", "No duplicate records detected."),
   });
   const outliers = db.dqIssues.find((i) => i.type === "extreme_outlier" && i.status !== "resolved");
   checks.push({
     key: "outliers",
-    label: "Nilai ekstrem",
+    label: pick("Nilai ekstrem", "Outliers"),
     result: "pass",
-    detail: outliers ? `${outliers.affectedSkus} nilai ekstrem akan dibatasi pada persentil ke-99.` : "Tidak ada nilai ekstrem.",
+    detail: outliers ? pick(`${outliers.affectedSkus} nilai ekstrem akan dibatasi pada persentil ke-99.`, `${outliers.affectedSkus} extreme values will be capped at the 99th percentile.`) : pick("Tidak ada nilai ekstrem.", "No extreme values detected."),
   });
   const promo = db.sources.find((s) => s.id === "src_promo");
   const promoAge = promo?.lastSuccessAt ? (Date.now() - new Date(promo.lastSuccessAt).getTime()) / DAY_MS : 0;
   checks.push({
     key: "freshness",
-    label: "Terakhir diperbarui",
+    label: pick("Terakhir diperbarui", "Freshness"),
     result: promoAge > 1 ? "warning" : "pass",
-    detail: promoAge > 1 ? `Kalender promosi berumur ${Math.floor(promoAge)} hari. Promosi terbaru tidak akan terbaca.` : "Semua sumber diperbarui dalam 24 jam terakhir.",
+    detail: promoAge > 1 ? pick(`Kalender promosi berumur ${Math.floor(promoAge)} hari. Promosi terbaru tidak akan terbaca.`, `Promotions calendar is ${Math.floor(promoAge)} days old. Recent promotions will be missing.`) : pick("Semua sumber diperbarui dalam 24 jam terakhir.", "All sources updated within 24 hours."),
   });
   checks.push({
     key: "fields",
-    label: "Kolom wajib",
+    label: pick("Kolom wajib", "Required fields"),
     result: input.name.trim().length === 0 ? "blocking" : "pass",
-    detail: input.name.trim().length === 0 ? "Beri nama proses agar mudah ditemukan lagi." : "Nama proses, cakupan, periode, rentang, dan model sudah diisi.",
+    detail: input.name.trim().length === 0 ? pick("Beri nama proses agar mudah ditemukan lagi.", "Give the run a name so it can be found later.") : pick("Nama proses, cakupan, periode, rentang, dan model sudah diisi.", pick("Nama proses, cakupan, periode, rentang, dan model sudah diatur.", "Run name, scope, window, horizon and model are set.")),
   });
   const model = db.models.find((m) => m.id === input.modelId);
   const compatible = model && model.status !== "archived" && input.horizonDays <= model.horizonDays && model.frequency === input.frequency;
   checks.push({
     key: "model",
-    label: "Kompatibilitas model",
+    label: pick("Kompatibilitas model", pick("Kecocokan model", "Model compatibility")),
     result: !model ? "blocking" : compatible ? (model.status === "candidate" ? "warning" : "pass") : "blocking",
     detail: !model
-      ? "Pilih model."
+      ? pick("Pilih model.", "Select a model.")
       : !compatible
         ? model.status === "archived"
-          ? `${model.name} ${model.version} sudah diarsipkan.`
+          ? pick(`${model.name} ${model.version} sudah diarsipkan.`, pick(`${model.name} ${model.version} sudah diarsipkan.`, pick(`${model.name} ${model.version} sudah diarsipkan.`, `${model.name} ${model.version} is archived.`)))
           : model.frequency !== input.frequency
-            ? `${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency === "daily" ? "harian" : "mingguan"}.`
-            : `${model.name} ${model.version} mendukung rentang hingga ${model.horizonDays} hari.`
+            ? pick(`${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency === "daily" ? "harian" : "mingguan"}.`, pick(`${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency}.`, pick(`${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency}.`, `${model.name} ${model.version} only supports ${model.frequency} forecasts.`)))
+            : pick(`${model.name} ${model.version} mendukung rentang hingga ${model.horizonDays} hari.`, pick(`${model.name} ${model.version} mendukung rentang sampai ${model.horizonDays} hari.`, pick(`${model.name} ${model.version} mendukung rentang sampai ${model.horizonDays} hari.`, `${model.name} ${model.version} supports horizons up to ${model.horizonDays} days.`)))
         : model.status === "candidate"
-          ? `${model.name} ${model.version} masih kandidat. Hasilnya sebaiknya tidak diterbitkan sebelum ditinjau.`
-          : `${model.name} ${model.version} sudah produksi dan mendukung rentang ini.`,
+          ? pick(`${model.name} ${model.version} masih kandidat. Hasilnya sebaiknya tidak diterbitkan sebelum ditinjau.`, pick(`${model.name} ${model.version} adalah kandidat. Hasil sebaiknya tidak diterbitkan tanpa ditinjau.`, pick(`${model.name} ${model.version} adalah kandidat. Hasil sebaiknya tidak diterbitkan tanpa ditinjau.`, `${model.name} ${model.version} is a candidate. Results should not be published without review.`)))
+          : pick(`${model.name} ${model.version} sudah produksi dan mendukung rentang ini.`, pick(`${model.name} ${model.version} sedang di produksi dan mendukung rentang ini.`, pick(`${model.name} ${model.version} sedang di produksi dan mendukung rentang ini.`, `${model.name} ${model.version} is in production and supports this horizon.`))),
   });
   return checks;
 }

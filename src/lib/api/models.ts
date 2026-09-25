@@ -3,6 +3,7 @@ import { buildBacktestResult } from "@/lib/mock/backtests";
 import { audit, getDb, nextId } from "@/lib/mock/db";
 import { addDays, iso, isoDate } from "@/lib/mock/time";
 import { applyList, ApiError, read, write, type ApiContext } from "./client";
+import { pick } from "@/lib/i18n/core";
 
 export function listModels(ctx: ApiContext, query: ListQuery) {
   return read(() => {
@@ -29,7 +30,7 @@ export function getModel(ctx: ApiContext, id: string) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
     const model = db.models.find((m) => m.id === id);
-    if (!model) throw new ApiError("This model does not exist in the current workspace.", "not_found");
+    if (!model) throw new ApiError(pick("Model ini tidak ada di ruang kerja ini.", "This model does not exist in the current workspace."), "not_found");
     return {
       model,
       backtests: db.backtests.filter((b) => b.modelId === id),
@@ -49,11 +50,11 @@ export function requestDefaultModel(ctx: ApiContext, id: string, rationale: stri
   return write(ctx, "model.manage", () => {
     const db = getDb(ctx.workspaceId);
     const model = db.models.find((m) => m.id === id);
-    if (!model) throw new ApiError("Model not found.", "not_found");
-    if (model.isDefault) throw new ApiError("This model is already the default.", "conflict");
+    if (!model) throw new ApiError(pick("Model tidak ditemukan.", "Model not found."), "not_found");
+    if (model.isDefault) throw new ApiError(pick("Model ini sudah menjadi bawaan.", "This model is already the default."), "conflict");
     if (model.status === "archived") throw new ApiError("Archived models cannot become the default.", "conflict");
     const existing = db.approvals.find((a) => a.type === "model_default" && a.objectId === id && a.status === "pending");
-    if (existing) throw new ApiError("A request to make this model the default is already pending.", "conflict");
+    if (existing) throw new ApiError(pick("Permintaan menjadikan model ini bawaan sudah menunggu.", "A request to make this model the default is already pending."), "conflict");
     const current = db.models.find((m) => m.isDefault);
     const approvalId = nextId(db, "apr");
     const now = iso(Date.now());
@@ -61,7 +62,7 @@ export function requestDefaultModel(ctx: ApiContext, id: string, rationale: stri
       id: approvalId,
       type: "model_default",
       objectId: id,
-      objectLabel: `Make ${model.name} ${model.version} the default model`,
+      objectLabel: pick(`Jadikan ${model.name} ${model.version} model bawaan`, `Make ${model.name} ${model.version} the default model`),
       requestedBy: ctx.userId,
       requestedAt: now,
       dueAt: iso(Date.now() + 3 * 86_400_000),
@@ -70,16 +71,16 @@ export function requestDefaultModel(ctx: ApiContext, id: string, rationale: stri
         units: 0,
         percent: current ? model.metrics.wape - current.metrics.wape : 0,
         skuCount: db.products.length,
-        summary: current ? `WAPE ${(current.metrics.wape * 100).toFixed(1)}% → ${(model.metrics.wape * 100).toFixed(1)}% in the latest evaluation.` : "",
+        summary: current ? pick(`WAPE ${(current.metrics.wape * 100).toFixed(1)}% → ${(model.metrics.wape * 100).toFixed(1)}% pada evaluasi terakhir.`, `WAPE ${(current.metrics.wape * 100).toFixed(1)}% → ${(model.metrics.wape * 100).toFixed(1)}% in the latest evaluation.`) : "",
       },
-      changeSet: [{ field: "Default model", from: current ? `${current.name} ${current.version}` : "None", to: `${model.name} ${model.version}` }],
+      changeSet: [{ field: pick("Model bawaan", "Default model"), from: current ? `${current.name} ${current.version}` : pick("Tidak ada", "None"), to: pick(`${model.name} ${model.version}`, `${model.name} ${model.version}`) }],
       evidence: db.backtests.filter((b) => b.modelId === id).map((b) => `Backtest ${b.id} (${b.windowStart} – ${b.windowEnd}).`),
       assumptions: [rationale],
-      policy: { name: "Model promotion", rule: "Changing the default model needs Manager approval.", requiredRole: "manager" },
-      afterApproval: `New forecast runs use ${model.name} ${model.version} by default. Existing runs are unchanged.`,
-      history: [{ id: `${approvalId}-h1`, at: now, actorId: ctx.userId, text: "Requested model promotion." }],
+      policy: { name: pick("Promosi model", "Model promotion"), rule: pick("Mengubah model bawaan memerlukan persetujuan Manajer.", "Changing the default model needs Manager approval."), requiredRole: "manager" },
+      afterApproval: pick(`Proses perkiraan baru memakai ${model.name} ${model.version} sebagai bawaan. Proses yang ada tidak berubah.`, `New forecast runs use ${model.name} ${model.version} by default. Existing runs are unchanged.`),
+      history: [{ id: `${approvalId}-h1`, at: now, actorId: ctx.userId, text: pick("Mengajukan promosi model.", "Requested model promotion.") }],
     });
-    audit(db, { actorId: ctx.userId, action: "set_default_model", entityType: "model", entityId: id, entityLabel: `${model.name} ${model.version}`, previousState: "not default", newState: "approval requested", reason: rationale, source: "web" });
+    audit(db, { actorId: ctx.userId, action: "set_default_model", entityType: "model", entityId: id, entityLabel: pick(`${model.name} ${model.version}`, `${model.name} ${model.version}`), previousState: "not default", newState: "approval requested", reason: rationale, source: "web" });
     return approvalId;
   });
 }
@@ -88,11 +89,11 @@ export function archiveModel(ctx: ApiContext, id: string) {
   return write(ctx, "model.manage", () => {
     const db = getDb(ctx.workspaceId);
     const model = db.models.find((m) => m.id === id);
-    if (!model) throw new ApiError("Model not found.", "not_found");
-    if (model.isDefault) throw new ApiError("The default model cannot be archived.", "conflict", "Make another model the default first.");
+    if (!model) throw new ApiError(pick("Model tidak ditemukan.", "Model not found."), "not_found");
+    if (model.isDefault) throw new ApiError(pick("Model bawaan tidak dapat diarsipkan.", "The default model cannot be archived."), "conflict", pick("Jadikan model lain bawaan terlebih dahulu.", "Make another model the default first."));
     const prev = model.status;
     model.status = "archived";
-    audit(db, { actorId: ctx.userId, action: "set_default_model", entityType: "model", entityId: id, entityLabel: `${model.name} ${model.version}`, previousState: prev, newState: "archived", reason: null, source: "web" });
+    audit(db, { actorId: ctx.userId, action: "set_default_model", entityType: "model", entityId: id, entityLabel: pick(`${model.name} ${model.version}`, `${model.name} ${model.version}`), previousState: prev, newState: "archived", reason: null, source: "web" });
     return model;
   });
 }
@@ -119,7 +120,7 @@ export function runBacktest(ctx: ApiContext, input: { modelId: string; windowDay
   return write(ctx, "backtest.run", () => {
     const db = getDb(ctx.workspaceId);
     const model = db.models.find((m) => m.id === input.modelId);
-    if (!model) throw new ApiError("Select a model.", "validation");
+    if (!model) throw new ApiError(pick("Pilih model.", "Select a model."), "validation");
     if (input.windowDays < 28) throw new ApiError("The evaluation window must be at least 28 days.", "validation");
     if (input.windowDays > 180) throw new ApiError("The evaluation window cannot exceed the 182 days of loaded history.", "validation");
     const count = db.backtests.length;
@@ -139,7 +140,7 @@ export function runBacktest(ctx: ApiContext, input: { modelId: string; windowDay
       errorBuckets: [],
     };
     db.backtests.unshift(bt);
-    audit(db, { actorId: ctx.userId, action: "run_backtest", entityType: "backtest", entityId: bt.id, entityLabel: `${model.name} ${model.version}`, previousState: null, newState: "queued", reason: `${input.windowDays}-day window, ${input.frequency}`, source: "web" });
+    audit(db, { actorId: ctx.userId, action: "run_backtest", entityType: "backtest", entityId: bt.id, entityLabel: pick(`${model.name} ${model.version}`, `${model.name} ${model.version}`), previousState: null, newState: "queued", reason: `${input.windowDays}-day window, ${input.frequency}`, source: "web" });
     return bt;
   });
 }

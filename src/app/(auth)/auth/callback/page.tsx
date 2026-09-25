@@ -13,6 +13,7 @@ import { track } from "@/lib/telemetry";
 import { buttonVariants } from "@/components/ui/button";
 import { AuthCard, AuthShell } from "@/components/auth/auth-shell";
 import { InlineAlert } from "@/components/feedback/states";
+import { pick } from "@/lib/i18n";
 
 const SESSION_HOURS = 12;
 const LAST_WORKSPACE_KEY = "mdf.last-workspace";
@@ -23,7 +24,7 @@ type Status = { kind: "processing"; message: string } | { kind: "error"; title: 
 function Callback() {
   const router = useRouter();
   const params = useSearchParams();
-  const [status, setStatus] = React.useState<Status>({ kind: "processing", message: "Memverifikasi proses masuk Anda" });
+  const [status, setStatus] = React.useState<Status>({ kind: "processing", message: pick("Memverifikasi proses masuk Anda", "Verifying your sign-in") });
   const ran = React.useRef(false);
 
   React.useEffect(() => {
@@ -39,12 +40,12 @@ function Callback() {
       expected = null;
     }
     if (!expected || expected.state !== state) {
-      setStatus({ kind: "error", title: "Tautan masuk ini sudah tidak berlaku.", detail: "Permintaan masuk sudah kedaluwarsa atau dimulai di tab lain. Mulai lagi dari halaman masuk." });
+      setStatus({ kind: "error", title: pick("Tautan masuk ini sudah tidak berlaku.", "This sign-in link is no longer valid."), detail: pick("Permintaan masuk sudah kedaluwarsa atau dimulai di tab lain. Mulai lagi dari halaman masuk.", "The sign-in request expired or was started in another browser tab. Start again from the sign-in page.") });
       return;
     }
     const user = findUser(code.replace(/^demo_/, ""));
     if (!user) {
-      setStatus({ kind: "error", title: "Penyedia identitas tidak mengembalikan akun yang dikenali.", detail: "Hubungi administrator ruang kerja Anda agar ditambahkan ke Mesta." });
+      setStatus({ kind: "error", title: pick("Penyedia identitas tidak mengembalikan akun yang dikenali.", "Your identity provider did not return a known account."), detail: pick("Hubungi administrator ruang kerja Anda agar ditambahkan ke Mesta.", "Contact your workspace administrator to be added to Mesta.") });
       return;
     }
     if (user.status === "suspended") {
@@ -55,7 +56,7 @@ function Callback() {
       router.replace("/unauthorized?reason=no-workspace");
       return;
     }
-    setStatus({ kind: "processing", message: "Menentukan ruang kerja dan peran Anda" });
+    setStatus({ kind: "processing", message: pick("Menentukan ruang kerja dan peran Anda", "Resolving your workspace and role") });
     let last: string | null = null;
     try {
       last = window.localStorage.getItem(LAST_WORKSPACE_KEY);
@@ -91,14 +92,14 @@ function Callback() {
   return (
     <AuthShell>
       {status.kind === "processing" ? (
-        <AuthCard title="Memasukkan Anda">
+        <AuthCard title={pick("Memasukkan Anda", "Signing you in")}>
           <div className="flex items-center gap-3" role="status" aria-live="polite">
             <Loader2 className="size-5 animate-spin text-primary" aria-hidden />
             <span className="body text-fg-secondary">{status.message}…</span>
           </div>
         </AuthCard>
       ) : (
-        <AuthCard title="Proses masuk tidak dapat diselesaikan">
+        <AuthCard title={pick("Proses masuk tidak dapat diselesaikan", "Sign-in could not be completed")}>
           <InlineAlert tone="critical" title={status.title}>
             {status.detail}
           </InlineAlert>

@@ -19,19 +19,9 @@ import { FreshnessIndicator } from "@/components/feedback/freshness";
 import { EmptyState, ErrorState, PageSkeleton } from "@/components/feedback/states";
 import { ModelIdentity, ProductIdentity, RunIdentity, scopeLabel } from "@/components/entities/identity";
 import { AuditTimeline } from "@/components/governance/audit";
-
-/** Severity and exception-type display labels (v3 §73: no raw backend names in the UI). */
-const SEVERITY_LABELS = { critical: "Kritis", warning: "Peringatan", info: "Info" } as const;
-const EXCEPTION_TYPE_LABELS: Record<string, string> = {
-  large_delta: "Perubahan besar",
-  low_confidence: "Rentang lebar",
-  high_error: "Selisih tinggi",
-  data_freshness: "Data belum diperbarui",
-  data_quality: "Masalah data",
-  model_anomaly: "Anomali model",
-  manual_override: "Diubah manual",
-  threshold_breach: "Melewati batas",
-};
+import { getSeverityLabel } from "@/components/feedback/status";
+import { EXCEPTION_TYPE_LABELS } from "@/features/exceptions/exceptions-view";
+import { pick } from "@/lib/i18n";
 
 /**
  * PAGE-OVERVIEW: understand the current forecast state within 5 seconds.
@@ -52,9 +42,9 @@ export function OverviewView() {
   if (q.isError) {
     return (
       <PageContainer>
-        <PageHeader title="Ringkasan" />
+        <PageHeader title={pick("Ringkasan", "Overview")} />
         <Panel>
-          <ErrorState what="Ringkasan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} retryLabel="Coba muat ulang ringkasan" />
+          <ErrorState what={pick("Ringkasan tidak dapat dimuat.", "The overview could not be loaded.")} error={q.error} onRetry={() => q.refetch()} retryLabel={pick("Coba muat ulang ringkasan", "Retry loading overview")} />
         </Panel>
       </PageContainer>
     );
@@ -66,14 +56,14 @@ export function OverviewView() {
   if (!base || !d.summary) {
     return (
       <PageContainer>
-        <PageHeader title="Ringkasan" description={`${workspace.name} · ${workspace.environment}`} />
+        <PageHeader title={pick("Ringkasan", "Overview")} description={`${workspace.name} · ${workspace.environment}`} />
         <Panel>
           <EmptyState
-            title="Belum ada perkiraan yang diterbitkan di ruang kerja ini."
-            description="Ringkasan menampilkan proses perkiraan terbit terakhir. Ikuti panduan persiapan untuk menyambungkan data, menjalankan perkiraan pertama, lalu menerbitkannya."
+            title={pick("Belum ada perkiraan yang diterbitkan di ruang kerja ini.", "No forecast has been published in this workspace yet.")}
+            description={pick("Ringkasan menampilkan proses perkiraan terbit terakhir. Ikuti panduan persiapan untuk menyambungkan data, menjalankan perkiraan pertama, lalu menerbitkannya.", "The overview summarises the latest published forecast run. Follow the setup guide to connect data, run the first forecast and publish it.")}
             action={
               <Link href="/onboarding" className={buttonVariants({ variant: "primary" })}>
-                Lanjutkan persiapan ruang kerja
+                {pick("Lanjutkan persiapan ruang kerja", "Continue workspace setup")}
               </Link>
             }
             secondaryAction={
@@ -96,8 +86,8 @@ export function OverviewView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Ringkasan"
-        description="Lihat kondisi permintaan, keandalan perkiraan, dan hal yang perlu diperhatikan."
+        title={pick("Ringkasan", "Overview")}
+        description={pick("Lihat kondisi permintaan, keandalan perkiraan, dan hal yang perlu diperhatikan.", "Current demand outlook, forecast reliability and what needs your attention.")}
         actions={
           can("forecast.run.create") ? (
             <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "primary" })}>
@@ -117,16 +107,16 @@ export function OverviewView() {
                 {base.id}
               </Link>
             </MetaItem>
-            <FreshnessIndicator timestamp={pos?.lastSuccessAt} label="Data POS diperbarui" source="Transaksi POS" />
+            <FreshnessIndicator timestamp={pos?.lastSuccessAt} label={pick("Data POS diperbarui", "POS data updated")} source={pick("Transaksi POS", "POS transactions")} />
           </>
         }
       />
 
       {/* Needs attention */}
-      <PageSection title="Perlu Ditinjau" description="Diurutkan berdasarkan tingkat kepentingan. Setiap item tertaut ke tindakannya." id="attention">
+      <PageSection title={pick("Perlu Ditinjau", "Needs attention")} description={pick("Diurutkan berdasarkan tingkat kepentingan. Setiap item tertaut ke tindakannya.", "Ordered by severity. Each item links to where you can act on it.")} id="attention">
         {d.attention.length === 0 ? (
           <Panel>
-            <EmptyState compact title="Tidak ada yang perlu ditinjau saat ini." description="Tidak ada masalah data yang menghambat, perubahan besar, proses gagal, atau persetujuan tertunda." />
+            <EmptyState compact title={pick("Tidak ada yang perlu ditinjau saat ini.", "Nothing needs your attention right now.")} description={pick("Tidak ada masalah data yang menghambat, perubahan besar, proses gagal, atau persetujuan tertunda.", "No blocking data issues, critical exceptions, failed runs or pending approvals.")} />
           </Panel>
         ) : (
           <ul className="grid auto-rows-fr gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -144,7 +134,7 @@ export function OverviewView() {
                     <span className="flex items-start gap-2.5">
                       <Icon className={cn("mt-0.5 size-4 shrink-0", a.severity === "critical" ? "text-critical" : a.severity === "warning" ? "text-warning" : "text-info")} aria-hidden />
                       <span className="min-w-0">
-                        <span className="sr-only">{SEVERITY_LABELS[a.severity]}: </span>
+                        <span className="sr-only">{getSeverityLabel(a.severity)}: </span>
                         <span className="block body-sm font-semibold text-fg">{a.title}</span>
                         <span className="mt-0.5 line-clamp-2 block caption">{a.detail}</span>
                       </span>
@@ -161,44 +151,44 @@ export function OverviewView() {
       </PageSection>
 
       {/* Forecast health */}
-      <PageSection title="Kesehatan Perkiraan" description={`Dari acuan terbit ${base.id}, periode ${base.horizonDays} hari.`} id="health">
+      <PageSection title={pick("Kesehatan Perkiraan", "Forecast health")} description={pick(`Dari acuan terbit ${base.id}, periode ${base.horizonDays} hari.`, `From the published baseline ${base.id}, ${base.horizonDays}-day horizon.`)} id="health">
         <MetricStrip>
           <MetricCard
-            label={`Total Permintaan · ${base.horizonDays} hari ke depan`}
+            label={pick(`Total Permintaan · ${base.horizonDays} hari ke depan`, `Forecasted demand · next ${base.horizonDays} days`)}
             value={formatNumber(s.forecast)}
-            unit="unit"
+            unit={pick("unit", "units")}
             delta={<ForecastDelta percent={s.deltaPercent} size="sm" />}
-            context={`Rentang 80% ${formatNumber(s.lower)} – ${formatNumber(s.upper)} · ${formatDeltaPercent(s.deltaPercent)} dibanding perkiraan sebelumnya`}
+            context={pick(`Rentang 80% ${formatNumber(s.lower)} – ${formatNumber(s.upper)} · ${formatDeltaPercent(s.deltaPercent)} dibanding perkiraan sebelumnya`, `80% interval ${formatNumber(s.lower)} – ${formatNumber(s.upper)} · ${formatDeltaPercent(s.deltaPercent)} vs previous run`)}
             href="/forecasting/explorer"
-            hrefLabel="Buka Perkiraan Permintaan"
-            tooltip="Jumlah perkiraan harian untuk semua SKU dalam cakupan selama periode perkiraan. Rentangnya menggabungkan rentang tiap SKU."
+            hrefLabel={pick("Buka Perkiraan Permintaan", "Open forecast explorer")}
+            tooltip={pick("Jumlah perkiraan harian untuk semua SKU dalam cakupan selama periode perkiraan. Rentangnya menggabungkan rentang tiap SKU.", "Sum of daily forecasts for all SKUs in scope over the horizon. The interval combines SKU-level intervals.")}
           />
           <MetricCard
-            label="Akurasi Perkiraan (WAPE)"
+            label={pick("Akurasi Perkiraan (WAPE)", "Forecast accuracy (WAPE)")}
             value={d.accuracy ? formatPercent(d.accuracy.wape) : "—"}
             context={
               d.accuracyWindow
-                ? `Uji model ${d.accuracyWindow.id}, ${formatDate(d.accuracyWindow.start)} – ${formatDate(d.accuracyWindow.end)}. Semakin kecil semakin baik.`
-                : "Belum ada uji model untuk model ini."
+                ? pick(`Uji model ${d.accuracyWindow.id}, ${formatDate(d.accuracyWindow.start)} – ${formatDate(d.accuracyWindow.end)}. Semakin kecil semakin baik.`, `Backtest ${d.accuracyWindow.id}, ${formatDate(d.accuracyWindow.start)} – ${formatDate(d.accuracyWindow.end)}. Lower is better.`)
+                : pick("Belum ada uji model untuk model ini.", "No backtest available for this model.")
             }
             href="/models/performance"
-            hrefLabel="Lihat performa model"
-            tooltip="Weighted absolute percentage error: total selisih absolut dibagi total permintaan aktual."
+            hrefLabel={pick("Lihat performa model", "View model performance")}
+            tooltip={pick("Weighted absolute percentage error: total selisih absolut dibagi total permintaan aktual.", "Weighted absolute percentage error: total absolute error divided by total actual demand.")}
           />
           <MetricCard
-            label="Bias Perkiraan"
+            label={pick("Bias Perkiraan", "Forecast bias")}
             value={d.accuracy ? formatDeltaPercent(d.accuracy.bias) : "—"}
-            context="Nilai positif berarti model cenderung memperkirakan terlalu tinggi. Target dalam ±3%."
+            context={pick("Nilai positif berarti model cenderung memperkirakan terlalu tinggi. Target dalam ±3%.", "Positive means the model over-forecasts on average. Target within ±3%.")}
             href="/models/performance"
-            hrefLabel="Lihat bias per kategori"
-            tooltip="Rata-rata selisih bertanda dibagi rata-rata permintaan aktual selama periode uji model."
+            hrefLabel={pick("Lihat bias per kategori", "View bias by category")}
+            tooltip={pick("Rata-rata selisih bertanda dibagi rata-rata permintaan aktual selama periode uji model.", "Mean signed error divided by mean actual demand over the backtest window.")}
           />
           <MetricCard
-            label="Perlu Ditinjau"
+            label={pick("Perlu Ditinjau", "Open exceptions")}
             value={formatNumber(d.exceptions.open)}
-            context={`${d.exceptions.critical} kritis · ${d.exceptions.warning} peringatan`}
+            context={pick(`${d.exceptions.critical} kritis · ${d.exceptions.warning} peringatan`, `${d.exceptions.critical} critical · ${d.exceptions.warning} warning`)}
             href="/planning/exceptions?status=open,investigating,escalated"
-            hrefLabel="Tinjau item"
+            hrefLabel={pick("Tinjau item", "Review exceptions")}
           />
         </MetricStrip>
       </PageSection>
@@ -206,34 +196,34 @@ export function OverviewView() {
       {/* Demand outlook */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <ForecastChart
-          title="Tren Permintaan"
+          title={pick("Tren Permintaan", "Demand outlook")}
           points={d.points}
-          unit="unit per hari"
-          source="Transaksi POS, pesanan penjualan ERP"
+          unit={pick("unit per hari", "units per day")}
+          source={pick("Transaksi POS, pesanan penjualan ERP", "POS transactions, ERP sales orders")}
           asOf={base.dataAsOf}
-          summary={`Permintaan yang diperkirakan untuk ${base.horizonDays} hari ke depan adalah ${formatNumber(s.forecast)} unit (rentang 80% ${formatNumber(s.lower)}–${formatNumber(s.upper)}), ${formatDeltaPercent(s.vsActualPercent)} dibanding permintaan aktual ${base.horizonDays} hari sebelumnya.`}
+          summary={pick(`Permintaan yang diperkirakan untuk ${base.horizonDays} hari ke depan adalah ${formatNumber(s.forecast)} unit (rentang 80% ${formatNumber(s.lower)}–${formatNumber(s.upper)}), ${formatDeltaPercent(s.vsActualPercent)} dibanding permintaan aktual ${base.horizonDays} hari sebelumnya.`, `Expected demand over the next ${base.horizonDays} days is ${formatNumber(s.forecast)} units (80% interval ${formatNumber(s.lower)}–${formatNumber(s.upper)}), ${formatDeltaPercent(s.vsActualPercent)} versus actual demand in the previous ${base.horizonDays} days.`)}
           height={300}
         />
         <ChartFrame
-          title="Perkiraan per kategori"
-          question="Kategori mana yang menyebabkan perubahan dibanding perkiraan sebelumnya?"
-          unit="unit"
-          timeframe={`${base.horizonDays} hari ke depan`}
+          title={pick("Perkiraan per kategori", "Outlook by category")}
+          question={pick("Kategori mana yang menyebabkan perubahan dibanding perkiraan sebelumnya?", "Which categories drive the change versus the previous run?")}
+          unit={pick("unit", "units")}
+          timeframe={pick(`${base.horizonDays} hari ke depan`, `Next ${base.horizonDays} days`)}
           legend={
             <>
-              <LegendItem color="var(--chart-previous)" label="Perkiraan sebelumnya" variant="bar" />
-              <LegendItem color="var(--chart-forecast)" label="Perkiraan saat ini" variant="bar" />
+              <LegendItem color="var(--chart-previous)" label={pick("Perkiraan sebelumnya", "Previous run")} variant="bar" />
+              <LegendItem color="var(--chart-forecast)" label={pick("Perkiraan saat ini", "Current forecast")} variant="bar" />
             </>
           }
-          chart={<PairedBars rows={d.byCategory.map((c) => ({ label: c.category, a: c.previous, b: c.forecast }))} aLabel="Perkiraan sebelumnya" bLabel="Perkiraan saat ini" />}
+          chart={<PairedBars rows={d.byCategory.map((c) => ({ label: c.category, a: c.previous, b: c.forecast }))} aLabel={pick("Perkiraan sebelumnya", "Previous run")} bLabel={pick("Perkiraan saat ini", "Current forecast")} />}
           table={
             <ChartDataTable
-              caption="Perkiraan per kategori"
+              caption={pick("Perkiraan per kategori", "Forecast by category")}
               columns={[
-                { key: "c", label: "Kategori" },
-                { key: "p", label: "Sebelumnya", numeric: true },
-                { key: "f", label: "Perkiraan", numeric: true },
-                { key: "d", label: "Perubahan", numeric: true },
+                { key: "c", label: pick("Kategori", "Category") },
+                { key: "p", label: pick("Sebelumnya", "Previous"), numeric: true },
+                { key: "f", label: pick("Perkiraan", "Forecast"), numeric: true },
+                { key: "d", label: pick("Perubahan", "Change"), numeric: true },
               ]}
               rows={d.byCategory.map((c) => ({ c: c.category, p: formatNumber(c.previous), f: formatNumber(c.forecast), d: formatDeltaPercent(c.previous ? (c.forecast - c.previous) / c.previous : 0) }))}
             />
@@ -244,8 +234,8 @@ export function OverviewView() {
       {/* Exception queue + runs */}
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel
-          title="Perubahan terbesar untuk ditinjau"
-          description="Item terbuka dengan perubahan terbesar dibanding perkiraan sebelumnya."
+          title={pick("Perubahan terbesar untuk ditinjau", "Largest forecast changes to review")}
+          description={pick("Item terbuka dengan perubahan terbesar dibanding perkiraan sebelumnya.", "Open exceptions with the biggest change versus the previous run.")}
           flush
           actions={
             <Link href="/planning/exceptions" className="text-xs font-semibold text-primary hover:underline">
@@ -254,7 +244,7 @@ export function OverviewView() {
           }
         >
           {d.exceptions.top.length === 0 ? (
-            <EmptyState compact title="Tidak ada perubahan besar yang perlu ditinjau." description="Semua perubahan perkiraan masih dalam batas tinjauan." />
+            <EmptyState compact title={pick("Tidak ada perubahan besar yang perlu ditinjau.", "No large changes need review.")} description={pick("Semua perubahan perkiraan masih dalam batas tinjauan.", "All forecast changes are within the review threshold.")} />
           ) : (
             <ul>
               {d.exceptions.top.map((e) => (
@@ -272,7 +262,7 @@ export function OverviewView() {
           )}
         </Panel>
         <Panel
-          title="Proses Perkiraan Terbaru"
+          title={pick("Proses Perkiraan Terbaru", "Recent Forecast Runs")}
           flush
           actions={
             <Link href="/forecasting/runs" className="text-xs font-semibold text-primary hover:underline">
@@ -293,7 +283,7 @@ export function OverviewView() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Panel title="Model yang digunakan">
+        <Panel title={pick("Model yang digunakan", pick("Model sedang dipakai", "Model in use"))}>
           <div className="flex flex-col gap-3">
             <ModelIdentity model={d.model} showStatus />
             <p className="caption">
@@ -310,7 +300,7 @@ export function OverviewView() {
           </div>
         </Panel>
         <Panel
-          title="Aktivitas Terbaru"
+          title={pick("Aktivitas Terbaru", "Recent activity")}
           actions={
             can("audit.view") ? (
               <Link href="/administration/audit" className="text-xs font-semibold text-primary hover:underline">

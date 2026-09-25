@@ -2,6 +2,7 @@ import type { Assumption, Scenario, ScenarioDriver, ScenarioResult } from "@/typ
 import { REGIONS } from "./catalog";
 import { baselineRun, runResult, type WorkspaceDb } from "./db";
 import { DAY_MS, HOUR_MS, iso, MINUTE_MS } from "./time";
+import { pick, localized } from "@/lib/i18n/core";
 
 export const SCENARIO_SIMULATION_MS = 2_500;
 
@@ -11,27 +12,45 @@ export const REGION_SCOPE_PREFIX = "Region · ";
 /** Price elasticity used to translate a price assumption into demand. Placeholder. */
 export const PRICE_ELASTICITY = -1.2;
 
-export const DRIVER_LABELS: Record<ScenarioDriver, string> = {
-  demand_change: "Perubahan permintaan",
+export const DRIVER_LABELS: Record<ScenarioDriver, string> = localized({
+  demand_change: pick("Perubahan permintaan", "Demand change"),
   price: "Harga / komersial",
   promotion: "Kenaikan promosi",
   seasonality: "Musiman",
   external: "Faktor eksternal",
   availability: "Ketersediaan",
-  regional: "Penyesuaian wilayah",
-  lifecycle: "Siklus produk",
-};
+  regional: pick("Penyesuaian wilayah", "Regional adjustment"),
+  lifecycle: pick("Siklus produk", "Lifecycle"),
+}, {
+  demand_change: "Demand change",
+  price: "Price / commercial",
+  promotion: "Promotion uplift",
+  seasonality: "Seasonality",
+  external: "External factor",
+  availability: "Availability",
+  regional: "Regional adjustment",
+  lifecycle: "Product lifecycle",
+});
 
-export const DRIVER_HELP: Record<ScenarioDriver, string> = {
-  demand_change: "Perubahan langsung pada perkiraan permintaan, dalam persen.",
-  price: `Perubahan harga jual, dalam persen. Dikonversi ke permintaan dengan elastisitas ${PRICE_ELASTICITY}.`,
-  promotion: "Tambahan kenaikan dari promosi yang belum ada di kalender promosi, dalam persen.",
-  seasonality: "Perubahan pada puncak musiman, dalam persen.",
-  external: "Efek cuaca, acara, atau kondisi makro, dalam persen.",
-  availability: "Perubahan ketersediaan di rak, dalam poin persentase. Ketersediaan rendah membatasi permintaan.",
-  regional: "Perubahan permintaan di suatu wilayah, dalam persen. Diskalakan menurut porsi volume wilayah.",
-  lifecycle: "Efek kenaikan awal atau penghentian produk, dalam persen.",
-};
+export const DRIVER_HELP: Record<ScenarioDriver, string> = localized({
+  demand_change: pick("Perubahan langsung pada perkiraan permintaan, dalam persen.", "Direct change to expected demand, in percent."),
+  price: pick(`Perubahan harga jual, dalam persen. Dikonversi ke permintaan dengan elastisitas ${PRICE_ELASTICITY}.`, `Change in shelf price, in percent. Converted to demand with an elasticity of ${PRICE_ELASTICITY}.`),
+  promotion: pick("Tambahan kenaikan dari promosi yang belum ada di kalender promosi, dalam persen.", "Additional uplift from promotions not in the promotions calendar, in percent."),
+  seasonality: pick("Perubahan pada puncak musiman, dalam persen.", "Change to the seasonal peak, in percent."),
+  external: pick("Efek cuaca, acara, atau kondisi makro, dalam persen.", "Weather, events or macro effects, in percent."),
+  availability: pick("Perubahan ketersediaan di rak, dalam poin persentase. Ketersediaan rendah membatasi permintaan.", "Change in on-shelf availability, in percentage points. Lower availability caps demand."),
+  regional: pick("Perubahan permintaan di suatu wilayah, dalam persen. Diskalakan menurut porsi volume wilayah.", "Change to demand in a region, in percent. Scaled by the region's share of volume."),
+  lifecycle: pick("Efek kenaikan awal atau penghentian produk, dalam persen.", "Ramp-up or phase-out effect, in percent."),
+}, {
+  demand_change: "Direct change to expected demand, in percent.",
+  price: `Change in shelf price, in percent. Converted to demand with an elasticity of ${PRICE_ELASTICITY}.`,
+  promotion: "Additional uplift from promotions not in the promotions calendar, in percent.",
+  seasonality: "Change to the seasonal peak, in percent.",
+  external: "Weather, events or macro effects, in percent.",
+  availability: "Change in on-shelf availability, in percentage points. Lower availability caps demand.",
+  regional: "Change to demand in a region, in percent. Scaled by the region's share of volume.",
+  lifecycle: "Ramp-up or phase-out effect, in percent.",
+});
 
 export const DRIVER_UNITS: Record<ScenarioDriver, Assumption["unit"]> = {
   demand_change: "%",
@@ -108,70 +127,70 @@ export function seedScenarios(db: WorkspaceDb, now: number): Scenario[] {
   return [
     mk({
       id: "scn_holiday",
-      name: "Kenaikan libur akhir tahun",
-      description: "Kenaikan musim libur untuk Minuman dan Camilan, dengan puncak Sembako yang lebih rendah.",
+      name: pick("Kenaikan libur akhir tahun", "Year-end holiday uplift"),
+      description: pick("Kenaikan musim libur untuk Minuman dan Camilan, dengan puncak Sembako yang lebih rendah.", "Holiday season uplift for Beverages and Snacks, with a softer Staples peak."),
       ownerId: "u_rina",
       status: "in_review",
       createdAt: iso(now - 4 * DAY_MS),
       modifiedAt: iso(now - 22 * HOUR_MS),
       simulate: true,
       assumptions: [
-        { id: "a1", driver: "seasonality", scope: "Beverages", baselineValue: 0, value: 12, unit: "%", rationale: "Minuman tumbuh 11–14% pada dua periode akhir tahun terakhir." },
-        { id: "a2", driver: "promotion", scope: "Snacks", baselineValue: 0, value: 8, unit: "%", rationale: "Promosi paket hadiah disepakati dengan dua pemasok camilan." },
-        { id: "a3", driver: "seasonality", scope: "Staples", baselineValue: 0, value: -3, unit: "%", rationale: "Puncak Sembako terjadi lebih awal bulan ini dibanding tahun lalu." },
+        { id: "a1", driver: "seasonality", scope: "Beverages", baselineValue: 0, value: 12, unit: "%", rationale: pick("Minuman tumbuh 11–14% pada dua periode akhir tahun terakhir.", "Beverages grew 11–14% in the last two year-end periods.") },
+        { id: "a2", driver: "promotion", scope: "Snacks", baselineValue: 0, value: 8, unit: "%", rationale: pick("Promosi paket hadiah disepakati dengan dua pemasok camilan.", "Gift-pack promotion agreed with two snack suppliers.") },
+        { id: "a3", driver: "seasonality", scope: "Staples", baselineValue: 0, value: -3, unit: "%", rationale: pick("Puncak Sembako terjadi lebih awal bulan ini dibanding tahun lalu.", "Staples peak earlier in the month than last year.") },
       ],
     }),
     mk({
       id: "scn_oil_price",
-      name: "Kenaikan harga minyak goreng",
-      description: "Kenaikan harga dari pemasok diteruskan ke harga jual.",
+      name: pick("Kenaikan harga minyak goreng", "Cooking oil price increase"),
+      description: pick("Kenaikan harga dari pemasok diteruskan ke harga jual.", "Supplier price increase passed through to shelf price."),
       ownerId: "u_yoga",
       status: "simulated",
       createdAt: iso(now - 2 * DAY_MS),
       modifiedAt: iso(now - 5 * HOUR_MS),
       simulate: true,
       assumptions: [
-        { id: "a1", driver: "price", scope: "Staples", baselineValue: 0, value: 8, unit: "%", rationale: "Pemberitahuan pemasok: harga daftar naik 8% mulai bulan depan." },
+        { id: "a1", driver: "price", scope: "Staples", baselineValue: 0, value: 8, unit: "%", rationale: pick("Pemberitahuan pemasok: harga daftar naik 8% mulai bulan depan.", "Supplier notice: +8% list price from next month.") },
       ],
     }),
     mk({
       id: "scn_wj_supply",
-      name: "Gangguan pasokan Jawa Barat",
-      description: "Pemeliharaan pusat distribusi menurunkan ketersediaan di Jawa Barat.",
+      name: pick("Gangguan pasokan Jawa Barat", "West Java supply disruption"),
+      description: pick("Pemeliharaan pusat distribusi menurunkan ketersediaan di Jawa Barat.", "Distribution centre maintenance reduces availability in West Java."),
       ownerId: "u_arif",
       status: "draft",
       createdAt: iso(now - 7 * HOUR_MS),
       modifiedAt: iso(now - 40 * MINUTE_MS),
       simulate: false,
       assumptions: [
-        { id: "a1", driver: "availability", scope: `${REGION_SCOPE_PREFIX}West Java`, baselineValue: 97, value: 90, unit: "pp", rationale: "Jendela pemeliharaan pusat distribusi selama 10 hari." },
+        { id: "a1", driver: "availability", scope: `${REGION_SCOPE_PREFIX}West Java`, baselineValue: 97, value: 90, unit: "pp", rationale: pick("Jendela pemeliharaan pusat distribusi selama 10 hari.", "DC maintenance window of 10 days.") },
       ],
     }),
     mk({
       id: "scn_frozen_heat",
-      name: "Musim kemarau panas · Beku",
-      description: "Suhu di atas rata-rata menaikkan penjualan es krim dan makanan beku.",
+      name: pick("Musim kemarau panas · Beku", "Hot dry season · Frozen"),
+      description: pick("Suhu di atas rata-rata menaikkan penjualan es krim dan makanan beku.", "Above-average temperatures lift ice cream and frozen desserts."),
       ownerId: "u_dewi",
       status: "approved",
       createdAt: iso(now - 12 * DAY_MS),
       modifiedAt: iso(now - 10 * DAY_MS),
       simulate: true,
       assumptions: [
-        { id: "a1", driver: "external", scope: "Frozen", baselineValue: 0, value: 15, unit: "%", rationale: "Prakiraan layanan cuaca: 1,5 °C di atas rata-rata." },
-        { id: "a2", driver: "demand_change", scope: "Beverages", baselineValue: 0, value: 4, unit: "%", rationale: "Kenaikan berkorelasi pada minuman dingin." },
+        { id: "a1", driver: "external", scope: "Frozen", baselineValue: 0, value: 15, unit: "%", rationale: pick("Prakiraan layanan cuaca: 1,5 °C di atas rata-rata.", "Weather service outlook: 1.5 °C above average.") },
+        { id: "a2", driver: "demand_change", scope: "Beverages", baselineValue: 0, value: 4, unit: "%", rationale: pick("Kenaikan berkorelasi pada minuman dingin.", "Correlated uplift in cold beverages.") },
       ],
     }),
     mk({
       id: "scn_new_range",
-      name: "Peluncuran rangkaian label sendiri",
-      description: "Peluncuran Mesta Select menggerus penjualan SKU Rumah Tangga bermerek.",
+      name: pick("Peluncuran rangkaian label sendiri", "Private-label range launch"),
+      description: pick("Peluncuran Mesta Select menggerus penjualan SKU Rumah Tangga bermerek.", "Mesta Select launch cannibalises branded Household SKUs."),
       ownerId: "u_rina",
       status: "archived",
       createdAt: iso(now - 30 * DAY_MS),
       modifiedAt: iso(now - 21 * DAY_MS),
       simulate: true,
       assumptions: [
-        { id: "a1", driver: "lifecycle", scope: "Household", baselineValue: 0, value: -6, unit: "%", rationale: "Pergerakan penjualan terlihat di toko percontohan." },
+        { id: "a1", driver: "lifecycle", scope: "Household", baselineValue: 0, value: -6, unit: "%", rationale: pick("Pergerakan penjualan terlihat di toko percontohan.", "Cannibalisation observed in the pilot stores.") },
       ],
     }),
   ];

@@ -21,6 +21,7 @@ import { ChartDataTable } from "@/components/charts/chart-frame";
 import { AuditTimeline, ConsequenceSummary } from "@/components/governance/audit";
 import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
 import { METRIC_DEFINITIONS, type MetricKey } from "./metric-definitions";
+import { pick } from "@/lib/i18n";
 
 export function metricValue(m: ModelMetrics, key: MetricKey) {
   switch (key) {
@@ -41,13 +42,13 @@ export function metricValue(m: ModelMetrics, key: MetricKey) {
 export function MetricTable({ metrics }: { metrics: ModelMetrics }) {
   return (
     <ChartDataTable
-      caption="Metrik performa model"
+      caption={pick("Metrik performa model", "Model performance metrics")}
       maxHeight="none"
       columns={[
-        { key: "metric", label: "Metrik" },
-        { key: "value", label: "Nilai", numeric: true },
-        { key: "definition", label: "Penjelasan" },
-        { key: "baseline", label: "Pembanding" },
+        { key: "metric", label: pick("Metrik", "Metric") },
+        { key: "value", label: pick("Nilai", "Value"), numeric: true },
+        { key: "definition", label: pick("Penjelasan", "Definition") },
+        { key: "baseline", label: pick("Pembanding", "Comparison baseline") },
       ]}
       rows={(Object.keys(METRIC_DEFINITIONS) as MetricKey[]).map((k) => ({
         metric: (
@@ -68,25 +69,25 @@ export function MetricTable({ metrics }: { metrics: ModelMetrics }) {
 export function ModelDetailView({ modelId }: { modelId: string }) {
   const { can } = useSession();
   const q = useApiQuery(["model", modelId], (c) => getModel(c, modelId));
-  useBreadcrumbLeaf(q.data ? `${q.data.model.name} ${q.data.model.version}` : null);
+  useBreadcrumbLeaf(q.data ? pick(`${q.data.model.name} ${q.data.model.version}`, pick(`${q.data.model.name} ${q.data.model.version}`, `${q.data.model.name} ${q.data.model.version}`)) : null);
   const [dialog, setDialog] = React.useState<null | "default" | "archive">(null);
   const [rationale, setRationale] = React.useState("");
   const promote = useApiMutation((c, v: string) => requestDefaultModel(c, modelId, v), {
     invalidate: [["model"], ["approvals"], ["nav-counts"]],
-    success: "Permintaan promosi dikirim",
-    successDescription: "A Manager must approve before new runs use this model by default.",
-    failure: "Permintaan tidak dapat dibuat.",
+    success: pick("Permintaan promosi dikirim", "Promotion requested"),
+    successDescription: pick("Manajer harus menyetujui sebelum proses baru memakai model ini sebagai bawaan.", "A Manager must approve before new runs use this model by default."),
+    failure: pick("Permintaan tidak dapat dibuat.", "The request was not created."),
     onSuccess: () => setDialog(null),
   });
-  const archive = useApiMutation((c, _v: void) => archiveModel(c, modelId), { invalidate: [["model"], ["models"]], success: "Model diarsipkan", failure: "Model tidak dapat diarsipkan.", onSuccess: () => setDialog(null) });
+  const archive = useApiMutation((c, _v: void) => archiveModel(c, modelId), { invalidate: [["model"], ["models"]], success: pick("Model diarsipkan", "Model archived"), failure: pick("Model tidak dapat diarsipkan.", pick("Model tidak diarsipkan.", "The model was not archived.")), onSuccess: () => setDialog(null) });
 
   if (q.isPending) return <PageContainer><PageSkeleton /></PageContainer>;
   if (q.isError) {
     return (
       <PageContainer>
-        <PageHeader title="Model" />
+        <PageHeader title={pick("Model", "Model")} />
         <Panel>
-          <ErrorState what="Model ini tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} recovery={<Link href="/models" className={buttonVariants({ variant: "secondary" })}>Kembali ke Daftar Model</Link>} />
+          <ErrorState what={pick("Model ini tidak dapat dimuat.", "This model could not be loaded.")} error={q.error} onRetry={() => q.refetch()} recovery={<Link href="/models" className={buttonVariants({ variant: "secondary" })}>{pick("Kembali ke Daftar Model", pick("Kembali ke daftar model", "Back to model registry"))}</Link>} />
         </Panel>
       </PageContainer>
     );
@@ -103,7 +104,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
         meta={
           <>
             <StatusBadge status={m.status} />
-            {m.isDefault && <Tag tone="primary">Model bawaan</Tag>}
+            {m.isDefault && <Tag tone="primary">{pick("Model bawaan", "Default model")}</Tag>}
             <MetaItem>Terakhir dilatih {formatDateTime(m.lastTrainedAt)}</MetaItem>
             <MetaItem>
               Penanggung jawab <UserIdentity userId={m.owner} className="ml-1" />
@@ -131,27 +132,27 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
         }
       />
       {pendingApproval && (
-        <InlineAlert tone="info" title="Permintaan menjadikan model ini bawaan sedang menunggu persetujuan." action={<Link href={`/planning/approvals?id=${pendingApproval.id}`} className={buttonVariants({ size: "sm" })}>Lihat permintaan</Link>}>
+        <InlineAlert tone="info" title={pick("Permintaan menjadikan model ini bawaan sedang menunggu persetujuan.", "A request to make this model the default is waiting for approval.")} action={<Link href={`/planning/approvals?id=${pendingApproval.id}`} className={buttonVariants({ size: "sm" })}>{pick("Lihat permintaan", "View request")}</Link>}>
           Diajukan {formatDateTime(pendingApproval.requestedAt)}.
         </InlineAlert>
       )}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Panel title="Performa" description={`Evaluasi terakhir ${formatDateRange(m.metrics.evaluationStart, m.metrics.evaluationEnd)} · ${m.metrics.population}`}>
+        <Panel title={pick("Performa", "Performance")} description={pick(`Evaluasi terakhir ${formatDateRange(m.metrics.evaluationStart, m.metrics.evaluationEnd)} · ${m.metrics.population}`, `Latest evaluation ${formatDateRange(m.metrics.evaluationStart, m.metrics.evaluationEnd)} · ${m.metrics.population}`)}>
           <MetricTable metrics={m.metrics} />
         </Panel>
-        <Panel title="Detail versi">
+        <Panel title={pick("Detail versi", pick("Metadata versi", "Version metadata"))}>
           <DescriptionList
             items={[
-              { label: "Versi", value: m.version },
-              { label: "Periode pelatihan", value: formatDateRange(m.trainingStart, m.trainingEnd) },
-              { label: "Dataset", value: m.dataset },
-              { label: "Rentang perkiraan", value: `Hingga ${m.horizonDays} hari` },
-              { label: "Frekuensi", value: m.frequency === "daily" ? "Harian" : "Mingguan" },
+              { label: pick("Versi", "Version"), value: m.version },
+              { label: pick("Periode pelatihan", "Training period"), value: formatDateRange(m.trainingStart, m.trainingEnd) },
+              { label: pick("Himpunan data", "Dataset"), value: m.dataset },
+              { label: pick("Rentang perkiraan", "Forecast horizon"), value: pick(`Hingga ${m.horizonDays} hari`, `Up to ${m.horizonDays} days`) },
+              { label: pick("Frekuensi", "Frequency"), value: m.frequency === "daily" ? pick("Harian", "Daily") : pick("Mingguan", "Weekly") },
             ]}
           />
           <div className="mt-4">
-            <p className="mb-1.5 metadata">Fitur</p>
+            <p className="mb-1.5 metadata">{pick("Fitur", "Features")}</p>
             <div className="flex flex-wrap gap-1.5">
               {m.features.map((f) => (
                 <Tag key={f}>{f}</Tag>
@@ -163,22 +164,22 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
 
       {latest ? (
         <ForecastChart
-          title={`Uji model ${latest.id}: perkiraan vs aktual`}
-          question="Seberapa dekat perkiraan model ini mengikuti permintaan aktual sebelumnya?"
+          title={pick(`Uji model ${latest.id}: perkiraan vs aktual`, `Backtest ${latest.id}: forecast vs actual`)}
+          question={pick("Seberapa dekat perkiraan model ini mengikuti permintaan aktual sebelumnya?", pick("Seberapa dekat perkiraan model ini mengikuti permintaan aktual di masa lalu?", "How closely did this model's forecasts track actual demand in the past?"))}
           points={latest.points}
-          unit="unit per hari"
-          source={`Uji model ${latest.id}`}
-          summary={`Selama ${formatDateRange(latest.windowStart, latest.windowEnd)}, WAPE sebesar ${formatPercent(latest.metrics?.wape ?? 0)} dan ${formatPercent(latest.metrics?.coverage80 ?? 0, 0)} hari berada di dalam rentang 80%.`}
+          unit={pick("unit per hari", "units per day")}
+          source={pick(`Uji model ${latest.id}`, `Backtest ${latest.id}`)}
+          summary={pick(`Selama ${formatDateRange(latest.windowStart, latest.windowEnd)}, WAPE sebesar ${formatPercent(latest.metrics?.wape ?? 0)} dan ${formatPercent(latest.metrics?.coverage80 ?? 0, 0)} hari berada di dalam rentang 80%.`, `Over ${formatDateRange(latest.windowStart, latest.windowEnd)}, WAPE was ${formatPercent(latest.metrics?.wape ?? 0)} and ${formatPercent(latest.metrics?.coverage80 ?? 0, 0)} of days fell inside the 80% interval.`)}
           height={260}
         />
       ) : (
-        <Panel title="Uji Model">
-          <p className="caption">Belum ada uji model yang selesai untuk model ini.</p>
+        <Panel title={pick("Uji Model", "Backtesting")}>
+          <p className="caption">{pick("Belum ada uji model yang selesai untuk model ini.", "No completed backtest for this model yet.")}</p>
         </Panel>
       )}
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Panel title="Batasan yang diketahui">
+        <Panel title={pick("Batasan yang diketahui", "Known limitations")}>
           <ul className="list-disc pl-5 body-sm text-fg-secondary">
             {m.limitations.map((l) => (
               <li key={l} className="mb-1">
@@ -187,9 +188,9 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
             ))}
           </ul>
         </Panel>
-        <Panel title="Penggunaan" description={`${formatNumber(m.usage.runs)} proses perkiraan · terakhir dipakai ${formatDate(m.usage.lastUsedAt)}`} flush>
+        <Panel title={pick("Penggunaan", "Usage")} description={pick(`${formatNumber(m.usage.runs)} proses perkiraan · terakhir dipakai ${formatDate(m.usage.lastUsedAt)}`, `${formatNumber(m.usage.runs)} forecast runs · last used ${formatDate(m.usage.lastUsedAt)}`)} flush>
           {runs.length === 0 ? (
-            <p className="px-4 py-6 caption">Belum ada proses di ruang kerja ini yang memakai model ini.</p>
+            <p className="px-4 py-6 caption">{pick("Belum ada proses di ruang kerja ini yang memakai model ini.", pick("Tidak ada proses di ruang kerja ini yang memakai model ini.", "No runs in this workspace used this model."))}</p>
           ) : (
             <ul>
               {runs.map((r) => (
@@ -202,14 +203,14 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
           )}
         </Panel>
       </div>
-      <Panel title="Riwayat">
-        <AuditTimeline events={audit} emptyText="Belum ada perubahan tercatat pada model ini." />
+      <Panel title={pick("Riwayat", "Audit")}>
+        <AuditTimeline events={audit} emptyText={pick("Belum ada perubahan tercatat pada model ini.", pick("Tidak ada perubahan tercatat untuk model ini.", "No audited changes to this model."))} />
       </Panel>
 
       <Dialog open={dialog === "default"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent
-          title={`Ajukan ${m.name} ${m.version} sebagai model bawaan?`}
-          description="Promosi model selalu melalui persetujuan Manajer."
+          title={pick(`Ajukan ${m.name} ${m.version} sebagai model bawaan?`, pick(`Ajukan ${m.name} ${m.version} sebagai model bawaan?`, pick(`Ajukan ${m.name} ${m.version} sebagai model bawaan?`, `Request ${m.name} ${m.version} as the default model?`)))}
+          description={pick("Promosi model selalu melalui persetujuan Manajer.", pick("Promosi model selalu lewat persetujuan Manajer.", "Model promotion always goes through Manager approval."))}
           footer={
             <>
               <Button variant="ghost" onClick={() => setDialog(null)}>
@@ -223,21 +224,21 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
         >
           <ConsequenceSummary
             rows={[
-              { label: "Yang berubah", value: "Proses perkiraan baru memakai model ini kecuali memilih model lain." },
-              { label: "Yang tidak berubah", value: "Proses yang sudah ada, acuan saat ini, dan rencana yang terbuka." },
-              { label: "Bukti terlampir", value: backtests.length ? backtests.map((b) => b.id).join(", ") : "Belum ada uji model. Jalankan dulu." },
-              { label: "Persetujuan", value: "Manajer" },
+              { label: pick("Yang berubah", "What changes"), value: pick("Proses perkiraan baru memakai model ini kecuali memilih model lain.", pick("Proses perkiraan baru memakai model ini kecuali dipilih lain.", "New forecast runs use this model unless another is chosen.")) },
+              { label: pick("Yang tidak berubah", "What does not change"), value: pick("Proses yang sudah ada, acuan saat ini, dan rencana yang terbuka.", "Existing runs, the current baseline and open plans.") },
+              { label: pick("Bukti terlampir", "Evidence attached"), value: backtests.length ? backtests.map((b) => b.id).join(", ") : pick("Belum ada uji model. Jalankan dulu.", "No backtests. Run one first.") },
+              { label: pick("Persetujuan", "Approval"), value: pick("Manajer", "Manager") },
             ]}
           />
-          <Field className="mt-4" label="Alasan" htmlFor="promo-why" required hint="Minimal 10 karakter. Tercatat bersama permintaan.">
-            <Textarea id="promo-why" value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder="mis. WAPE lebih rendah dan rentang lebih terkalibrasi dalam 90 hari terakhir." />
+          <Field className="mt-4" label={pick("Alasan", "Rationale")} htmlFor="promo-why" required hint={pick("Minimal 10 karakter. Tercatat bersama permintaan.", "At least 10 characters. Recorded with the request.")}>
+            <Textarea id="promo-why" value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder={pick("mis. WAPE lebih rendah dan rentang lebih terkalibrasi dalam 90 hari terakhir.", "e.g. Lower WAPE and better-calibrated intervals over the last 90 days.")} />
           </Field>
         </DialogContent>
       </Dialog>
       <Dialog open={dialog === "archive"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent
           size="sm"
-          title={`Arsipkan ${m.name} ${m.version}?`}
+          title={pick(`Arsipkan ${m.name} ${m.version}?`, `Archive ${m.name} ${m.version}?`)}
           footer={
             <>
               <Button variant="ghost" onClick={() => setDialog(null)}>
@@ -249,7 +250,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
             </>
           }
         >
-          <p className="body-sm text-fg-secondary">Model yang diarsipkan tidak dapat dipilih untuk proses perkiraan baru. Proses dan uji model yang sudah ada tetap merujuk ke model ini.</p>
+          <p className="body-sm text-fg-secondary">{pick("Model yang diarsipkan tidak dapat dipilih untuk proses perkiraan baru. Proses dan uji model yang sudah ada tetap merujuk ke model ini.", "Archived models cannot be selected for new forecast runs. Existing runs and backtests keep their reference to this model.")}</p>
         </DialogContent>
       </Dialog>
     </PageContainer>

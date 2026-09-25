@@ -15,6 +15,7 @@ import { MetricTrend, ShareBar } from "@/components/charts/small-charts";
 import { EmptyState, ErrorState, InlineAlert, PageSkeleton } from "@/components/feedback/states";
 import { METRIC_DEFINITIONS, type MetricKey } from "./metric-definitions";
 import { metricValue } from "./model-detail-view";
+import { pick } from "@/lib/i18n";
 
 const COLORS = ["var(--chart-series-1)", "var(--chart-series-3)", "var(--chart-series-2)", "var(--chart-series-4)", "var(--chart-series-5)"];
 
@@ -30,8 +31,8 @@ export function PerformanceView() {
   if (q.isError) {
     return (
       <PageContainer>
-        <PageHeader title="Performa Model" />
-        <Panel><ErrorState what="Performa model tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} /></Panel>
+        <PageHeader title={pick("Performa Model", pick("Performa model", "Model performance"))} />
+        <Panel><ErrorState what={pick("Performa model tidak dapat dimuat.", "Model performance could not be loaded.")} error={q.error} onRetry={() => q.refetch()} /></Panel>
       </PageContainer>
     );
   }
@@ -44,14 +45,14 @@ export function PerformanceView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Performa Model"
-        description="Seberapa akurat dan seberapa bias tiap model dari minggu ke minggu, pada populasi yang sama."
+        title={pick("Performa Model", pick("Performa model", "Model performance"))}
+        description={pick("Seberapa akurat dan seberapa bias tiap model dari minggu ke minggu, pada populasi yang sama.", pick("Seberapa akurat dan seberapa bias tiap model, minggu demi minggu, pada populasi yang sama.", "How accurate and how biased each model has been, week by week, on the same population."))}
         actions={
           <div className="w-[min(24rem,90vw)]">
             <MultiSelect
               value={selected}
               onChange={(v) => state.setParams({ models: v.length ? v.join(",") : null })}
-              allLabel="Pilih model untuk dibandingkan"
+              allLabel={pick("Pilih model untuk dibandingkan", "Choose models to compare")}
               options={(options.data ?? []).map((m) => ({ value: m.id, label: `${m.name} ${m.version}`, hint: m.status }))}
             />
           </div>
@@ -59,23 +60,23 @@ export function PerformanceView() {
       />
       {models.length === 0 ? (
         <Panel>
-          <EmptyState title="Pilih minimal satu model untuk dibandingkan." description="Gunakan pemilih model di atas." />
+          <EmptyState title={pick("Pilih minimal satu model untuk dibandingkan.", "Choose at least one model to compare.")} description={pick("Gunakan pemilih model di atas.", "Use the model picker above.")} />
         </Panel>
       ) : (
         <>
-          <InlineAlert tone="info" title="Definisi metrik masih perlu disepakati dengan pemilik analitik.">
+          <InlineAlert tone="info" title={pick("Definisi metrik masih perlu disepakati dengan pemilik analitik.", "Metric definitions need agreement with analytics owners.")}>
             Values below use the proposed definitions shown next to each metric. Compare models over identical windows; different windows can create false precision.
           </InlineAlert>
           <ChartFrame
             title={`${def.name} by week`}
-            question={metric === "wape" ? "Apakah selisih perkiraan membaik atau memburuk?" : "Apakah ada model yang konsisten terlalu tinggi atau terlalu rendah?"}
+            question={metric === "wape" ? pick("Apakah selisih perkiraan membaik atau memburuk?", "Is forecast error improving or drifting?") : pick("Apakah ada model yang konsisten terlalu tinggi atau terlalu rendah?", pick("Adakah model yang konsisten memperkirakan terlalu tinggi atau rendah?", "Is any model consistently over- or under-forecasting?"))}
             unit={def.unit}
             timeframe={firstWeek && lastWeek ? `Weeks of ${formatDate(firstWeek)} – ${formatDate(lastWeek)}` : ""}
-            source="Proses evaluasi mingguan"
+            source={pick("Proses evaluasi mingguan", "Weekly evaluation job")}
             actions={
               <Segmented
                 size="sm"
-                aria-label="Metrik"
+                aria-label={pick("Metrik", "Metric")}
                 value={metric}
                 onValueChange={(v) => state.setParams({ metric: v })}
                 options={[
@@ -97,7 +98,7 @@ export function PerformanceView() {
             table={
               <ChartDataTable
                 caption={`${def.name} by week`}
-                columns={[{ key: "week", label: "Minggu" }, ...series.map((s) => ({ key: s.key, label: s.label, numeric: true }))]}
+                columns={[{ key: "week", label: pick("Minggu", "Week of") }, ...series.map((s) => ({ key: s.key, label: s.label, numeric: true }))]}
                 rows={q.data.series.map((r) => ({
                   week: formatDate(r.week as string),
                   ...Object.fromEntries(series.map((s) => [s.key, metric === "wape" ? formatPercent(r[s.key] as number) : <SignedPercent key={s.key} percent={r[s.key] as number} />])),
@@ -105,14 +106,14 @@ export function PerformanceView() {
               />
             }
           />
-          <Panel title="Evaluasi terakhir" description="Uji model terakhir yang selesai untuk tiap model. Pastikan periodenya sama sebelum membandingkan." flush>
+          <Panel title={pick("Evaluasi terakhir", "Latest evaluation")} description={pick("Uji model terakhir yang selesai untuk tiap model. Pastikan periodenya sama sebelum membandingkan.", "Each model's latest completed backtest. Check that the windows match before comparing.")} flush>
             <div className="p-4">
               <ChartDataTable
-                caption="Evaluasi terakhir per model"
+                caption={pick("Evaluasi terakhir per model", "Latest evaluation by model")}
                 maxHeight="none"
                 columns={[
-                  { key: "model", label: "Model" },
-                  { key: "window", label: "Periode" },
+                  { key: "model", label: pick("Model", "Model") },
+                  { key: "window", label: pick("Periode", "Window") },
                   ...(Object.keys(METRIC_DEFINITIONS) as MetricKey[]).map((k) => ({ key: k, label: METRIC_DEFINITIONS[k].label, numeric: true })),
                   { key: "link", label: "" },
                 ]}
@@ -133,14 +134,14 @@ export function PerformanceView() {
               />
             </div>
           </Panel>
-          <Panel title="Performa per kategori" description="Dari uji model terakhir tiap model. Bagian volume adalah porsi kategori terhadap permintaan aktual." flush>
+          <Panel title={pick("Performa per kategori", "Performance by category")} description={pick("Dari uji model terakhir tiap model. Bagian volume adalah porsi kategori terhadap permintaan aktual.", "From each model's latest backtest. Volume share is the category's share of actual demand.")} flush>
             <div className="p-4">
               <ChartDataTable
-                caption="Performa per kategori"
+                caption={pick("Performa per kategori", "Performance by category")}
                 maxHeight="none"
                 columns={[
-                  { key: "segment", label: "Kategori" },
-                  { key: "share", label: "Bagian volume", numeric: true },
+                  { key: "segment", label: pick("Kategori", "Category") },
+                  { key: "share", label: pick("Bagian volume", "Volume share"), numeric: true },
                   ...models.flatMap((m) => [
                     { key: `${m.id}:wape`, label: `WAPE · ${m.version}`, numeric: true },
                     { key: `${m.id}:bias`, label: `Bias · ${m.version}`, numeric: true },

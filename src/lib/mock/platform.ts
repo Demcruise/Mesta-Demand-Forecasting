@@ -2,6 +2,7 @@ import type { ApiKey, ForecastSchedule, NotificationCategory, NotificationRules,
 import type { WorkspaceDb } from "./db";
 import { createRng } from "./random";
 import { addDays, DAY_MS, HOUR_MS, iso, MINUTE_MS } from "./time";
+import { pick } from "@/lib/i18n/core";
 
 export type PlatformState = {
   schedules: ForecastSchedule[];
@@ -57,7 +58,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
     schedules: [
       {
         id: "sch_daily",
-        name: "Penyegaran harian · Semua kategori",
+        name: pick("Penyegaran harian · Semua kategori", "Daily refresh · All categories"),
         cadence: { type: "daily" },
         time: "05:30",
         categories: [],
@@ -73,7 +74,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
       },
       {
         id: "sch_weekly_90",
-        name: "Perkiraan mingguan 90 hari",
+        name: pick("Perkiraan mingguan 90 hari", "Weekly 90-day outlook"),
         cadence: { type: "weekly", weekday: 1 },
         time: "06:00",
         categories: [],
@@ -89,15 +90,15 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
       },
     ],
     apiKeys: [
-      { id: "key_1", name: "Sistem pengisian ulang (baca perkiraan)", prefix: "mdf_live_7Kq2", scopes: ["forecasts:read", "plans:read"], createdBy: "u_budi", createdAt: iso(now - 90 * DAY_MS), expiresAt: iso(now + 275 * DAY_MS), lastUsedAt: iso(now - 12 * MINUTE_MS), status: "active" },
-      { id: "key_2", name: "Pemuatan gudang data", prefix: "mdf_live_P9xa", scopes: ["demand:write"], createdBy: "u_lina", createdAt: iso(now - 200 * DAY_MS), expiresAt: iso(now + 20 * DAY_MS), lastUsedAt: iso(now - 9 * HOUR_MS), status: "active" },
-      { id: "key_3", name: "Ekspor BI lama", prefix: "mdf_live_m1Tz", scopes: ["forecasts:read", "audit:read"], createdBy: "u_budi", createdAt: iso(now - 400 * DAY_MS), expiresAt: iso(now - 35 * DAY_MS), lastUsedAt: iso(now - 40 * DAY_MS), status: "expired" },
+      { id: "key_1", name: pick("Sistem pengisian ulang (baca perkiraan)", "Replenishment system (read forecasts)"), prefix: "mdf_live_7Kq2", scopes: ["forecasts:read", "plans:read"], createdBy: "u_budi", createdAt: iso(now - 90 * DAY_MS), expiresAt: iso(now + 275 * DAY_MS), lastUsedAt: iso(now - 12 * MINUTE_MS), status: "active" },
+      { id: "key_2", name: pick("Pemuatan gudang data", pick("Pemuat gudang data", "Data warehouse loader")), prefix: "mdf_live_P9xa", scopes: ["demand:write"], createdBy: "u_lina", createdAt: iso(now - 200 * DAY_MS), expiresAt: iso(now + 20 * DAY_MS), lastUsedAt: iso(now - 9 * HOUR_MS), status: "active" },
+      { id: "key_3", name: pick("Ekspor BI lama", "Old BI export"), prefix: "mdf_live_m1Tz", scopes: ["forecasts:read", "audit:read"], createdBy: "u_budi", createdAt: iso(now - 400 * DAY_MS), expiresAt: iso(now - 35 * DAY_MS), lastUsedAt: iso(now - 40 * DAY_MS), status: "expired" },
     ],
     webhooks: [
       {
         id: "whk_1",
         url: "https://replenishment.mestaretail.example/hooks/forecast",
-        description: "Beri tahu pengisian ulang saat acuan diterbitkan",
+        description: pick("Beri tahu pengisian ulang saat acuan diterbitkan", "Notify replenishment when a baseline is published"),
         events: ["forecast_run.published", "plan.published"],
         enabled: true,
         createdBy: "u_budi",
@@ -107,7 +108,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
       {
         id: "whk_2",
         url: "https://alerts.mestaretail.example/mesta",
-        description: "Peringatan operasional",
+        description: pick("Peringatan operasional", "Operations alerting"),
         events: ["forecast_run.failed", "data_quality.blocking"],
         enabled: true,
         createdBy: "u_lina",
@@ -116,15 +117,15 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
       },
     ],
     savedViews: [
-      { id: "view_1", name: "Minuman perlu ditinjau", surface: "explorer", query: "category=Beverages&status=needs_review", ownerId: "u_rina", shared: true, createdAt: iso(now - 10 * DAY_MS) },
-      { id: "view_2", name: "Penurunan terbesar", surface: "explorer", query: "sort=deltaPercent&dir=asc&delta=decrease", ownerId: "u_dimas", shared: true, createdAt: iso(now - 4 * DAY_MS) },
-      { id: "view_3", name: "Item kritis saya yang terbuka", surface: "exceptions", query: "severity=critical&status=open,investigating", ownerId: "u_rina", shared: false, createdAt: iso(now - 2 * DAY_MS) },
+      { id: "view_1", name: pick("Minuman perlu ditinjau", "Beverages needing review"), surface: "explorer", query: "category=Beverages&status=needs_review", ownerId: "u_rina", shared: true, createdAt: iso(now - 10 * DAY_MS) },
+      { id: "view_2", name: pick("Penurunan terbesar", "Biggest decreases"), surface: "explorer", query: "sort=deltaPercent&dir=asc&delta=decrease", ownerId: "u_dimas", shared: true, createdAt: iso(now - 4 * DAY_MS) },
+      { id: "view_3", name: pick("Item kritis saya yang terbuka", "My open critical exceptions"), surface: "exceptions", query: "severity=critical&status=open,investigating", ownerId: "u_rina", shared: false, createdAt: iso(now - 2 * DAY_MS) },
     ],
     notificationRules: {},
   };
 }
 
-export const WEEKDAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+export const WEEKDAYS = [pick("Minggu", "Sunday"), pick("Senin", "Monday"), pick("Selasa", "Tuesday"), pick("Rabu", "Wednesday"), pick("Kamis", "Thursday"), pick("Jumat", "Friday"), pick("Sabtu", "Saturday")];
 
 /** Next execution time for a schedule, in local time. */
 export function nextRunAt(s: Pick<ForecastSchedule, "cadence" | "time" | "enabled">, now = Date.now()): string | null {

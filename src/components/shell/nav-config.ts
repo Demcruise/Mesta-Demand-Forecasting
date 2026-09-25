@@ -26,7 +26,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Permission } from "@/lib/permissions";
-import { getActiveLocale, type Locale } from "@/lib/i18n";
+import { getActiveLocale, type Locale } from "@/lib/i18n/core";
 
 /**
  * Global information architecture. Six limited sections with

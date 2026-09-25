@@ -21,6 +21,7 @@ import { EmptyState, ErrorState, InlineAlert, PageSkeleton } from "@/components/
 import { StatusBadge } from "@/components/feedback/status";
 import { ExportMenu } from "@/components/tables/export-menu";
 import { downloadExport, type ExportFormat } from "@/lib/export";
+import { pick } from "@/lib/i18n";
 
 /**
  * PAGE-SCENARIO-COMPARISON: what changes between the baseline and each scenario?
@@ -37,16 +38,16 @@ export function CompareView() {
 
   const picker = (
     <div className="w-[min(28rem,90vw)]">
-      <MultiSelect value={ids} onChange={(v) => state.setParams({ ids: v.length ? v.slice(0, 4).join(",") : null })} allLabel="Pilih maksimal 4 skenario" options={options} placeholder="Cari skenario tersimulasi" />
+      <MultiSelect value={ids} onChange={(v) => state.setParams({ ids: v.length ? v.slice(0, 4).join(",") : null })} allLabel={pick("Pilih maksimal 4 skenario", "Choose up to 4 scenarios")} options={options} placeholder={pick("Cari skenario tersimulasi", "Search simulated scenarios")} />
     </div>
   );
 
   if (ids.length === 0) {
     return (
       <PageContainer>
-        <PageHeader title="Bandingkan Skenario" description="Bandingkan skenario tersimulasi terhadap acuan yang sama." actions={picker} />
+        <PageHeader title={pick("Bandingkan Skenario", "Scenario comparison")} description={pick("Bandingkan skenario tersimulasi terhadap acuan yang sama.", "Compare simulated scenarios against their shared baseline.")} actions={picker} />
         <Panel>
-          <EmptyState icon={GitCompareArrows} title="Pilih skenario untuk dibandingkan." description="Hanya skenario yang sudah disimulasikan yang dapat dibandingkan. Pilih maksimal empat lewat pemilih di atas." action={<Link href="/scenarios" className={buttonVariants({ variant: "secondary" })}>Buka Skenario</Link>} />
+          <EmptyState icon={GitCompareArrows} title={pick("Pilih skenario untuk dibandingkan.", "Choose scenarios to compare.")} description={pick("Hanya skenario yang sudah disimulasikan yang dapat dibandingkan. Pilih maksimal empat lewat pemilih di atas.", "Only simulated scenarios can be compared. Pick up to four with the selector above.")} action={<Link href="/scenarios" className={buttonVariants({ variant: "secondary" })}>{pick("Buka Skenario", "Go to scenarios")}</Link>} />
         </Panel>
       </PageContainer>
     );
@@ -55,8 +56,8 @@ export function CompareView() {
   if (q.isError) {
     return (
       <PageContainer>
-        <PageHeader title="Bandingkan Skenario" actions={picker} />
-        <Panel><ErrorState what="Perbandingan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} /></Panel>
+        <PageHeader title={pick("Bandingkan Skenario", "Scenario comparison")} actions={picker} />
+        <Panel><ErrorState what={pick("Perbandingan tidak dapat dimuat.", "The comparison could not be loaded.")} error={q.error} onRetry={() => q.refetch()} /></Panel>
       </PageContainer>
     );
   }
@@ -65,8 +66,8 @@ export function CompareView() {
   if (!first || !base) {
     return (
       <PageContainer>
-        <PageHeader title="Bandingkan Skenario" actions={picker} />
-        <Panel><EmptyState title="Tidak ada skenario terpilih yang punya hasil simulasi." description="Jalankan simulasi pada tiap skenario lebih dulu." /></Panel>
+        <PageHeader title={pick("Bandingkan Skenario", "Scenario comparison")} actions={picker} />
+        <Panel><EmptyState title={pick("Tidak ada skenario terpilih yang punya hasil simulasi.", "None of the selected scenarios have simulation results.")} description={pick("Jalankan simulasi pada tiap skenario lebih dulu.", "Run the simulation on each scenario first.")} /></Panel>
       </PageContainer>
     );
   }
@@ -77,7 +78,7 @@ export function CompareView() {
     ...Object.fromEntries(scenarios.map((s) => [s.id, s.result?.points[i]?.scenario ?? 0])),
   }));
   const metricRows: { metric: string; baseline: number; values: number[] }[] = [
-    { metric: "Total permintaan", baseline: base.baselineUnits, values: scenarios.map((s) => s.result?.scenarioUnits ?? 0) },
+    { metric: pick("Total permintaan", "Total demand"), baseline: base.baselineUnits, values: scenarios.map((s) => s.result?.scenarioUnits ?? 0) },
     ...base.byCategory.map((c) => ({ metric: c.category, baseline: c.baseline, values: scenarios.map((s) => s.result?.byCategory.find((x) => x.category === c.category)?.scenario ?? 0) })),
   ];
 
@@ -86,39 +87,39 @@ export function CompareView() {
     downloadExport(
       format,
       `scenario-comparison-${formatDate(new Date()).replace(/ /g, "-")}`,
-      ["Ukuran", "Acuan", ...scenarios.flatMap((s) => [s.name, `${s.name} selisih`, `${s.name} selisih %`])],
+      [pick("Ukuran", "Metric"), pick("Acuan", "Baseline"), ...scenarios.flatMap((s) => [s.name, pick(`${s.name} selisih`, `${s.name} delta`), pick(`${s.name} selisih %`, `${s.name} delta %`)])],
       metricRows.map((r) => [r.metric, r.baseline, ...r.values.flatMap((v) => [v, v - r.baseline, r.baseline ? Number((((v - r.baseline) / r.baseline) * 100).toFixed(1)) : null])]),
-      "Bandingkan Skenario",
+      pick("Bandingkan Skenario", "Scenario comparison"),
     );
   };
 
   return (
     <PageContainer>
       <PageHeader
-        title="Bandingkan Skenario"
+        title={pick("Bandingkan Skenario", "Scenario comparison")}
         description={`Baseline ${q.data.baseline?.id ?? first.baselineRunId} · ${q.data.baseline ? `${q.data.baseline.horizonDays}-day horizon from ${formatDate(base.points[0]?.date)}` : ""} · all categories, all regions`}
         actions={
           <>
             {picker}
-            {can("export") && <ExportMenu label="Ekspor perbandingan" note="Total per kategori untuk skenario terpilih." onExport={exportFile} />}
+            {can("export") && <ExportMenu label={pick("Ekspor perbandingan", "Export comparison")} note={pick("Total per kategori untuk skenario terpilih.", "Totals by category for the selected scenarios.")} onExport={exportFile} />}
           </>
         }
       />
       {!q.data.sameBaseline && (
-        <InlineAlert tone="warning" title="Skenario ini memakai acuan yang berbeda.">
+        <InlineAlert tone="warning" title={pick("Skenario ini memakai acuan yang berbeda.", "These scenarios use different baselines.")}>
           Deltas are shown against each scenario's own baseline. For a like-for-like comparison, rebuild them on the same published run.
         </InlineAlert>
       )}
       <ChartFrame
-        title="Permintaan harian: acuan vs skenario"
-        question="Bagaimana tiap skenario mengubah permintaan selama periode perkiraan?"
+        title={pick("Permintaan harian: acuan vs skenario", "Daily demand: baseline vs scenarios")}
+        question={pick("Bagaimana tiap skenario mengubah permintaan selama periode perkiraan?", "How does each scenario change demand across the horizon?")}
         unit="units per day"
         timeframe={`${formatDate(base.points[0]?.date)} – ${formatDate(base.points[base.points.length - 1]?.date)}`}
         source={`Baseline ${first.baselineRunId}`}
         asOf={base.simulatedAt}
         legend={
           <>
-            <LegendItem color="var(--chart-forecast)" label="Acuan" />
+            <LegendItem color="var(--chart-forecast)" label={pick("Acuan", "Baseline")} />
             {scenarios.map((s, i) => (
               <LegendItem key={s.id} color={SCENARIO_COLORS[i % SCENARIO_COLORS.length] as string} label={s.name} variant={i === 0 ? "line" : "dashed"} />
             ))}
@@ -127,25 +128,25 @@ export function CompareView() {
         chart={<ScenarioChart rows={chartRows} scenarios={scenarios.map((s) => ({ key: s.id, label: s.name }))} />}
         table={
           <ChartDataTable
-            caption="Permintaan harian per skenario"
-            columns={[{ key: "date", label: "Tanggal" }, { key: "baseline", label: "Acuan", numeric: true }, ...scenarios.map((s) => ({ key: s.id, label: s.name, numeric: true }))]}
+            caption={pick("Permintaan harian per skenario", "Daily demand by scenario")}
+            columns={[{ key: "date", label: pick("Tanggal", "Date") }, { key: "baseline", label: pick("Acuan", "Baseline"), numeric: true }, ...scenarios.map((s) => ({ key: s.id, label: s.name, numeric: true }))]}
             rows={chartRows.map((r) => ({ ...Object.fromEntries(Object.entries(r).map(([k, v]) => [k, typeof v === "number" ? formatNumber(v) : v])), date: formatDate(r.date) }))}
           />
         }
       />
-      <PageSection title="Perbandingan" description="Total selama periode perkiraan. Selisih dihitung terhadap acuan.">
+      <PageSection title={pick("Perbandingan", "Comparison")} description={pick("Total selama periode perkiraan. Selisih dihitung terhadap acuan.", "Totals over the horizon. Delta is versus the baseline.")}>
         <Panel flush>
           <div className="p-4">
             <ChartDataTable
-              caption="Perbandingan skenario"
+              caption={pick("Perbandingan skenario", "Scenario comparison")}
               maxHeight="none"
               columns={[
-                { key: "metric", label: "Ukuran" },
-                { key: "baseline", label: "Acuan", numeric: true },
+                { key: "metric", label: pick("Ukuran", "Metric") },
+                { key: "baseline", label: pick("Acuan", "Baseline"), numeric: true },
                 ...scenarios.flatMap((s) => [
                   { key: `${s.id}:v`, label: s.name, numeric: true },
-                  { key: `${s.id}:d`, label: "Selisih", numeric: true },
-                  { key: `${s.id}:p`, label: "Selisih %", numeric: true },
+                  { key: `${s.id}:d`, label: pick("Selisih", "Delta"), numeric: true },
+                  { key: `${s.id}:p`, label: pick("Selisih %", "Delta %"), numeric: true },
                 ]),
               ]}
               rows={metricRows.map((r) => ({
@@ -157,7 +158,7 @@ export function CompareView() {
                     return [
                       [`${s.id}:v`, formatNumber(v)],
                       [`${s.id}:d`, formatDeltaNumber(v - r.baseline)],
-                      [`${s.id}:p`, <SignedPercent key="p" percent={r.baseline ? (v - r.baseline) / r.baseline : 0} />],
+                      [`${s.id}:p`, <SignedPercent key={pick("p", "Assumptions and uncertainty")} percent={r.baseline ? (v - r.baseline) / r.baseline : 0} />],
                     ];
                   }),
                 ),
@@ -166,7 +167,7 @@ export function CompareView() {
           </div>
         </Panel>
       </PageSection>
-      <PageSection title="Asumsi dan rentang">
+      <PageSection title={pick("Asumsi dan rentang", "Assumptions and ranges")}>
         <div className="grid auto-rows-fr gap-4 lg:grid-cols-2 2xl:grid-cols-4">
           {scenarios.map((s, i) => (
             <ScenarioCard key={s.id} scenario={s} color={SCENARIO_COLORS[i % SCENARIO_COLORS.length] as string} />

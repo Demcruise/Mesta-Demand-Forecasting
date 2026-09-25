@@ -23,17 +23,27 @@ import { FreshnessIndicator } from "@/components/feedback/freshness";
 import { EntityId, ProductIdentity, UserIdentity } from "@/components/entities/identity";
 import { MetricCard, MetricStrip } from "@/components/forecasting/metrics";
 import { AuditTimeline } from "@/components/governance/audit";
+import { pick, localized } from "@/lib/i18n";
 
-const TYPE_LABELS: Record<DataQualityIssue["type"], string> = {
-  missing_records: "Data belum lengkap",
-  duplicate_records: "Data duplikat",
-  missing_dimensions: "Dimensi belum lengkap",
-  late_data: "Data terlambat",
-  unexpected_zero: "Permintaan nol tidak wajar",
+const TYPE_LABELS: Record<DataQualityIssue["type"], string> = localized({
+  missing_records: pick("Data belum lengkap", "Missing records"),
+  duplicate_records: pick("Data duplikat", "Duplicate records"),
+  missing_dimensions: pick("Dimensi belum lengkap", "Missing dimensions"),
+  late_data: pick("Data terlambat", "Late data"),
+  unexpected_zero: pick("Permintaan nol tidak wajar", "Unexpected zero demand"),
   extreme_outlier: "Nilai ekstrem",
-  schema_mismatch: "Skema tidak cocok",
-  source_unavailable: "Sumber tidak tersedia",
-};
+  schema_mismatch: pick("Skema tidak cocok", "Schema mismatch"),
+  source_unavailable: pick("Sumber tidak tersedia", "Source unavailable"),
+}, {
+  missing_records: "Missing records",
+  duplicate_records: "Duplicate records",
+  missing_dimensions: "Missing dimensions",
+  late_data: pick("Data terlambat", "Late data"),
+  unexpected_zero: "Unexpected zero demand",
+  extreme_outlier: "Extreme outlier",
+  schema_mismatch: "Schema mismatch",
+  source_unavailable: "Source unavailable",
+});
 
 /** PAGE-DATA-QUALITY: make data readiness operationally visible. */
 export function QualityView() {
@@ -44,7 +54,7 @@ export function QualityView() {
 
   const columns = React.useMemo<ColumnDef<DataQualityIssue, unknown>[]>(
     () => [
-      { id: "severity", header: "Tingkat", meta: { width: "120px", sortKey: "severity" } satisfies ColumnMeta, cell: ({ row }) => <SeverityBadge severity={row.original.severity} size="sm" /> },
+      { id: "severity", header: pick("Tingkat", "Severity"), meta: { width: "120px", sortKey: "severity" } satisfies ColumnMeta, cell: ({ row }) => <SeverityBadge severity={row.original.severity} size="sm" /> },
       {
         id: "issue",
         header: "Issue",
@@ -58,9 +68,9 @@ export function QualityView() {
           </span>
         ),
       },
-      { id: "source", header: "Sumber", meta: { width: "minmax(150px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{sourceName(row.original.sourceId)}</span> },
-      { id: "skus", header: "SKU terdampak", meta: { width: "120px", numeric: true, sortKey: "affectedSkus" } satisfies ColumnMeta, cell: ({ row }) => formatNumber(row.original.affectedSkus) },
-      { id: "detected", header: "Terdeteksi", meta: { width: "120px", sortKey: "detectedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{formatRelative(row.original.detectedAt)}</span> },
+      { id: "source", header: pick("Sumber", "Source"), meta: { width: "minmax(150px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{sourceName(row.original.sourceId)}</span> },
+      { id: "skus", header: pick("SKU terdampak", "SKUs affected"), meta: { width: "120px", numeric: true, sortKey: "affectedSkus" } satisfies ColumnMeta, cell: ({ row }) => formatNumber(row.original.affectedSkus) },
+      { id: "detected", header: pick("Terdeteksi", "Detected"), meta: { width: "120px", sortKey: "detectedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{formatRelative(row.original.detectedAt)}</span> },
       { id: "owner", header: "Owner", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
       { id: "status", header: "Status", meta: { width: "140px", sortKey: "status" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
     ],
@@ -71,15 +81,15 @@ export function QualityView() {
   const s = q.data?.summary;
   return (
     <PageContainer>
-      <PageHeader title="Kualitas Data" description="Periksa apakah data siap digunakan untuk membuat perkiraan. Temuan yang menghambat menghentikan proses perkiraan; peringatan menurunkan akurasi." />
+      <PageHeader title={pick("Kualitas Data", pick("Kualitas data", "Data quality"))} description={pick("Periksa apakah data siap digunakan untuk membuat perkiraan. Temuan yang menghambat menghentikan proses perkiraan; peringatan menurunkan akurasi.", "Is the demand data ready for forecasting? Blocking issues stop forecast runs; warnings reduce accuracy.")} />
       <MetricStrip>
-        <MetricCard label="Temuan menghambat" value={s ? formatNumber(s.blocking) : "—"} context={s?.blocking ? "Proses yang mencakup SKU terdampak akan gagal diperiksa." : "Tidak ada temuan yang menghambat."} href="/demand-data/quality?severity=blocking" hrefLabel="Lihat yang menghambat" />
-        <MetricCard label="Peringatan" value={s ? formatNumber(s.warnings) : "—"} context="Dapat menurunkan akurasi perkiraan." href="/demand-data/quality?severity=warning&status=open,investigating" hrefLabel="Lihat peringatan" />
-        <MetricCard label="Cakupan" value={s ? formatPercent(s.coverage) : "—"} context={s ? `Perkiraan bagian dari ${formatNumber(s.skus)} SKU tanpa masalah terbuka` : undefined} tooltip="Perkiraan bagian SKU-hari dalam 28 hari terakhir yang lolos semua pemeriksaan." />
-        <MetricCard label="Sumber bermasalah" value={q.data ? formatNumber(q.data.sources.filter((x) => x.status === "failed" || x.status === "warning").length) : "—"} context={q.data ? `dari ${q.data.sources.length} sumber` : undefined} href="/demand-data/sources" hrefLabel="Lihat sumber" />
+        <MetricCard label={pick("Temuan menghambat", "Blocking issues")} value={s ? formatNumber(s.blocking) : "—"} context={s?.blocking ? pick("Proses yang mencakup SKU terdampak akan gagal diperiksa.", "Runs covering affected SKUs fail validation.") : pick("Tidak ada temuan yang menghambat.", "No blocking issues.")} href="/demand-data/quality?severity=blocking" hrefLabel={pick("Lihat yang menghambat", "Show blocking")} />
+        <MetricCard label={pick("Peringatan", "Warnings")} value={s ? formatNumber(s.warnings) : "—"} context={pick("Dapat menurunkan akurasi perkiraan.", "May reduce forecast accuracy.")} href="/demand-data/quality?severity=warning&status=open,investigating" hrefLabel={pick("Lihat peringatan", "Show warnings")} />
+        <MetricCard label={pick("Cakupan", "Coverage")} value={s ? formatPercent(s.coverage) : "—"} context={s ? pick(`Perkiraan bagian dari ${formatNumber(s.skus)} SKU tanpa masalah terbuka`, `Share of ${formatNumber(s.skus)} SKUs without open issues (estimate)`) : undefined} tooltip={pick("Perkiraan bagian SKU-hari dalam 28 hari terakhir yang lolos semua pemeriksaan.", "Estimated share of SKU-days in the last 28 days that pass all checks.")} />
+        <MetricCard label={pick("Sumber bermasalah", "Sources with problems")} value={q.data ? formatNumber(q.data.sources.filter((x) => x.status === "failed" || x.status === "warning").length) : "—"} context={q.data ? pick(`dari ${q.data.sources.length} sumber`, pick(`dari ${q.data.sources.length} sumber`, pick(`dari ${q.data.sources.length} sumber`, `of ${q.data.sources.length} sources`))) : undefined} href="/demand-data/sources" hrefLabel={pick("Lihat sumber", "View sources")} />
       </MetricStrip>
       {q.data && (
-        <PageSection title="Terakhir Diperbarui" description="Pembaruan menentukan apakah perkiraan hari ini memakai data hari ini.">
+        <PageSection title={pick("Terakhir Diperbarui", "Source freshness")} description={pick("Pembaruan menentukan apakah perkiraan hari ini memakai data hari ini.", pick("Kebaruan menentukan apakah perkiraan hari ini memakai data hari ini.", "Freshness determines whether today's forecasts use today's data."))}>
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {q.data.sources.map((src) => (
               <li key={src.id}>
@@ -88,7 +98,7 @@ export function QualityView() {
                     <span className="truncate body-sm font-semibold">{src.name}</span>
                     <StatusBadge status={src.status} size="sm" />
                   </span>
-                  <FreshnessIndicator timestamp={src.lastSuccessAt} label="Berhasil terakhir" source={src.name} />
+                  <FreshnessIndicator timestamp={src.lastSuccessAt} label={pick("Berhasil terakhir", "Last success")} source={src.name} />
                 </Link>
               </li>
             ))}
@@ -96,7 +106,7 @@ export function QualityView() {
         </PageSection>
       )}
       <DataTable
-        label="Masalah kualitas data"
+        label={pick("Masalah kualitas data", "Data quality issues")}
         columns={columns}
         data={q.data?.page.items}
         getRowId={(r) => r.id}
@@ -104,7 +114,7 @@ export function QualityView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Masalah kualitas data tidak dapat dimuat."
+        errorWhat={pick("Masalah kualitas data tidak dapat dimuat.", "Data quality issues could not be loaded.")}
         storageKey="dq"
         activeRowId={selectedId}
         onRowClick={(r) => state.setParam("id", r.id)}
@@ -113,20 +123,20 @@ export function QualityView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Cari masalah"
+            searchPlaceholder={pick("Cari masalah", "Search issues")}
             facets={[
-              { key: "severity", label: "Tingkat", primary: true, options: [{ value: "blocking", label: "Menghambat" }, { value: "warning", label: "Peringatan" }, { value: "info", label: "Info" }] },
+              { key: "severity", label: pick("Tingkat", "Severity"), primary: true, options: [{ value: "blocking", label: pick("Menghambat", "Blocking") }, { value: "warning", label: pick("Peringatan", "Warning") }, { value: "info", label: "Info" }] },
               { key: "status", label: "Status", primary: true, options: (["open", "investigating", "resolved", "dismissed"] as StatusKey[]).map((v) => ({ value: v, label: STATUS[v].label })) },
-              { key: "source", label: "Sumber", options: (q.data?.sources ?? []).map((x) => ({ value: x.id, label: x.name })) },
-              { key: "type", label: "Jenis masalah", options: Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label })) },
+              { key: "source", label: pick("Sumber", "Source"), options: (q.data?.sources ?? []).map((x) => ({ value: x.id, label: x.name })) },
+              { key: "type", label: pick("Jenis masalah", "Issue type"), options: Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label })) },
             ]}
           />
         }
         empty={
           state.activeFilterCount > 0 ? (
-            <EmptyState title="Tidak ada masalah kualitas data yang cocok dengan filter." action={<Button variant="secondary" onClick={state.clearFilters}>Hapus filter</Button>} />
+            <EmptyState title={pick("Tidak ada masalah kualitas data yang cocok dengan filter.", "No data quality issues match the current filters.")} action={<Button variant="secondary" onClick={state.clearFilters}>{pick("Hapus filter", "Clear filters")}</Button>} />
           ) : (
-            <EmptyState icon={ShieldCheck} title="Belum ada masalah kualitas data yang terdeteksi." description="Semua pemeriksaan lolos. Masalah baru muncul di sini begitu ada pemeriksaan yang gagal." />
+            <EmptyState icon={ShieldCheck} title={pick("Belum ada masalah kualitas data yang terdeteksi.", "No data quality issues have been detected.")} description={pick("Semua pemeriksaan lolos. Masalah baru muncul di sini begitu ada pemeriksaan yang gagal.", "All checks pass. New issues appear here as soon as a check fails.")} />
           )
         }
       />
@@ -144,14 +154,14 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
   const update = useApiMutation((c, v: { status?: DataQualityIssue["status"]; ownerId?: string | null; note?: string }) => updateDataQualityIssue(c, id as string, v), {
     invalidate,
     success: (i) => `${i.title}: ${i.status}`,
-    failure: "Masalah tidak dapat diperbarui.",
+    failure: pick("Masalah tidak dapat diperbarui.", "The issue was not updated."),
     onSuccess: () => setResolve(null),
   });
   const retry = useApiMutation((c, _v: void) => retryDataCheck(c, id as string), {
     invalidate,
-    success: "Pemeriksaan dijalankan ulang: masalah masih ada.",
-    successDescription: "Data di sumber belum berubah. Ikuti tindakan yang disarankan.",
-    failure: "Pemeriksaan tidak dapat dijalankan ulang.",
+    success: pick("Pemeriksaan dijalankan ulang: masalah masih ada.", "Check re-run: the issue is still present."),
+    successDescription: pick("Data di sumber belum berubah. Ikuti tindakan yang disarankan.", "The data has not changed at the source. Follow the recommended action."),
+    failure: pick("Pemeriksaan tidak dapat dijalankan ulang.", "The check could not be re-run."),
   });
   const d = q.data;
   const closed = d && (d.issue.status === "resolved" || d.issue.status === "dismissed");
@@ -161,7 +171,7 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
         <DrawerContent
           size="md"
           eyebrow={<EntityId value={id.toUpperCase().replace("_", "-")} copy={false} />}
-          title={d?.issue.title ?? "Masalah kualitas data"}
+          title={d?.issue.title ?? pick("Masalah kualitas data", "Data quality issue")}
           footer={
             d && can("data.manage") && !closed ? (
               <>
@@ -181,7 +191,7 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
           {q.isPending ? (
             <DetailSkeleton />
           ) : q.isError ? (
-            <ErrorState compact what="Masalah ini tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />
+            <ErrorState compact what={pick("Masalah ini tidak dapat dimuat.", "This issue could not be loaded.")} error={q.error} onRetry={() => q.refetch()} />
           ) : d ? (
             <div className="flex flex-col gap-6">
               <div className="flex flex-wrap items-center gap-2">
@@ -195,16 +205,16 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
               <DescriptionList
                 columns={2}
                 items={[
-                  { label: "Cakupan terdampak", value: `${formatNumber(d.issue.affectedSkus)} SKU · ${formatNumber(d.issue.affectedLocations)} lokasi` },
-                  { label: "Terdeteksi", value: formatDateTime(d.issue.detectedAt) },
-                  { label: "Sumber", value: d.source ? <Link href={`/demand-data/sources?id=${d.source.id}`} className="text-primary hover:underline">{d.source.name}</Link> : "—" },
+                  { label: pick("Cakupan terdampak", "Affected scope"), value: pick(`${formatNumber(d.issue.affectedSkus)} SKU · ${formatNumber(d.issue.affectedLocations)} lokasi`, `${formatNumber(d.issue.affectedSkus)} SKUs · ${formatNumber(d.issue.affectedLocations)} locations`) },
+                  { label: pick("Terdeteksi", "Detected"), value: formatDateTime(d.issue.detectedAt) },
+                  { label: pick("Sumber", "Source"), value: d.source ? <Link href={`/demand-data/sources?id=${d.source.id}`} className="text-primary hover:underline">{d.source.name}</Link> : "—" },
                   { label: "Owner", value: <UserIdentity userId={d.issue.ownerId} /> },
                 ]}
               />
               <section className="rounded-lg border border-border bg-subtle p-3.5">
-                <h3 className="mb-1 card-title">Dampak pada perkiraan</h3>
+                <h3 className="mb-1 card-title">{pick("Dampak pada perkiraan", "Forecast impact")}</h3>
                 <p className="body-sm text-fg-secondary">{d.issue.forecastImpact}</p>
-                <h3 className="mb-1 mt-3 card-title">Tindakan yang disarankan</h3>
+                <h3 className="mb-1 mt-3 card-title">{pick("Tindakan yang disarankan", "Recommended action")}</h3>
                 <p className="body-sm text-fg-secondary">{d.issue.recommendedAction}</p>
               </section>
               {!can("data.manage") ? (
@@ -227,7 +237,7 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
               )}
               {d.products.length > 0 && (
                 <section>
-                  <h3 className="mb-2 card-title">Contoh produk terdampak</h3>
+                  <h3 className="mb-2 card-title">{pick("Contoh produk terdampak", "Sample of affected products")}</h3>
                   <ul className="flex flex-col gap-2">
                     {d.products.slice(0, 6).map((p) => (
                       <li key={p.id}>
@@ -238,7 +248,7 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
                 </section>
               )}
               <section>
-                <h3 className="mb-2 card-title">Aktivitas</h3>
+                <h3 className="mb-2 card-title">{pick("Aktivitas", "Activity")}</h3>
                 <AuditTimeline events={d.activity} emptyText={`No actions yet. Detected ${formatRelative(d.issue.detectedAt)} by automated checks; owner ${actorName(d.issue.ownerId)}.`} />
               </section>
             </div>
@@ -249,20 +259,20 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
         {resolve && d && (
           <DialogContent
             size="sm"
-            title={resolve === "resolved" ? "Tandai masalah ini selesai?" : "Abaikan masalah ini?"}
-            description={resolve === "resolved" ? "Masalah yang selesai tidak lagi menghambat pemeriksaan. Jelaskan cara memperbaikinya." : "Masalah yang diabaikan ditutup tanpa perbaikan. Jelaskan mengapa tidak perlu tindakan."}
+            title={resolve === "resolved" ? pick("Tandai masalah ini selesai?", "Mark this issue resolved?") : pick("Abaikan masalah ini?", "Dismiss this issue?")}
+            description={resolve === "resolved" ? pick("Masalah yang selesai tidak lagi menghambat pemeriksaan. Jelaskan cara memperbaikinya.", "Resolved issues stop blocking validation. Explain how it was fixed.") : pick("Masalah yang diabaikan ditutup tanpa perbaikan. Jelaskan mengapa tidak perlu tindakan.", "Dismissed issues are closed without a fix. Explain why no action is needed.")}
             footer={
               <>
                 <Button variant="ghost" onClick={() => setResolve(null)}>
                   Cancel
                 </Button>
                 <Button variant="primary" disabled={note.trim().length < 5} loading={update.isPending} onClick={() => update.mutate({ status: resolve, note })}>
-                  {resolve === "resolved" ? "Tandai selesai" : "Abaikan masalah"}
+                  {resolve === "resolved" ? pick("Tandai selesai", "Mark resolved") : pick("Abaikan masalah", "Dismiss issue")}
                 </Button>
               </>
             }
           >
-            <Field label="Catatan" htmlFor="dq-note" required hint="Tercatat di riwayat aktivitas. Minimal 5 karakter.">
+            <Field label={pick("Catatan", "Note")} htmlFor="dq-note" required hint={pick("Tercatat di riwayat aktivitas. Minimal 5 karakter.", "Recorded in the audit log. At least 5 characters.")}>
               <Textarea id="dq-note" value={note} onChange={(e) => setNote(e.target.value)} autoFocus />
             </Field>
           </DialogContent>

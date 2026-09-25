@@ -20,6 +20,7 @@ import { StatusBadge, STATUS } from "@/components/feedback/status";
 import { EmptyState } from "@/components/feedback/states";
 import { DateCell, ScenarioIdentity, UserIdentity } from "@/components/entities/identity";
 import { ForecastDelta } from "@/components/forecasting/metrics";
+import { pick } from "@/lib/i18n";
 
 /** PAGE-SCENARIOS: compare planning outcomes under alternate assumptions. */
 export function ScenariosView() {
@@ -33,23 +34,23 @@ export function ScenariosView() {
   const duplicate = useApiMutation((c, id: string) => duplicateScenario(c, id), {
     invalidate: [["scenarios"]],
     success: (s) => `Created “${s.name}”`,
-    failure: "Skenario tidak dapat diduplikat.",
+    failure: pick("Skenario tidak dapat diduplikat.", "The scenario was not duplicated."),
     onSuccess: (s) => router.push(`/scenarios/${s.id}?edit=1`),
   });
-  const archive = useApiMutation((c, id: string) => archiveScenario(c, id), { invalidate: [["scenarios"]], success: (s) => `Mengarsipkan “${s.name}”`, failure: "Skenario tidak dapat diarsipkan." });
+  const archive = useApiMutation((c, id: string) => archiveScenario(c, id), { invalidate: [["scenarios"]], success: (s) => pick(`Mengarsipkan “${s.name}”`, `Archived “${s.name}”`), failure: pick("Skenario tidak dapat diarsipkan.", "The scenario was not archived.") });
 
   const columns = React.useMemo<ColumnDef<Scenario, unknown>[]>(
     () => [
-      { id: "scenario", header: "Skenario", meta: { width: "minmax(260px, 2.5fr)", sortKey: "name", pinned: true, label: "Skenario" } satisfies ColumnMeta, cell: ({ row }) => <ScenarioIdentity scenario={row.original} /> },
-      { id: "baseline", header: "Acuan", meta: { width: "160px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="mono-id text-fg-secondary">{row.original.baselineRunId}</span> },
-      { id: "assumptions", header: "Asumsi", meta: { width: "120px", numeric: true, hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => row.original.assumptions.length },
-      { id: "owner", header: "Penanggung jawab", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
+      { id: "scenario", header: pick("Skenario", "Scenario"), meta: { width: "minmax(260px, 2.5fr)", sortKey: "name", pinned: true, label: pick("Skenario", "Scenario") } satisfies ColumnMeta, cell: ({ row }) => <ScenarioIdentity scenario={row.original} /> },
+      { id: "baseline", header: pick("Acuan", "Baseline"), meta: { width: "160px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="mono-id text-fg-secondary">{row.original.baselineRunId}</span> },
+      { id: "assumptions", header: pick("Asumsi", "Assumptions"), meta: { width: "120px", numeric: true, hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => row.original.assumptions.length },
+      { id: "owner", header: pick("Penanggung jawab", "Owner"), meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
       { id: "status", header: "Status", meta: { width: "130px", sortKey: "status" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
-      { id: "modified", header: "Diubah", meta: { width: "120px", sortKey: "modifiedAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.modifiedAt} relative /> },
+      { id: "modified", header: pick("Diubah", "Modified"), meta: { width: "120px", sortKey: "modifiedAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.modifiedAt} relative /> },
       {
         id: "impact",
-        header: "Dampak",
-        meta: { width: "150px", numeric: true, sortKey: "impact", description: "Perubahan total permintaan dibanding acuan selama periode perkiraan." } satisfies ColumnMeta,
+        header: pick("Dampak", "Impact"),
+        meta: { width: "150px", numeric: true, sortKey: "impact", description: pick("Perubahan total permintaan dibanding acuan selama periode perkiraan.", "Change in total demand versus the baseline over the horizon.") } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.result ? (
             <span className="flex flex-col items-end">
@@ -57,13 +58,13 @@ export function ScenariosView() {
               <span className="text-[0.6875rem] tabular text-fg-tertiary">{formatDeltaNumber(row.original.result.deltaUnits)} units</span>
             </span>
           ) : (
-            <span className="text-xs text-fg-tertiary">Belum disimulasikan</span>
+            <span className="text-xs text-fg-tertiary">{pick("Belum disimulasikan", "Not simulated")}</span>
           ),
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Aksi</span>,
-        meta: { width: "52px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">{pick("Aksi", "Actions")}</span>,
+        meta: { width: "52px", pinned: true, label: pick("Aksi", "Actions") } satisfies ColumnMeta,
         cell: ({ row }) => {
           const s = row.original;
           return (
@@ -107,8 +108,8 @@ export function ScenariosView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Skenario"
-        description="Buat dan bandingkan beberapa kemungkinan permintaan berdasarkan acuan yang sudah diterbitkan."
+        title={pick("Skenario", "Scenarios")}
+        description={pick("Buat dan bandingkan beberapa kemungkinan permintaan berdasarkan acuan yang sudah diterbitkan.", "Alternate assumptions applied to a published baseline, simulated and compared before they are adopted into a plan.")}
         actions={
           <>
             <Link href="/scenarios/compare" className={buttonVariants({ variant: "secondary" })}>
@@ -123,7 +124,7 @@ export function ScenariosView() {
         }
       />
       <DataTable
-        label="Skenario"
+        label={pick("Skenario", "Scenarios")}
         columns={columns}
         data={q.data?.items}
         getRowId={(s) => s.id}
@@ -131,7 +132,7 @@ export function ScenariosView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Skenario tidak dapat dimuat."
+        errorWhat={pick("Skenario tidak dapat dimuat.", "Scenarios could not be loaded.")}
         onRowClick={(s) => router.push(`/scenarios/${s.id}`)}
         selection={{ selected: selection, onChange: setSelection, isSelectable: (s) => !!s.result }}
         bulkBar={
@@ -153,16 +154,16 @@ export function ScenariosView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Cari skenario"
+            searchPlaceholder={pick("Cari skenario", "Search scenarios")}
             facets={[{ key: "status", label: "Status", primary: true, options: (["draft", "simulated", "in_review", "approved", "rejected", "archived"] as StatusKey[]).map((s) => ({ value: s, label: STATUS[s].label })) }]}
           />
         }
         empty={
           <EmptyState
             icon={SlidersHorizontal}
-            title={state.activeFilterCount ? "Tidak ada skenario yang cocok dengan filter." : "Belum ada skenario di ruang kerja ini."}
-            description="Skenario menerapkan asumsi seperti perubahan harga atau promosi pada perkiraan terbit, lalu menunjukkan dampaknya."
-            action={can("scenario.create") ? <Link href="/scenarios/new" className={buttonVariants({ variant: "primary" })}>Buat Skenario</Link> : undefined}
+            title={state.activeFilterCount ? pick("Tidak ada skenario yang cocok dengan filter.", "No scenarios match the current filters.") : pick("Belum ada skenario di ruang kerja ini.", "No scenarios in this workspace yet.")}
+            description={pick("Skenario menerapkan asumsi seperti perubahan harga atau promosi pada perkiraan terbit, lalu menunjukkan dampaknya.", "No scenarios match the current filters.")}
+            action={can("scenario.create") ? <Link href="/scenarios/new" className={buttonVariants({ variant: "primary" })}>{pick("Buat Skenario", "Create scenario")}</Link> : undefined}
           />
         }
       />
