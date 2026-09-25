@@ -24,7 +24,7 @@ import { ChartDataTable } from "@/components/charts/chart-frame";
 
 type SourceRow = DataSource & { openIssues: number };
 
-const SCHEDULES = ["Every hour", "Every 4 hours", "Daily at 02:00", "Daily at 04:30", "Daily at 05:00", "Manual"];
+const SCHEDULES = ["Setiap jam", "Setiap 4 jam", "Harian pukul 02:00", "Harian pukul 04:30", "Harian pukul 05:00", "Manual"];
 
 /**
  * PAGE-DATA-SOURCES and PAGE-INTEGRATIONS share this view. `mode="admin"` leads with
@@ -39,8 +39,8 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
     () => [
       {
         id: "source",
-        header: "Source",
-        meta: { width: "minmax(240px, 2fr)", pinned: true, label: "Source" } satisfies ColumnMeta,
+        header: "Sumber",
+        meta: { width: "minmax(240px, 2fr)", pinned: true, label: "Sumber" } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-[0.8125rem] font-semibold">{row.original.name}</span>
@@ -50,12 +50,12 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
       },
       { id: "type", header: "Type", meta: { width: "150px", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{row.original.type}</Tag> },
       { id: "status", header: "Status", meta: { width: "140px" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
-      { id: "sync", header: "Last sync", meta: { width: "150px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateTime(row.original.lastSyncAt)}</span> },
-      { id: "freshness", header: "Freshness", meta: { width: "190px", description: "Time since the last successful sync." } satisfies ColumnMeta, cell: ({ row }) => <FreshnessIndicator timestamp={row.original.lastSuccessAt} label="Success" /> },
-      { id: "records", header: "Records", meta: { width: "120px", numeric: true, hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => formatNumber(row.original.records) },
+      { id: "sync", header: "Sinkron terakhir", meta: { width: "150px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateTime(row.original.lastSyncAt)}</span> },
+      { id: "freshness", header: "Terakhir Diperbarui", meta: { width: "190px", description: "Waktu sejak sinkronisasi terakhir yang berhasil." } satisfies ColumnMeta, cell: ({ row }) => <FreshnessIndicator timestamp={row.original.lastSuccessAt} label="Berhasil" /> },
+      { id: "records", header: "Catatan", meta: { width: "120px", numeric: true, hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => formatNumber(row.original.records) },
       {
         id: "issues",
-        header: "Open issues",
+        header: "Masalah terbuka",
         meta: { width: "110px", numeric: true, hideBelow: "md" } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.openIssues > 0 ? (
@@ -74,11 +74,11 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
   return (
     <PageContainer>
       <PageHeader
-        title={mode === "admin" ? "Integrations" : "Data sources"}
+        title={mode === "admin" ? "Integrasi" : "Sumber Data"}
         description={
           mode === "admin"
-            ? "Connections that feed demand, product and promotion data into forecasting. Test, sync and schedule them here."
-            : "Where demand data comes from, how fresh it is, and which sources have problems."
+            ? "Koneksi yang memasok data permintaan, produk, dan promosi ke perkiraan. Uji, sinkronkan, dan atur jadwalnya di sini."
+            : "Dari mana data permintaan berasal, seberapa baru, dan sumber mana yang bermasalah."
         }
       />
       {q.data?.some((s) => s.status === "failed") && (
@@ -87,18 +87,18 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
         </InlineAlert>
       )}
       <DataTable
-        label="Data sources"
+        label="Sumber data"
         columns={columns}
         data={q.data}
         getRowId={(r) => r.id}
         isLoading={q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Data sources could not be loaded."
+        errorWhat="Sumber data tidak dapat dimuat."
         activeRowId={selectedId}
         onRowClick={(r) => state.setParam("id", r.id)}
         hideDensityToggle
-        empty={<EmptyState icon={Plug} title="No data sources are connected to this workspace." description="Connect a POS, ERP or data warehouse source to start loading demand history." />}
+        empty={<EmptyState icon={Plug} title="Belum ada sumber data yang terhubung ke ruang kerja ini." description="Sambungkan sumber POS, ERP, atau gudang data untuk mulai memuat riwayat permintaan." />}
       />
       <SourceDrawer id={selectedId} onClose={() => state.setParam("id", null)} />
     </PageContainer>
@@ -112,11 +112,11 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
   const [confirmDisconnect, setConfirmDisconnect] = React.useState(false);
   React.useEffect(() => setTestResult(null), [id]);
   const invalidate = [["sources"], ["source"], ["dq"], ["overview"], ["monitoring"]] as const;
-  const test = useApiMutation((c, _v: void) => testConnection(c, id as string), { failure: "The connection test could not run.", onSuccess: (r) => setTestResult(r) });
+  const test = useApiMutation((c, _v: void) => testConnection(c, id as string), { failure: "Uji koneksi tidak dapat dijalankan.", onSuccess: (r) => setTestResult(r) });
   const sync = useApiMutation((c, _v: void) => syncNow(c, id as string), {
     invalidate,
     success: (s) => (s.lastError && s.status === "failed" ? null : `${s.name} synced`),
-    failure: "Sync did not start.",
+    failure: "Sinkronisasi tidak dimulai.",
     onSuccess: (s) => {
       if (s.status === "failed") setTestResult({ ok: false, message: `Sync failed: ${s.lastError ?? "unknown error"}` });
     },
@@ -124,10 +124,10 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
   const connect = useApiMutation((c, connected: boolean) => setSourceConnection(c, id as string, connected), {
     invalidate,
     success: (s) => (s.status === "disconnected" ? `${s.name} disconnected` : `${s.name} connected`),
-    failure: "The connection was not changed.",
+    failure: "Koneksi tidak dapat diubah.",
     onSuccess: () => setConfirmDisconnect(false),
   });
-  const schedule = useApiMutation((c, v: string) => updateSourceSchedule(c, id as string, v), { invalidate, success: (s) => `Schedule set to “${s.schedule}”`, failure: "The schedule was not changed." });
+  const schedule = useApiMutation((c, v: string) => updateSourceSchedule(c, id as string, v), { invalidate, success: (s) => `Jadwal diatur ke “${s.schedule}”`, failure: "Jadwal tidak dapat diubah." });
   const d = q.data;
   const manage = can("integration.manage");
 
@@ -137,7 +137,7 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
         <DrawerContent
           size="lg"
           eyebrow={d?.source.type}
-          title={d?.source.name ?? "Data source"}
+          title={d?.source.name ?? "Sumber data"}
           description={d?.source.description}
           footer={
             d && manage ? (
@@ -153,7 +153,7 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
                   <Button variant="secondary" loading={test.isPending} onClick={() => test.mutate()}>
                     Test connection
                   </Button>
-                  <Button variant="primary" loading={sync.isPending} loadingText="Syncing" onClick={() => sync.mutate()}>
+                  <Button variant="primary" loading={sync.isPending} loadingText="Menyinkronkan" onClick={() => sync.mutate()}>
                     <RefreshCw aria-hidden /> Sync now
                   </Button>
                 </>
@@ -164,50 +164,50 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
           {q.isPending ? (
             <DetailSkeleton />
           ) : q.isError ? (
-            <ErrorState compact what="This source could not be loaded." error={q.error} onRetry={() => q.refetch()} />
+            <ErrorState compact what="Sumber ini tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />
           ) : d ? (
             <div className="flex flex-col gap-6">
               <div className="flex flex-wrap items-center gap-3">
                 <StatusBadge status={d.source.status} />
-                <FreshnessIndicator timestamp={d.source.lastSuccessAt} label="Last successful sync" source={d.source.name} />
+                <FreshnessIndicator timestamp={d.source.lastSuccessAt} label="Sinkron berhasil terakhir" source={d.source.name} />
               </div>
               {d.source.lastError && (
-                <InlineAlert tone={d.source.status === "failed" ? "critical" : "warning"} title={d.source.status === "failed" ? "The last sync failed." : "The last sync completed with issues."}>
+                <InlineAlert tone={d.source.status === "failed" ? "critical" : "warning"} title={d.source.status === "failed" ? "Sinkronisasi terakhir gagal." : "Sinkronisasi terakhir selesai dengan masalah."}>
                   {d.source.lastError}
                 </InlineAlert>
               )}
               {testResult && (
-                <InlineAlert tone={testResult.ok ? "success" : "critical"} title={testResult.ok ? "Connection test passed." : "Connection test failed."}>
+                <InlineAlert tone={testResult.ok ? "success" : "critical"} title={testResult.ok ? "Uji koneksi berhasil." : "Uji koneksi gagal."}>
                   {testResult.message}
                 </InlineAlert>
               )}
-              {!manage && <PermissionNotice permission="integration.manage" compact message="You can view this source but not change it." />}
+              {!manage && <PermissionNotice permission="integration.manage" compact message="Anda dapat melihat sumber ini, tetapi tidak mengubahnya." />}
               <DescriptionList
                 columns={2}
                 items={[
-                  { label: "Connection", value: d.source.status === "disconnected" ? "Not connected" : `${d.source.type} connector` },
+                  { label: "Koneksi", value: d.source.status === "disconnected" ? "Tidak terhubung" : `Konektor ${d.source.type}` },
                   {
-                    label: "Schedule",
+                    label: "Jadwal",
                     value: manage ? (
-                      <Select size="sm" aria-label="Sync schedule" value={d.source.schedule} onValueChange={(v) => schedule.mutate(v)} options={SCHEDULES.map((s) => ({ value: s, label: s }))} disabled={schedule.isPending} />
+                      <Select size="sm" aria-label="Jadwal sinkronisasi" value={d.source.schedule} onValueChange={(v) => schedule.mutate(v)} options={SCHEDULES.map((s) => ({ value: s, label: s }))} disabled={schedule.isPending} />
                     ) : (
                       d.source.schedule
                     ),
                   },
-                  { label: "Last successful sync", value: formatDateTime(d.source.lastSuccessAt) },
-                  { label: "Last failed sync", value: formatDateTime(d.source.lastFailureAt) },
-                  { label: "Records", value: formatNumber(d.source.records) },
-                  { label: "Owner", value: <UserIdentity userId={d.source.owner} /> },
+                  { label: "Sinkron berhasil terakhir", value: formatDateTime(d.source.lastSuccessAt) },
+                  { label: "Sinkron gagal terakhir", value: formatDateTime(d.source.lastFailureAt) },
+                  { label: "Catatan", value: formatNumber(d.source.records) },
+                  { label: "Penanggung jawab", value: <UserIdentity userId={d.source.owner} /> },
                 ]}
               />
               <section>
-                <h3 className="mb-2 card-title">Data mapping</h3>
-                <ChartDataTable caption="Field mapping" columns={[{ key: "s", label: "Source field" }, { key: "t", label: "Mesta field" }]} rows={d.source.mapping.map((m) => ({ s: <span className="mono-id">{m.source}</span>, t: <span className="mono-id">{m.target}</span> }))} />
+                <h3 className="mb-2 card-title">Pemetaan data</h3>
+                <ChartDataTable caption="Pemetaan kolom" columns={[{ key: "s", label: "Kolom sumber" }, { key: "t", label: "Kolom Mesta" }]} rows={d.source.mapping.map((m) => ({ s: <span className="mono-id">{m.source}</span>, t: <span className="mono-id">{m.target}</span> }))} />
               </section>
               <section>
-                <h3 className="mb-2 card-title">Health</h3>
+                <h3 className="mb-2 card-title">Kesehatan</h3>
                 {d.issues.length === 0 ? (
-                  <p className="caption">No data quality issues from this source.</p>
+                  <p className="caption">Tidak ada masalah kualitas data dari sumber ini.</p>
                 ) : (
                   <ul className="flex flex-col gap-2">
                     {d.issues.map((i) => (
@@ -223,8 +223,8 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
                 )}
               </section>
               <section>
-                <h3 className="mb-2 card-title">Recent activity</h3>
-                <AuditTimeline events={d.activity} emptyText="No recorded changes to this source." />
+                <h3 className="mb-2 card-title">Aktivitas terbaru</h3>
+                <AuditTimeline events={d.activity} emptyText="Belum ada perubahan tercatat pada sumber ini." />
               </section>
             </div>
           ) : null}
@@ -234,24 +234,24 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
         {d && (
           <DialogContent
             size="sm"
-            title={`Disconnect ${d.source.name}?`}
+            title={`Putuskan ${d.source.name}?`}
             footer={
               <>
                 <Button variant="ghost" onClick={() => setConfirmDisconnect(false)}>
-                  Keep connected
+                  Tetap terhubung
                 </Button>
                 <Button variant="danger" loading={connect.isPending} onClick={() => connect.mutate(false)}>
-                  Disconnect source
+                  Putuskan sumber
                 </Button>
               </>
             }
           >
             <ConsequenceSummary
               rows={[
-                { label: "Source", value: d.source.name },
-                { label: "Consequence", value: "No new data is received. Forecasts use the last loaded data and freshness warnings appear.", emphasis: true },
-                { label: "Permission", value: "Manage integrations (Administrator)" },
-                { label: "Reversible", value: "Yes. Reconnect at any time; missed syncs are backfilled." },
+                { label: "Sumber", value: d.source.name },
+                { label: "Dampak", value: "Tidak ada data baru yang diterima. Perkiraan memakai data terakhir yang dimuat dan muncul peringatan pembaruan.", emphasis: true },
+                { label: "Izin", value: "Mengelola integrasi (Administrator)" },
+                { label: "Dapat dibatalkan", value: "Ya. Sambungkan kembali kapan saja; sinkronisasi yang terlewat akan diisi." },
               ]}
             />
           </DialogContent>

@@ -22,10 +22,10 @@ import { Tag } from "@/components/feedback/status";
 import { DateCell, ProductIdentity } from "@/components/entities/identity";
 
 const LIFECYCLE: Record<Product["lifecycle"], { label: string; tone: "info" | "neutral" | "warning" | "primary" }> = {
-  new: { label: "New", tone: "info" },
-  core: { label: "Core", tone: "neutral" },
-  seasonal: { label: "Seasonal", tone: "primary" },
-  "end-of-life": { label: "End of life", tone: "warning" },
+  new: { label: "Baru", tone: "info" },
+  core: { label: "Inti", tone: "neutral" },
+  seasonal: { label: "Musiman", tone: "primary" },
+  "end-of-life": { label: "Akhir masa", tone: "warning" },
 };
 
 /** Product master used for forecasting (from the enterprise data warehouse). */
@@ -38,21 +38,21 @@ export function ProductsView() {
 
   const columns = React.useMemo<ColumnDef<Product, unknown>[]>(
     () => [
-      { id: "product", header: "Product", meta: { width: "minmax(280px, 2.5fr)", sortKey: "name", pinned: true, label: "Product" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original} /> },
-      { id: "subcategory", header: "Subcategory", meta: { width: "minmax(140px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.subcategory}</span> },
+      { id: "product", header: "Produk", meta: { width: "minmax(280px, 2.5fr)", sortKey: "name", pinned: true, label: "Produk" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original} /> },
+      { id: "subcategory", header: "Subkategori", meta: { width: "minmax(140px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.subcategory}</span> },
       { id: "brand", header: "Brand", meta: { width: "130px", sortKey: "brand", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate">{row.original.brand}</span> },
       { id: "unit", header: "Unit", meta: { width: "100px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.unit}</span> },
       {
         id: "lifecycle",
-        header: "Lifecycle",
-        meta: { width: "120px", sortKey: "lifecycle", description: "From the product master. New listings have less history and wider intervals." } satisfies ColumnMeta,
+        header: "Siklus produk",
+        meta: { width: "120px", sortKey: "lifecycle", description: "Dari master produk. Produk baru memiliki riwayat lebih pendek dan rentang lebih lebar." } satisfies ColumnMeta,
         cell: ({ row }) => <Tag tone={LIFECYCLE[row.original.lifecycle].tone}>{LIFECYCLE[row.original.lifecycle].label}</Tag>,
       },
-      { id: "launched", header: "Launched", meta: { width: "120px", sortKey: "launchedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.launchedAt} /> },
+      { id: "launched", header: "Diluncurkan", meta: { width: "120px", sortKey: "launchedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.launchedAt} /> },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
-        meta: { width: "120px", pinned: true, label: "Actions" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">Aksi</span>,
+        meta: { width: "120px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
         cell: ({ row }) => (
           <Link href={`/forecasting/detail/${row.original.id}`} onClick={(e) => e.stopPropagation()} className="text-xs font-semibold text-primary hover:underline">
             View forecast
@@ -66,17 +66,17 @@ export function ProductsView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Products"
-        description="The product master used for forecasting: hierarchy, units and lifecycle. Read-only here; maintained in the data warehouse."
+        title="Produk"
+        description="Master produk yang dipakai untuk perkiraan: hierarki, satuan, dan siklus produk. Hanya baca di sini; dikelola di gudang data."
         meta={
           <>
-            <span className="text-xs font-medium text-fg-secondary">{q.data ? `${formatNumber(q.data.total)} products` : "Loading…"}</span>
-            <FreshnessIndicator timestamp={q.data?.asOf} label="Product master synced" source="Enterprise data warehouse" />
+            <span className="text-xs font-medium text-fg-secondary">{q.data ? `${formatNumber(q.data.total)} produk` : "Memuat…"}</span>
+            <FreshnessIndicator timestamp={q.data?.asOf} label="Master produk tersinkron" source="Gudang data perusahaan" />
           </>
         }
       />
       <DataTable
-        label="Products"
+        label="Produk"
         columns={columns}
         data={q.data?.items}
         getRowId={(r) => r.id}
@@ -84,7 +84,7 @@ export function ProductsView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Products could not be loaded."
+        errorWhat="Produk tidak dapat dimuat."
         storageKey="products"
         onRowClick={(r) => router.push(`/forecasting/detail/${r.id}`)}
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
@@ -92,10 +92,10 @@ export function ProductsView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Search name, SKU, brand"
+            searchPlaceholder="Cari nama, SKU, merek"
             facets={[
-              { key: "category", label: "Category", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
-              { key: "lifecycle", label: "Lifecycle", primary: true, options: Object.entries(LIFECYCLE).map(([value, v]) => ({ value, label: v.label })) },
+              { key: "category", label: "Kategori", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
+              { key: "lifecycle", label: "Siklus produk", primary: true, options: Object.entries(LIFECYCLE).map(([value, v]) => ({ value, label: v.label })) },
               { key: "brand", label: "Brand", options: facets.brands.map((b) => ({ value: b, label: b })) },
             ]}
           />
@@ -103,8 +103,8 @@ export function ProductsView() {
         empty={
           <EmptyState
             icon={Boxes}
-            title="No products match the current filters."
-            description="Check the spelling of the SKU or clear filters."
+            title="Tidak ada produk yang cocok dengan filter."
+            description="Periksa ejaan SKU atau hapus filter."
             action={
               <Button variant="secondary" onClick={state.clearFilters}>
                 Clear filters

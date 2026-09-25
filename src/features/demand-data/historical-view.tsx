@@ -40,33 +40,33 @@ export function HistoricalView() {
 
   const columns = React.useMemo<ColumnDef<Row, unknown>[]>(
     () => [
-      { id: "date", header: "Date", meta: { width: "120px", sortKey: "date" } satisfies ColumnMeta, cell: ({ row }) => <span className="tabular whitespace-nowrap">{formatDate(row.original.date)}</span> },
-      { id: "product", header: "Product", meta: { width: "minmax(260px, 2.5fr)", pinned: true, label: "Product" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original.product} href={`/forecasting/detail/${row.original.productId}`} /> },
+      { id: "date", header: "Tanggal", meta: { width: "120px", sortKey: "date" } satisfies ColumnMeta, cell: ({ row }) => <span className="tabular whitespace-nowrap">{formatDate(row.original.date)}</span> },
+      { id: "product", header: "Produk", meta: { width: "minmax(260px, 2.5fr)", pinned: true, label: "Produk" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original.product} href={`/forecasting/detail/${row.original.productId}`} /> },
       {
         id: "units",
-        header: "Demand",
-        meta: { width: "110px", numeric: true, description: "Units sold (POS) or ordered (ERP) on the day." } satisfies ColumnMeta,
+        header: "Permintaan",
+        meta: { width: "110px", numeric: true, description: "Unit terjual (POS) atau dipesan (ERP) pada hari itu." } satisfies ColumnMeta,
         cell: ({ row }) => <span className="font-semibold">{formatNumber(row.original.units)}</span>,
       },
-      { id: "unit", header: "Unit", meta: { width: "90px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.product?.unit}</span> },
-      { id: "location", header: "Location", meta: { width: "minmax(140px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: () => <span className="truncate text-fg-secondary">{q.data?.location?.name ?? "All locations"}</span> },
-      { id: "source", header: "Source", meta: { width: "90px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{SOURCE_LABELS[row.original.sourceId] ?? row.original.sourceId}</Tag> },
+      { id: "unit", header: "Satuan", meta: { width: "90px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.product?.unit}</span> },
+      { id: "location", header: "Lokasi", meta: { width: "minmax(140px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: () => <span className="truncate text-fg-secondary">{q.data?.location?.name ?? "Semua lokasi"}</span> },
+      { id: "source", header: "Sumber", meta: { width: "90px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{SOURCE_LABELS[row.original.sourceId] ?? row.original.sourceId}</Tag> },
       {
         id: "quality",
-        header: "Quality",
-        meta: { width: "120px", description: "Result of data quality checks for this record." } satisfies ColumnMeta,
+        header: "Kualitas",
+        meta: { width: "120px", description: "Hasil pemeriksaan kualitas data untuk catatan ini." } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.quality === "ok" ? (
-            <span className="text-xs text-fg-tertiary">Passed</span>
+            <span className="text-xs text-fg-tertiary">Lolos</span>
           ) : (
-            <Tooltip content={row.original.quality === "blocking" ? "Missing record: no POS data received for this day (DQ-001)." : "Affected by an open data quality warning."}>
+            <Tooltip content={row.original.quality === "blocking" ? "Data hilang: tidak ada data POS untuk hari ini (DQ-001)." : "Terkena peringatan kualitas data yang masih terbuka."}>
               <span tabIndex={0}>
-                <Tag tone={row.original.quality === "blocking" ? "critical" : "warning"}>{row.original.quality === "blocking" ? "Missing" : "Warning"}</Tag>
+                <Tag tone={row.original.quality === "blocking" ? "critical" : "warning"}>{row.original.quality === "blocking" ? "Hilang" : "Peringatan"}</Tag>
               </span>
             </Tooltip>
           ),
       },
-      { id: "updated", header: "Updated", meta: { width: "150px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateTime(row.original.updatedAt)}</span> },
+      { id: "updated", header: "Diperbarui", meta: { width: "150px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateTime(row.original.updatedAt)}</span> },
     ],
     [q.data?.location],
   );
@@ -74,22 +74,22 @@ export function HistoricalView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Historical demand"
-        description="Daily demand by product, as used by the forecasting models. Records are queried page by page from the demand store."
+        title="Permintaan Historis"
+        description="Permintaan harian per produk, seperti yang dipakai model perkiraan. Catatan diambil per halaman dari penyimpanan permintaan."
         meta={
           <>
             {q.data && <span className="text-xs font-medium text-fg-secondary">History available from {formatDate(q.data.window.earliest)}</span>}
-            <FreshnessIndicator timestamp={q.data?.page.asOf} label="POS data updated" source="POS transactions" />
+            <FreshnessIndicator timestamp={q.data?.page.asOf} label="Data POS diperbarui" source="Transaksi POS" />
           </>
         }
       />
       {state.query.filters?.quality?.length ? (
-        <InlineAlert tone="info" title="Quality filter scans at most 5,000 records.">
+        <InlineAlert tone="info" title="Filter kualitas memeriksa maksimal 5.000 catatan.">
           Narrow the date range or category for complete results.
         </InlineAlert>
       ) : null}
       <DataTable
-        label="Historical demand records"
+        label="Catatan permintaan historis"
         columns={columns}
         data={rows}
         getRowId={(r) => r.id}
@@ -97,7 +97,7 @@ export function HistoricalView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Historical demand could not be loaded."
+        errorWhat="Permintaan historis tidak dapat dimuat."
         storageKey="historical"
         maxHeight="min(70vh, 44rem)"
         pageSizeOptions={[25, 50, 100, 250]}
@@ -108,17 +108,17 @@ export function HistoricalView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Search product or SKU"
+            searchPlaceholder="Cari produk atau SKU"
             facets={[
-              { key: "category", label: "Category", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
+              { key: "category", label: "Kategori", primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
               {
                 key: "quality",
-                label: "Quality",
+                label: "Kualitas",
                 primary: true,
                 options: [
-                  { value: "blocking", label: "Missing" },
-                  { value: "warning", label: "Warning" },
-                  { value: "ok", label: "Passed" },
+                  { value: "blocking", label: "Hilang" },
+                  { value: "warning", label: "Peringatan" },
+                  { value: "ok", label: "Lolos" },
                 ],
               },
             ]}
@@ -133,19 +133,19 @@ export function HistoricalView() {
             <Select
               size="sm"
               className="w-auto min-w-44"
-              aria-label="Location"
-              prefix="Location:"
+              aria-label="Lokasi"
+              prefix="Lokasi:"
               value={locationId || "all"}
               onValueChange={(v) => state.setParams({ location: v === "all" ? null : v }, { resetPage: true })}
-              options={[{ value: "all", label: "All locations" }, ...facets.locations.map((l) => ({ value: l.id, label: l.name, description: l.region }))]}
+              options={[{ value: "all", label: "Semua lokasi" }, ...facets.locations.map((l) => ({ value: l.id, label: l.name, description: l.region }))]}
             />
           </FilterBar>
         }
         empty={
           <EmptyState
             icon={History}
-            title="No demand records match the current filters."
-            description="The date range may be outside the loaded history, or no product matches the search."
+            title="Tidak ada catatan permintaan yang cocok dengan filter."
+            description="Rentang tanggal mungkin di luar riwayat yang dimuat, atau tidak ada produk yang cocok dengan pencarian."
             action={
               <Button variant="secondary" onClick={state.clearFilters}>
                 Clear filters
