@@ -46,7 +46,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             duration={t.tone === "critical" ? 10_000 : 6000}
             onOpenChange={(open) => !open && setItems((prev) => prev.filter((x) => x.id !== t.id))}
             className={cn(
-              "grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-lg border border-border bg-surface p-3.5 shadow-lg",
+              "grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-lg border border-border bg-surface p-3.5 shadow-popover",
               t.tone === "critical" && "border-critical/40",
             )}
           >

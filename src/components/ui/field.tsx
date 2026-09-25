@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /** Shared control surface: one height, padding and focus treatment for every text control. */
 export const controlClass =
-  "h-[var(--control-h-md)] w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-sm text-fg shadow-sm transition-colors placeholder:text-fg-tertiary hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40 disabled:cursor-not-allowed disabled:bg-muted disabled:text-fg-disabled aria-[invalid=true]:border-critical";
+  "h-[var(--control-h-md)] w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-sm text-fg transition-colors placeholder:text-fg-tertiary hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40 disabled:cursor-not-allowed disabled:bg-muted disabled:text-fg-disabled aria-[invalid=true]:border-critical";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input(
   { className, type = "text", ...props },

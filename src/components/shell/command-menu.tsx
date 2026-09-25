@@ -24,6 +24,16 @@ const RESULT_ICONS: Record<SearchResult["type"], React.ComponentType<{ className
   Approval: ShieldCheck,
 };
 
+/** Search categories (v3 §9 NAV-002). */
+const RESULT_LABELS: Record<SearchResult["type"], string> = {
+  Product: "Produk",
+  "Forecast run": "Perkiraan",
+  Scenario: "Skenario",
+  Model: "Model",
+  Exception: "Perlu Ditinjau",
+  Approval: "Persetujuan",
+};
+
 const CommandMenuContext = React.createContext<{ open: () => void } | null>(null);
 
 export function useCommandMenu() {
@@ -74,11 +84,11 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
   };
 
   const actions = [
-    { label: "Create forecast run", href: "/forecasting/runs/new", icon: Plus, allowed: can("forecast.run.create"), keywords: "new run forecast" },
-    { label: "Create scenario", href: "/scenarios/new", icon: Plus, allowed: can("scenario.create"), keywords: "new scenario" },
-    { label: "Open exceptions needing review", href: "/planning/exceptions?status=open", icon: ListChecks, allowed: true, keywords: "exception review" },
-    { label: "Open approval queue", href: "/planning/approvals?status=pending", icon: ShieldCheck, allowed: true, keywords: "approval pending" },
-    { label: "Open settings", href: "/administration/settings", icon: Settings, allowed: true, keywords: "preferences settings" },
+    { label: "Buat Perkiraan", href: "/forecasting/runs/new", icon: Plus, allowed: can("forecast.run.create"), keywords: "perkiraan baru" },
+    { label: "Buat Skenario", href: "/scenarios/new", icon: Plus, allowed: can("scenario.create"), keywords: "skenario baru" },
+    { label: "Buka Perlu Ditinjau", href: "/planning/exceptions?status=open", icon: ListChecks, allowed: true, keywords: "perlu ditinjau" },
+    { label: "Buka Persetujuan", href: "/planning/approvals?status=pending", icon: ShieldCheck, allowed: true, keywords: "persetujuan" },
+    { label: "Buka Pengaturan", href: "/administration/settings", icon: Settings, allowed: true, keywords: "pengaturan" },
   ].filter((a) => a.allowed);
 
   const grouped = React.useMemo(() => {
@@ -93,33 +103,33 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
       <D.Root open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(""); }}>
         <D.Portal>
           <D.Overlay className="fixed inset-0 z-[var(--z-index-dialog)] bg-overlay" />
-          <D.Content className="fixed left-1/2 top-[12vh] z-[var(--z-index-dialog)] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-surface shadow-lg outline-none">
-            <D.Title className="sr-only">Search and commands</D.Title>
-            <D.Description className="sr-only">Search products, runs, scenarios, models, exceptions and approvals in this workspace, or run a command.</D.Description>
-            <Command label="Search and commands" shouldFilter={false} className="flex flex-col">
+          <D.Content className="fixed left-1/2 top-[12vh] z-[var(--z-index-dialog)] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-surface shadow-dialog outline-none">
+            <D.Title className="sr-only">Cari dan perintah</D.Title>
+            <D.Description className="sr-only">Cari produk, perkiraan, skenario, model, item yang perlu ditinjau dan persetujuan di ruang kerja ini, atau jalankan perintah.</D.Description>
+            <Command label="Cari dan perintah" shouldFilter={false} className="flex flex-col">
               <div className="flex items-center gap-2 border-b border-border px-4">
                 <Search className="size-4 shrink-0 text-fg-tertiary" aria-hidden />
                 <Command.Input
                   value={q}
                   onValueChange={setQ}
-                  placeholder="Search SKU, forecast run, scenario, exception…"
+                  placeholder="Cari produk, perkiraan, atau skenario"
                   className="h-12 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-tertiary"
                 />
-                {results.isFetching && <Loader2 className="size-4 animate-spin text-fg-tertiary" aria-label="Searching" />}
+                {results.isFetching && <Loader2 className="size-4 animate-spin text-fg-tertiary" aria-label="Mencari" />}
                 <Kbd>Esc</Kbd>
               </div>
               <Command.List className="max-h-[60vh] overflow-y-auto p-2">
                 {debounced.trim().length >= 2 && !results.isFetching && (results.data?.length ?? 0) === 0 && (
                   <Command.Empty className="px-3 py-8 text-center">
                     <FileSearch className="mx-auto mb-2 size-5 text-fg-tertiary" aria-hidden />
-                    <p className="body-sm font-semibold">No results for “{debounced}” in this workspace.</p>
-                    <p className="caption">Search matches names, SKUs and IDs. Try a shorter term.</p>
+                    <p className="body-sm font-semibold">Tidak ditemukan untuk “{debounced}”.</p>
+                    <p className="caption">Coba kata lain. Pencarian mencakup nama, SKU dan ID.</p>
                   </Command.Empty>
                 )}
                 {Array.from(grouped.entries()).map(([type, items]) => {
                   const Icon = RESULT_ICONS[type];
                   return (
-                    <Command.Group key={type} heading={type} className="mb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:metadata">
+                    <Command.Group key={type} heading={RESULT_LABELS[type]} className="mb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:metadata">
                       {items.map((r) => (
                         <Command.Item key={`${type}-${r.id}`} value={`${type}-${r.id}`} onSelect={() => go(r.href)} className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 data-[selected=true]:bg-hover">
                           <Icon className="size-4 shrink-0 text-fg-tertiary" aria-hidden />

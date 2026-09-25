@@ -83,7 +83,7 @@ export function QualityView() {
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {q.data.sources.map((src) => (
               <li key={src.id}>
-                <Link href={`/demand-data/sources?id=${src.id}`} className="flex h-full flex-col gap-1.5 rounded-lg border border-border bg-surface p-3 shadow-sm hover:border-border-strong">
+                <Link href={`/demand-data/sources?id=${src.id}`} className="flex h-full flex-col gap-1.5 rounded-lg border border-border bg-surface p-3 hover:border-border-strong">
                   <span className="flex items-center justify-between gap-2">
                     <span className="truncate body-sm font-semibold">{src.name}</span>
                     <StatusBadge status={src.status} size="sm" />

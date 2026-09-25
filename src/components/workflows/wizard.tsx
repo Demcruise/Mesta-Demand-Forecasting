@@ -90,7 +90,7 @@ export function WizardPanel({ title, description, children, footer }: { title: s
     headingRef.current?.focus();
   }, [title]);
   return (
-    <section className="flex flex-col rounded-lg border border-border bg-surface shadow-sm">
+    <section className="flex flex-col rounded-lg border border-border bg-surface">
       <div className="border-b border-border-subtle px-5 py-4">
         <h2 ref={headingRef} tabIndex={-1} className="section-title outline-none">
           {title}

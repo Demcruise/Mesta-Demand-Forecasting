@@ -37,7 +37,7 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
   const setup = onboarding.data && !onboarding.data.dismissed && !onboarding.data.complete ? onboarding.data : null;
 
   return (
-    <nav aria-label="Main" className={cn("flex h-full flex-col bg-surface", !mobile && "border-r border-border")}>
+    <nav aria-label="Utama" className={cn("flex h-full flex-col bg-surface", !mobile && "border-r border-border")}>
       <div className={cn("flex h-[var(--topbar-h)] shrink-0 items-center border-b border-border", collapsed ? "justify-center px-2" : "gap-2.5 px-4")}>
         <Link href="/overview" className="flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-focus" onClick={onNavigate}>
           <MestaMark className="size-7 shrink-0" />
@@ -63,7 +63,7 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
             <Rocket className="size-4 shrink-0" aria-hidden />
             {!collapsed && (
               <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                <span className="truncate">Finish setup</span>
+                <span className="truncate">Selesaikan persiapan</span>
                 <span className="tabular text-xs">
                   {setup.steps.filter((s) => !s.optional && s.done).length}/{setup.steps.filter((s) => !s.optional).length}
                 </span>
@@ -76,7 +76,7 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
         {NAV.map((group) => (
           <div key={group.label} className={cn("py-1.5", collapsed ? "px-2" : "px-3")}>
             {!collapsed && group.items.length > 1 && <div className="px-2 pb-1 pt-1 metadata">{group.label}</div>}
-            {collapsed && group.label !== "Overview" && <div className="mx-auto my-1 h-px w-6 bg-border" aria-hidden />}
+            {collapsed && group.label !== "Ringkasan" && <div className="mx-auto my-1 h-px w-6 bg-border" aria-hidden />}
             <ul className="flex flex-col gap-0.5">
               {group.items.map((item) => (
                 <li key={item.href}>
@@ -93,11 +93,11 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
             type="button"
             onClick={() => setPreference("sidebarCollapsed", !sidebarCollapsed)}
             className={cn("flex h-8 w-full items-center gap-2 rounded-md px-2 text-[0.8125rem] font-semibold text-fg-secondary hover:bg-hover hover:text-fg", collapsed && "justify-center px-0")}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Buka bilah samping" : "Tutup bilah samping"}
             aria-expanded={!collapsed}
           >
             {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
-            {!collapsed && "Collapse"}
+            {!collapsed && "Tutup"}
           </button>
         </div>
       )}
@@ -121,7 +121,7 @@ function NavLink({ item, active, collapsed, count, locked, onNavigate }: { item:
       {active && <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
       <Icon className="size-4 shrink-0" aria-hidden />
       {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
-      {!collapsed && locked && <Lock className="size-3 shrink-0 text-fg-tertiary" aria-label="Restricted" />}
+      {!collapsed && locked && <Lock className="size-3 shrink-0 text-fg-tertiary" aria-label="Terbatas" />}
       {!collapsed && count !== undefined && count > 0 && (
         <span className="shrink-0 rounded-full bg-muted px-1.5 text-[0.6875rem] font-bold tabular leading-[1.125rem] text-fg-secondary" aria-label={`${count} open`}>
           {count > 99 ? "99+" : count}

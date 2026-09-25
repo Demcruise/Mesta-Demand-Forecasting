@@ -79,7 +79,7 @@ export function FilterBar({
               }
             }}
             placeholder={searchPlaceholder}
-            className="h-[var(--control-h-sm)] w-full rounded-md border border-border-strong bg-surface pl-8 pr-2 text-[0.8125rem] text-fg shadow-sm placeholder:text-fg-tertiary hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40 [&::-webkit-search-cancel-button]:hidden"
+            className="h-[var(--control-h-sm)] w-full rounded-md border border-border-strong bg-surface pl-8 pr-2 text-[0.8125rem] text-fg placeholder:text-fg-tertiary hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40 [&::-webkit-search-cancel-button]:hidden"
           />
         </label>
         {children}
@@ -160,7 +160,7 @@ function FacetMenu({ facet, selected, onChange }: { facet: Facet; selected: stri
     <Popover>
       <PopoverTrigger
         className={cn(
-          "inline-flex h-[var(--control-h-sm)] max-w-60 items-center gap-2 rounded-md border bg-surface pl-3 pr-3 text-[0.8125rem] font-semibold shadow-sm transition-colors hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-focus",
+          "inline-flex h-[var(--control-h-sm)] max-w-60 items-center gap-2 rounded-md border bg-surface pl-3 pr-3 text-[0.8125rem] font-semibold transition-colors hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-focus",
           selected.length ? "border-primary/50 text-fg" : "border-border-strong text-fg-secondary",
         )}
         aria-label={`${facet.label}${summary ? `: ${summary}` : ""}`}
@@ -251,7 +251,7 @@ export function DateRangeFilter({
   const invalid = !f || !t || f > t;
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className="inline-flex h-[var(--control-h-sm)] items-center gap-2 rounded-md border border-border-strong bg-surface px-3 text-[0.8125rem] font-semibold text-fg shadow-sm hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-focus" aria-label={`Date range: ${fmt(from)} to ${fmt(to)}`}>
+      <PopoverTrigger className="inline-flex h-[var(--control-h-sm)] items-center gap-2 rounded-md border border-border-strong bg-surface px-3 text-[0.8125rem] font-semibold text-fg hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-focus" aria-label={`Date range: ${fmt(from)} to ${fmt(to)}`}>
         <span className="tabular">
           {fmt(from)} – {fmt(to)}
         </span>

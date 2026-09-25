@@ -114,7 +114,7 @@ export function Panel({
 }) {
   const headingId = id ? `${id}-title` : undefined;
   return (
-    <As className={cn("flex h-full min-w-0 flex-col rounded-lg border border-border bg-surface shadow-sm", className)} aria-labelledby={headingId} id={id}>
+    <As className={cn("flex h-full min-w-0 flex-col rounded-lg border border-border bg-surface", className)} aria-labelledby={headingId} id={id}>
       {(title || actions) && (
         <div className="flex items-start justify-between gap-3 border-b border-border-subtle px-4 py-3">
           <div className="min-w-0">

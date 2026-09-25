@@ -50,7 +50,7 @@ export function ErrorState({
   what,
   error,
   onRetry,
-  retryLabel = "Retry",
+  retryLabel = "Coba Lagi",
   recovery,
   className,
   compact,
@@ -71,7 +71,7 @@ export function ErrorState({
   const unavailable = error instanceof ApiError && error.code === "unavailable";
   const Icon = notFound ? SearchX : unavailable ? WifiOff : AlertOctagon;
   // Raw exception text is not shown to users; it is only surfaced in development.
-  const why = error instanceof ApiError ? [error.message, error.detail].filter(Boolean).join(" ") : "An unexpected error occurred while showing this content.";
+  const why = error instanceof ApiError ? [error.message, error.detail].filter(Boolean).join(" ") : "Terjadi kesalahan saat menampilkan konten ini.";
   const devDetail = !(error instanceof ApiError) && error instanceof Error && process.env.NODE_ENV === "development" ? error.message : null;
   return (
     <div role="alert" className={cn("flex flex-col items-center justify-center text-center", compact ? "px-4 py-8" : "px-6 py-14", className)}>
@@ -80,7 +80,7 @@ export function ErrorState({
       </span>
       <p className="card-title">{what}</p>
       <p className="mt-1 max-w-md body-sm text-fg-secondary">{why}</p>
-      {!notFound && !unavailable && <p className="mt-1 max-w-md caption">Retry. If it keeps failing, contact your workspace administrator.</p>}
+      {!notFound && !unavailable && <p className="mt-1 max-w-md caption">Coba lagi. Jika masih gagal, hubungi administrator ruang kerja Anda.</p>}
       {devDetail && <p className="mt-2 max-w-md mono-id text-fg-tertiary">{devDetail}</p>}
       {(onRetry || recovery) && (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -115,9 +115,9 @@ export function PermissionNotice({
     <div className={cn("flex items-start gap-3 rounded-lg border border-border bg-subtle p-4", compact && "p-3", className)} role="note">
       <Lock className="mt-0.5 size-4 shrink-0 text-fg-tertiary" aria-hidden />
       <div className="min-w-0">
-        <p className="body-sm font-semibold text-fg">{message ?? "You do not have access to this action."}</p>
+        <p className="body-sm font-semibold text-fg">{message ?? "Anda tidak memiliki akses untuk melakukan perubahan ini."}</p>
         <p className="caption mt-0.5">
-          {detail ?? (roles.length > 0 ? `Available to: ${roles.join(", ")}. Ask a workspace administrator if you need access.` : "Ask a workspace administrator if you need access.")}
+          {detail ?? (roles.length > 0 ? `Tersedia untuk: ${roles.join(", ")}. Hubungi administrator ruang kerja jika Anda memerlukan akses.` : "Hubungi administrator ruang kerja jika Anda memerlukan akses.")}
         </p>
       </div>
     </div>
@@ -164,7 +164,7 @@ export function InlineAlert({
 
 export function TableSkeleton({ rows = 8, columns = 6, density = "comfortable" }: { rows?: number; columns?: number; density?: "compact" | "comfortable" }) {
   return (
-    <div role="status" aria-label="Loading table" className="overflow-hidden">
+    <div role="status" aria-label="Memuat tabel" className="overflow-hidden">
       <div className="flex h-10 items-center gap-4 border-b border-border bg-subtle px-4">
         {Array.from({ length: columns }, (_, i) => (
           <Skeleton key={i} className="h-3" style={{ width: i === 0 ? "22%" : `${10 + ((i * 7) % 8)}%` }} />
@@ -177,20 +177,20 @@ export function TableSkeleton({ rows = 8, columns = 6, density = "comfortable" }
           ))}
         </div>
       ))}
-      <span className="sr-only">Loading</span>
+      <span className="sr-only">Memuat</span>
     </div>
   );
 }
 
 export function ChartSkeleton({ height = 280 }: { height?: number }) {
   return (
-    <div role="status" aria-label="Loading chart" className="flex flex-col gap-3">
+    <div role="status" aria-label="Memuat grafik" className="flex flex-col gap-3">
       <div className="relative flex items-end gap-1.5" style={{ height }}>
         {Array.from({ length: 36 }, (_, i) => (
           <Skeleton key={i} className="flex-1 rounded-xs" style={{ height: `${35 + Math.abs(Math.sin(i / 4)) * 45}%` }} />
         ))}
       </div>
-      <span className="sr-only">Loading</span>
+      <span className="sr-only">Memuat</span>
     </div>
   );
 }
@@ -209,7 +209,7 @@ export function CardSkeleton({ lines = 3, className }: { lines?: number; classNa
 
 export function DetailSkeleton() {
   return (
-    <div role="status" aria-label="Loading details" className="flex flex-col gap-6">
+    <div role="status" aria-label="Memuat detail" className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-6 w-2/3" />
@@ -228,7 +228,7 @@ export function DetailSkeleton() {
 
 export function TimelineSkeleton({ items = 4 }: { items?: number }) {
   return (
-    <div role="status" aria-label="Loading activity" className="flex flex-col gap-4">
+    <div role="status" aria-label="Memuat aktivitas" className="flex flex-col gap-4">
       {Array.from({ length: items }, (_, i) => (
         <div key={i} className="flex gap-3">
           <Skeleton className="size-7 shrink-0 rounded-full" />
@@ -244,7 +244,7 @@ export function TimelineSkeleton({ items = 4 }: { items?: number }) {
 
 export function PageSkeleton() {
   return (
-    <div role="status" aria-label="Loading page" className="flex flex-col gap-6">
+    <div role="status" aria-label="Memuat halaman" className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-3 w-40" />
         <Skeleton className="h-7 w-72" />

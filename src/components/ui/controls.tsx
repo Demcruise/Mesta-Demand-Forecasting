@@ -15,7 +15,7 @@ export const Checkbox = React.forwardRef<HTMLButtonElement, React.ComponentProps
     <CB.Root
       ref={ref}
       className={cn(
-        "peer inline-flex size-4 shrink-0 items-center justify-center rounded-xs border border-border-strong bg-surface shadow-sm transition-colors hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary",
+        "peer inline-flex size-4 shrink-0 items-center justify-center rounded-xs border border-border-strong bg-surface transition-colors hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary",
         className,
       )}
       {...props}
@@ -120,7 +120,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, React.ComponentPropsWi
       )}
       {...props}
     >
-      <SW.Thumb className="block size-4 rounded-full bg-surface shadow-sm transition-transform data-[state=checked]:translate-x-4" />
+      <SW.Thumb className="block size-4 rounded-full bg-surface transition-transform data-[state=checked]:translate-x-4" />
     </SW.Root>
   );
 });
@@ -210,7 +210,7 @@ export function Segmented<T extends string>({
         <TG.Item
           key={o.value}
           value={o.value}
-          className="inline-flex h-full items-center gap-1.5 whitespace-nowrap rounded-[5px] px-2.5 text-[0.8125rem] font-semibold text-fg-secondary transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-focus data-[state=on]:bg-surface data-[state=on]:text-fg data-[state=on]:shadow-sm [&_svg]:size-4"
+          className="inline-flex h-full items-center gap-1.5 whitespace-nowrap rounded-[5px] px-2.5 text-[0.8125rem] font-semibold text-fg-secondary transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-focus data-[state=on]:bg-surface data-[state=on]:text-fg [&_svg]:size-4"
         >
           {o.icon}
           {o.label}

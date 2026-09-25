@@ -59,7 +59,7 @@ export function PairedBars({
             cursor={{ fill: "var(--bg-hover)" }}
             content={({ active, payload, label }) =>
               active && payload?.length ? (
-                <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-lg">
+                <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-popover">
                   <div className="mb-1 font-semibold">{label}</div>
                   {payload.map((p) => (
                     <div key={String(p.dataKey)} className="flex justify-between gap-6">
@@ -98,7 +98,7 @@ export function Histogram({ rows, label, height = 220, highlight }: { rows: { bu
             cursor={{ fill: "var(--bg-hover)" }}
             content={({ active, payload }) =>
               active && payload?.length ? (
-                <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-lg">
+                <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-popover">
                   <div className="font-semibold">{payload[0]?.payload.bucket}</div>
                   <div className="tabular">
                     {formatNumber(payload[0]?.value as number)} {label}
@@ -144,7 +144,7 @@ export function MetricTrend({
           <Tooltip
             content={({ active, payload, label }) =>
               active && payload?.length ? (
-                <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-lg">
+                <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-popover">
                   <div className="mb-1 font-semibold">Week of {formatShortDate(label as string)}</div>
                   {payload.map((p) => {
                     const s = series.find((x) => x.key === p.dataKey);

@@ -97,7 +97,7 @@ export function MetricCard({
       {href && hrefLabel && <span className="mt-auto pt-3 text-xs font-semibold text-primary group-hover:underline">{hrefLabel} →</span>}
     </>
   );
-  const cls = cn("group flex h-full min-w-0 flex-col rounded-lg border border-border bg-surface p-4 shadow-sm", className);
+  const cls = cn("group flex h-full min-w-0 flex-col rounded-lg border border-border bg-surface p-4", className);
   if (href) {
     return (
       <Link href={href} className={cn(cls, "transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus")}>

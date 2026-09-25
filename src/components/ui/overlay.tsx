@@ -35,7 +35,7 @@ export function Tooltip({
           side={side}
           align={align}
           sideOffset={6}
-          className="z-[var(--z-index-tooltip)] max-w-72 rounded-md bg-inverse px-2.5 py-1.5 text-xs font-medium leading-4 text-fg-inverse shadow-md"
+          className="z-[var(--z-index-tooltip)] max-w-72 rounded-md bg-inverse px-2.5 py-1.5 text-xs font-medium leading-4 text-fg-inverse shadow-popover"
         >
           {content}
         </T.Content>
@@ -59,7 +59,7 @@ export const PopoverContent = React.forwardRef<HTMLDivElement, React.ComponentPr
           ref={ref}
           align={align}
           sideOffset={sideOffset}
-          className={cn("z-[var(--z-index-popover)] rounded-lg border border-border bg-surface p-3 text-fg shadow-lg outline-none", className)}
+          className={cn("z-[var(--z-index-popover)] rounded-lg border border-border bg-surface p-3 text-fg shadow-popover outline-none", className)}
           {...props}
         />
       </P.Portal>
@@ -81,7 +81,7 @@ export const DropdownMenuContent = React.forwardRef<HTMLDivElement, React.Compon
           ref={ref}
           align={align}
           sideOffset={sideOffset}
-          className={cn("z-[var(--z-index-popover)] min-w-48 rounded-md border border-border bg-surface p-1 text-fg shadow-lg", className)}
+          className={cn("z-[var(--z-index-popover)] min-w-48 rounded-md border border-border bg-surface p-1 text-fg shadow-popover", className)}
           {...props}
         />
       </DM.Portal>
@@ -186,7 +186,7 @@ export function DialogContent({ title, description, size = "md", footer, hideClo
       <D.Overlay className="fixed inset-0 z-[var(--z-index-dialog)] bg-overlay" />
       <D.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-[var(--z-index-dialog)] flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-surface shadow-lg outline-none",
+          "fixed left-1/2 top-1/2 z-[var(--z-index-dialog)] flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-surface shadow-dialog outline-none",
           size === "sm" ? "max-w-md" : size === "lg" ? "max-w-3xl" : "max-w-xl",
           className,
         )}
@@ -239,7 +239,7 @@ export function DrawerContent({ title, description, size = "md", footer, headerA
       <D.Overlay className="fixed inset-0 z-[var(--z-index-drawer)] bg-overlay" />
       <D.Content
         className={cn(
-          "fixed inset-y-0 right-0 z-[var(--z-index-drawer)] flex w-full flex-col border-l border-border bg-surface shadow-lg outline-none",
+          "fixed inset-y-0 right-0 z-[var(--z-index-drawer)] flex w-full flex-col border-l border-border bg-surface shadow-drawer outline-none",
           size === "sm" ? "sm:w-[var(--drawer-sm)]" : size === "lg" ? "sm:w-[var(--drawer-lg)]" : "sm:w-[var(--drawer-md)]",
           className,
         )}

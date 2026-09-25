@@ -20,7 +20,7 @@ export function ScenarioChart({ rows, scenarios, height = 280 }: { rows: Record<
               if (!active || !payload?.length) return null;
               const base = payload.find((p) => p.dataKey === "baseline")?.value as number | undefined;
               return (
-                <div className="min-w-52 rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-lg">
+                <div className="min-w-52 rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-popover">
                   <div className="mb-1 font-semibold">{formatDate(label as string)}</div>
                   {payload.map((p) => {
                     const v = p.value as number;

@@ -151,7 +151,7 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
               const effect = assumptionEffect(a);
               const rowErr = showErrors ? errors.rows[i] : undefined;
               return (
-                <li key={a.id} className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+                <li key={a.id} className="rounded-lg border border-border bg-surface p-4">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <span className="metadata">Assumption {i + 1}</span>
                     <Tooltip content="Remove assumption">

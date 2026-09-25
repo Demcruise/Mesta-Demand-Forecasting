@@ -10,11 +10,12 @@ import { Popover, PopoverContent, PopoverTrigger, Tooltip } from "@/components/u
 import { Tag } from "@/components/feedback/status";
 
 const ENV_TONE = { Production: "primary", Staging: "info", Sandbox: "neutral" } as const;
+const ENV_LABELS: Record<Workspace["environment"], string> = { Production: "Produksi", Staging: "Staging", Sandbox: "Sandbox" };
 
 function WorkspaceStatus({ status }: { status: Workspace["status"] }) {
   if (status === "active") return null;
   return (
-    <Tag tone={status === "degraded" ? "warning" : "neutral"}>{status === "degraded" ? "Degraded" : "Maintenance"}</Tag>
+    <Tag tone={status === "degraded" ? "warning" : "neutral"}>{status === "degraded" ? "Menurun" : "Pemeliharaan"}</Tag>
   );
 }
 
@@ -34,7 +35,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         "flex w-full items-center rounded-md border border-border bg-subtle text-left transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus",
         collapsed ? "size-10 justify-center" : "gap-2 px-2.5 py-2",
       )}
-      aria-label={`Workspace: ${workspace.name}, ${workspace.environment}. Switch workspace`}
+      aria-label={`Ruang kerja: ${workspace.name}, ${ENV_LABELS[workspace.environment]}. Ganti ruang kerja`}
     >
       <span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-primary text-[0.6875rem] font-bold text-primary-fg" aria-hidden>
         {workspace.name.slice(0, 1)}
@@ -44,7 +45,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-[0.8125rem] font-semibold leading-5 text-fg">{workspace.name}</span>
             <span className="flex items-center gap-1 truncate text-xs text-fg-tertiary">
-              {workspace.environment} · {ROLE_LABELS[session.role]}
+              {ENV_LABELS[workspace.environment]} · {ROLE_LABELS[session.role]}
             </span>
           </span>
           <ChevronsUpDown className="size-4 shrink-0 text-fg-tertiary" aria-hidden />
@@ -55,23 +56,23 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
 
   return (
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(""); }}>
-      {collapsed ? <Tooltip content={`${workspace.name} · ${workspace.environment}`} side="right">{trigger}</Tooltip> : trigger}
+      {collapsed ? <Tooltip content={`${workspace.name} · ${ENV_LABELS[workspace.environment]}`} side="right">{trigger}</Tooltip> : trigger}
       <PopoverContent className="w-80 p-0" align="start" side={collapsed ? "right" : "bottom"}>
         <div className="border-b border-border p-2">
           <label className="relative block">
-            <span className="sr-only">Search workspaces</span>
+            <span className="sr-only">Cari ruang kerja</span>
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-tertiary" aria-hidden />
             <input
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search workspaces"
+              placeholder="Cari ruang kerja"
               className="h-8 w-full rounded-md border border-border bg-surface pl-8 pr-2 text-sm outline-none focus-visible:border-focus"
             />
           </label>
         </div>
-        <ul role="listbox" aria-label="Workspaces" className="max-h-72 overflow-y-auto p-1">
-          {filtered.length === 0 && <li className="px-3 py-6 text-center caption">No workspaces match “{q}”.</li>}
+        <ul role="listbox" aria-label="Ruang Kerja" className="max-h-72 overflow-y-auto p-1">
+          {filtered.length === 0 && <li className="px-3 py-6 text-center caption">Tidak ada ruang kerja yang cocok dengan “{q}”.</li>}
           {filtered.map((w) => {
             const current = w.id === workspace.id;
             return (
@@ -90,21 +91,21 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="flex items-center gap-1.5">
                       <span className="truncate text-[0.8125rem] font-semibold text-fg">{w.name}</span>
-                      <Tag tone={ENV_TONE[w.environment]}>{w.environment}</Tag>
+                      <Tag tone={ENV_TONE[w.environment]}>{ENV_LABELS[w.environment]}</Tag>
                       <WorkspaceStatus status={w.status} />
                     </span>
                     <span className="truncate text-xs text-fg-tertiary">
                       {w.organization} · {w.region}
                     </span>
-                    <span className="text-xs text-fg-secondary">Your role: {ROLE_LABELS[session.role]}</span>
+                    <span className="text-xs text-fg-secondary">Peran Anda: {ROLE_LABELS[session.role]}</span>
                   </span>
-                  {current && <Check className="mt-1 size-4 shrink-0 text-primary" aria-label="Current workspace" />}
+                  {current && <Check className="mt-1 size-4 shrink-0 text-primary" aria-label="Ruang kerja aktif" />}
                 </button>
               </li>
             );
           })}
         </ul>
-        <p className="border-t border-border px-3 py-2 caption">Switching resets filters and reloads data for the selected workspace.</p>
+        <p className="border-t border-border px-3 py-2 caption">Beralih ruang kerja mengatur ulang filter dan memuat ulang data.</p>
       </PopoverContent>
     </Popover>
   );
@@ -117,8 +118,8 @@ export function WorkspaceContextBanner() {
   return (
     <div className={cn("flex items-center justify-center gap-2 border-b px-4 py-1.5 text-xs font-semibold", tone)} role="status">
       {workspace.status === "degraded"
-        ? `${workspace.name} · ${workspace.environment} is degraded: some data sources are delayed. Forecasts may use older data.`
-        : `You are working in ${workspace.name} · ${workspace.environment}. Changes here do not affect Production.`}
+        ? `${workspace.name} · ${ENV_LABELS[workspace.environment]} sedang menurun: sebagian sumber data terlambat. Perkiraan dapat memakai data lama.`
+        : `Anda bekerja di ${workspace.name} · ${ENV_LABELS[workspace.environment]}. Perubahan di sini tidak memengaruhi Produksi.`}
     </div>
   );
 }

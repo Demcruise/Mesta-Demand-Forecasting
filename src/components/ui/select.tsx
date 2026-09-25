@@ -34,7 +34,7 @@ export function Select({ value, onValueChange, options, placeholder, id, disable
       <S.Trigger
         id={id}
         className={cn(
-          "group inline-flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border-strong bg-surface pl-3 pr-3 text-left text-fg shadow-sm transition-colors hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40 disabled:cursor-not-allowed disabled:bg-muted disabled:text-fg-disabled aria-[invalid=true]:border-critical data-[placeholder]:text-fg-tertiary",
+          "group inline-flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border-strong bg-surface pl-3 pr-3 text-left text-fg transition-colors hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40 disabled:cursor-not-allowed disabled:bg-muted disabled:text-fg-disabled aria-[invalid=true]:border-critical data-[placeholder]:text-fg-tertiary",
           size === "sm" ? "h-[var(--control-h-sm)] text-[0.8125rem]" : "h-[var(--control-h-md)] text-sm",
           className,
         )}
@@ -54,7 +54,7 @@ export function Select({ value, onValueChange, options, placeholder, id, disable
         <S.Content
           position="popper"
           sideOffset={4}
-          className="z-[var(--z-index-popover)] max-h-[min(var(--radix-select-content-available-height),22rem)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-md border border-border bg-surface shadow-lg"
+          className="z-[var(--z-index-popover)] max-h-[min(var(--radix-select-content-available-height),22rem)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-md border border-border bg-surface shadow-popover"
         >
           <S.Viewport className="p-1">
             {options.map((o) => (

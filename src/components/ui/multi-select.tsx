@@ -36,7 +36,7 @@ export function MultiSelect({
         <PopoverTrigger
           id={id}
           aria-describedby={describedBy}
-          className="flex h-[var(--control-h-md)] w-full items-center justify-between gap-2 rounded-md border border-border-strong bg-surface px-3 text-left text-sm shadow-sm hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40"
+          className="flex h-[var(--control-h-md)] w-full items-center justify-between gap-2 rounded-md border border-border-strong bg-surface px-3 text-left text-sm hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40"
         >
           <span className={cn("truncate font-medium", value.length === 0 ? "text-fg-secondary" : "text-fg")}>{label}</span>
           <ChevronDown className="size-4 shrink-0 text-fg-tertiary" aria-hidden />

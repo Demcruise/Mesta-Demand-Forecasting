@@ -32,7 +32,7 @@ export function AuthShell({ children, footer }: { children: React.ReactNode; foo
 
 export function AuthCard({ title, description, children }: { title: string; description?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-6 shadow-md sm:p-8">
+    <div className="rounded-xl border border-border bg-surface p-6 sm:p-8">
       <h1 className="page-title">{title}</h1>
       {description && <p className="mt-1.5 body text-fg-secondary">{description}</p>}
       <div className="mt-6">{children}</div>

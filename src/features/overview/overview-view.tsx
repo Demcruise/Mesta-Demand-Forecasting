@@ -124,7 +124,7 @@ export function OverviewView() {
                   <Link
                     href={a.href}
                     className={cn(
-                      "group flex h-full flex-col rounded-lg border bg-surface p-4 shadow-sm transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+                      "group flex h-full flex-col rounded-lg border bg-surface p-4 transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
                       a.severity === "critical" ? "border-critical/30" : "border-border",
                     )}
                   >

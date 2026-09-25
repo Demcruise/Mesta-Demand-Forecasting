@@ -91,19 +91,19 @@ export function can(role: Role | null | undefined, permission: Permission) {
 }
 
 export const ROLE_LABELS: Record<Role, string> = {
-  viewer: "Viewer",
-  planner: "Planner",
-  manager: "Manager",
-  analyst: "Analyst",
+  viewer: "Pengamat",
+  planner: "Perencana",
+  manager: "Manajer",
+  analyst: "Analis",
   admin: "Administrator",
 };
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
-  viewer: "Reads forecasts, plans and reports. Cannot change data.",
-  planner: "Runs forecasts, applies overrides, builds scenarios and plans.",
-  manager: "Everything a planner can do, plus approvals and publishing.",
-  analyst: "Owns models, backtests and data quality. Cannot approve plans.",
-  admin: "Manages users, integrations and workspace settings. Cannot approve business changes.",
+  viewer: "Melihat perkiraan, rencana, dan laporan. Tidak dapat mengubah data.",
+  planner: "Menjalankan perkiraan, mengubah perkiraan, dan menyusun skenario serta rencana.",
+  manager: "Semua yang dapat dilakukan perencana, ditambah persetujuan dan penerbitan.",
+  analyst: "Bertanggung jawab atas model, uji model, dan kualitas data. Tidak dapat menyetujui rencana.",
+  admin: "Mengelola pengguna, integrasi, dan pengaturan ruang kerja. Tidak dapat menyetujui perubahan bisnis.",
 };
 
 /** Which role must hold a permission for the UI to explain who can act. */
@@ -112,33 +112,33 @@ export function rolesWith(permission: Permission): Role[] {
 }
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
-  "forecast.run.create": "Create forecast runs",
-  "forecast.run.cancel": "Cancel forecast runs",
-  "forecast.run.publish": "Publish forecast runs",
-  "forecast.run.archive": "Archive forecast runs",
-  "forecast.override": "Apply forecast overrides",
-  "scenario.create": "Create and edit scenarios",
-  "scenario.submit": "Submit scenarios for review",
-  "plan.edit": "Edit planning decisions",
-  "plan.publish": "Publish plans",
-  "exception.update": "Update exceptions",
-  "approval.decide": "Approve or reject requests",
-  "model.manage": "Manage models",
-  "backtest.run": "Run backtests",
-  "data.manage": "Resolve data quality issues",
-  "integration.manage": "Manage integrations",
-  "users.manage": "Manage users and roles",
-  "settings.workspace": "Change workspace settings",
-  "audit.view": "View the audit log",
-  "api.manage": "Manage API keys and webhooks",
-  export: "Export data",
+  "forecast.run.create": "membuat proses perkiraan",
+  "forecast.run.cancel": "membatalkan proses perkiraan",
+  "forecast.run.publish": "menerbitkan proses perkiraan",
+  "forecast.run.archive": "mengarsipkan proses perkiraan",
+  "forecast.override": "mengubah perkiraan",
+  "scenario.create": "membuat dan mengubah skenario",
+  "scenario.submit": "mengirim skenario untuk ditinjau",
+  "plan.edit": "mengubah keputusan perencanaan",
+  "plan.publish": "menerbitkan rencana",
+  "exception.update": "memperbarui item yang perlu ditinjau",
+  "approval.decide": "menyetujui atau menolak permintaan",
+  "model.manage": "mengelola model",
+  "backtest.run": "menjalankan uji model",
+  "data.manage": "menyelesaikan masalah kualitas data",
+  "integration.manage": "mengelola integrasi",
+  "users.manage": "mengelola pengguna dan akses",
+  "settings.workspace": "mengubah pengaturan ruang kerja",
+  "audit.view": "melihat riwayat aktivitas",
+  "api.manage": "mengelola API key dan webhook",
+  export: "mengekspor data",
 };
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS) as Permission[];
 
 export class PermissionError extends Error {
   constructor(public permission: Permission) {
-    super(`You do not have permission to ${PERMISSION_LABELS[permission].toLowerCase()}.`);
+    super(`Anda tidak memiliki izin untuk ${PERMISSION_LABELS[permission]}.`);
     this.name = "PermissionError";
   }
 }

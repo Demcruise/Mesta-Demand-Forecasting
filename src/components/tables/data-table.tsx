@@ -283,7 +283,7 @@ export function DataTable<T>({
   const pageCount = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize)) : 1;
 
   return (
-    <div className={cn("flex min-w-0 flex-col rounded-lg border border-border bg-surface shadow-sm", className)}>
+    <div className={cn("flex min-w-0 flex-col rounded-lg border border-border bg-surface", className)}>
       {(toolbarStart || toolbarEnd || onExport || !hideDensityToggle) && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2.5">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbarStart}</div>

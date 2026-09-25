@@ -37,7 +37,7 @@ function ForecastTooltip({ active, payload, unit }: { active?: boolean; payload?
       </div>
     );
   return (
-    <div className="min-w-52 rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-lg">
+    <div className="min-w-52 rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-popover">
       <div className="mb-1.5 font-semibold text-fg">{formatDate(p.ts)}</div>
       <div className="flex flex-col gap-1">
         {row("Actual", p.actual, "var(--chart-actual)")}

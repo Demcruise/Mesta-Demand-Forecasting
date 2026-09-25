@@ -44,7 +44,7 @@ export function ChartFrame({
   const [view, setView] = React.useState<"chart" | "table">(defaultView);
   const id = React.useId();
   return (
-    <section className={cn("flex min-w-0 flex-col rounded-lg border border-border bg-surface shadow-sm", className)} aria-labelledby={`${id}-t`}>
+    <section className={cn("flex min-w-0 flex-col rounded-lg border border-border bg-surface", className)} aria-labelledby={`${id}-t`}>
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-subtle px-4 py-3">
         <div className="min-w-0">
           <h3 id={`${id}-t`} className="card-title">

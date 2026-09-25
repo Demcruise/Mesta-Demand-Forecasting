@@ -37,7 +37,7 @@ export function MonitoringView() {
   return (
     <PageContainer>
       <PageHeader title="Monitoring" description="Health of forecasting jobs, data sources and production models. Refreshes every 15 seconds." />
-      <div className={cn("flex items-center gap-3 rounded-lg border bg-surface p-4 shadow-sm", overall === "down" ? "border-critical/30" : overall === "degraded" ? "border-warning/30" : "border-border")} role="status">
+      <div className={cn("flex items-center gap-3 rounded-lg border bg-surface p-4", overall === "down" ? "border-critical/30" : overall === "degraded" ? "border-warning/30" : "border-border")} role="status">
         <O.icon className={cn("size-6 shrink-0", O.cls)} aria-hidden />
         <div>
           <p className="section-title">{overall === "operational" ? "All systems operational" : `${down ? `${down} down` : ""}${down && degraded ? " · " : ""}${degraded ? `${degraded} degraded` : ""}`}</p>

@@ -54,7 +54,7 @@ export function LineageView() {
           return (
             <li key={n.key} className="flex flex-col items-stretch">
               {n.href ? (
-                <Link href={n.href} className="rounded-lg border border-border bg-surface px-4 py-3 shadow-sm transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+                <Link href={n.href} className="rounded-lg border border-border bg-surface px-4 py-3 transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
                   {body}
                 </Link>
               ) : (

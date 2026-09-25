@@ -25,11 +25,11 @@ export function freshnessState(timestamp: string | null | undefined, now = Date.
 }
 
 const COPY: Record<FreshnessState, { label: string; note: string; dot: string; text: string }> = {
-  fresh: { label: "Fresh", note: "Data is considered fresh.", dot: "bg-success", text: "text-fg-secondary" },
-  recent: { label: "Recent", note: "Updated within the last 24 hours.", dot: "bg-info", text: "text-fg-secondary" },
-  delayed: { label: "Delayed", note: "Older than 24 hours. Check the source schedule.", dot: "bg-warning", text: "text-warning-fg" },
-  stale: { label: "Stale", note: "Source may be stale. Decisions may use outdated data.", dot: "bg-critical", text: "text-critical-fg" },
-  unavailable: { label: "Unavailable", note: "The update time for this data is unknown.", dot: "bg-fg-disabled", text: "text-fg-tertiary" },
+  fresh: { label: "Terbaru", note: "Data masih baru.", dot: "bg-success", text: "text-fg-secondary" },
+  recent: { label: "Baru saja", note: "Diperbarui dalam 24 jam terakhir.", dot: "bg-info", text: "text-fg-secondary" },
+  delayed: { label: "Terlambat", note: "Lebih dari 24 jam. Periksa jadwal sumber data.", dot: "bg-warning", text: "text-warning-fg" },
+  stale: { label: "Usang", note: "Sumber data mungkin sudah lama. Keputusan dapat memakai data lama.", dot: "bg-critical", text: "text-critical-fg" },
+  unavailable: { label: "Tidak tersedia", note: "Waktu pembaruan data ini tidak diketahui.", dot: "bg-fg-disabled", text: "text-fg-tertiary" },
 };
 
 /** Re-renders every minute so relative times do not drift. */
@@ -44,7 +44,7 @@ function useNow(intervalMs = 60_000) {
 
 export function FreshnessIndicator({
   timestamp,
-  label = "Updated",
+  label = "Diperbarui",
   source,
   className,
   variant = "inline",
@@ -60,12 +60,12 @@ export function FreshnessIndicator({
   const now = useNow();
   const state = freshnessState(timestamp, now, thresholds);
   const copy = COPY[state];
-  const text = timestamp ? `${label} ${formatRelative(timestamp, now)}` : "Update time unknown";
+  const text = timestamp ? `${label} ${formatRelative(timestamp, now)}` : "Waktu pembaruan tidak diketahui";
   const tooltip = (
     <span className="flex flex-col gap-0.5">
       <span className="font-semibold">{copy.label}</span>
       {timestamp && <span>{formatDateTime(timestamp)}</span>}
-      {source && <span>Source: {source}</span>}
+      {source && <span>Sumber: {source}</span>}
       <span>{copy.note}</span>
     </span>
   );

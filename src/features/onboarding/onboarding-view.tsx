@@ -86,7 +86,7 @@ function StepCard({ step, index, current, nextRunId }: { step: OnboardingStep; i
   const who = step.permission ? rolesWith(step.permission).map((r) => ROLE_LABELS[r]).join(" or ") : "";
   return (
     <li
-      className={cn("rounded-lg border bg-surface p-4 shadow-sm", current ? "border-primary/40 ring-4 ring-primary-subtle" : "border-border")}
+      className={cn("rounded-lg border bg-surface p-4", current ? "border-primary/40 ring-4 ring-primary-subtle" : "border-border")}
       aria-current={current ? "step" : undefined}
     >
       <div className="flex items-start gap-3">

@@ -110,3 +110,37 @@ Status of the [Enterprise Backlog v1](Mesta_Demand_Forecasting_Enterprise_Backlo
 ## Validation required before production (§93)
 
 Industry and operating model, roles, product hierarchy, forecast grain, frequency and horizon, data sources, demand definitions, model types, accuracy metrics, interval definition, exception rules, override policy, approval rules, scenario drivers, planning workflow, integrations, RBAC, audit retention, privacy, export rules, identity provider, deployment environment, backend and API contracts, and SLAs.
+
+---
+
+# Frontend backlog v3 — Indonesian UX + white UI
+
+Status of the [Frontend-Only Backlog v3](Mesta_Demand_Forecasting_Frontend_Only_Backlog_v3.md). The v3 pass is being delivered foundation-first (v3 §92: "do not polish isolated pages before the global system").
+
+## Done
+
+| Item | Notes |
+|---|---|
+| V2-FE-001 White canvas | `--bg-canvas` is white; page background is no longer gray. |
+| V2-FE-002 Neutral-first surfaces | surface `#FFFFFF`, subtle `#FAFAFA`, muted `#F5F5F5`, hover `#F5F7FA`. |
+| V2-FE-003 Border system | `#E5E7EB` / `#D0D5DD` / `#F0F2F4`; separation comes from borders, not fills. |
+| V2-FE-004 Radius system | 4 / 6 / 8 / 10 only; `xl` collapses onto `lg` so no oversized card radius can return. |
+| V2-FE-005 Shadow reduction | Cards, tables and inputs carry no shadow. New `shadow-popover` / `shadow-drawer` / `shadow-dialog` are used only by floating layers. |
+| Indonesian number, date and time formatting | `id-ID`: `12.440`, `+4,5%`, `−1.204`, Indonesian months (`Mei`, `Agu`, `Okt`), `25 Sep 2026, 14:05`, `14 menit yang lalu`, `2 mnt 5 dtk`. Unit tests updated. |
+| FE-P0-010 Sidebar IA (NAV-001) | Six limited sections — Ringkasan · Perkiraan · Data · Model · Perencanaan · Sistem — with Indonesian labels. No page became unreachable. |
+| FE-P0-011 Global search (NAV-002) | Placeholder "Cari produk, perkiraan, atau skenario"; result groups Produk · Perkiraan · Skenario · Model · Perlu Ditinjau · Persetujuan; "Tidak ditemukan / Coba kata lain". |
+| FE-P0-012 App shell polish | Breadcrumbs, skip link, demo badge, mobile drawer and sidebar chrome in Indonesian. |
+| §73 Status language | All 35 statuses plus severities localised with Indonesian tooltips. |
+| §8 / §47 / §48 Error, empty and loading copy | Shared `ErrorState` / `EmptyState` / skeletons localised; retry is "Coba Lagi". |
+| §45 Permission UX copy | "Anda tidak memiliki akses untuk melakukan perubahan ini." plus role names and permission labels. |
+| §11 Workspace UI | Switcher, environment labels (Produksi/Staging/Sandbox), role line and the degraded-workspace banner in Indonesian. |
+
+## Remaining
+
+| Area | Status |
+|---|---|
+| Page-level copy (FE-P0-013…020, FE-P1-*) | **Not started.** Page titles, subtitles, table columns, filters and inline copy are still English on every feature page. This is the bulk of the remaining v3 work and the reason the UI is currently mixed-language. |
+| §58 Visual regression viewports | Only 1440 × 900 is covered; 1280 / 1024 / 768 / 390 baselines are outstanding. |
+| §44 Manual accessibility | The axe pass is automated only; a manual keyboard and screen-reader review is still required. |
+| FE-P1-027…031 React Bits | Registry configured; blocks cannot be installed without a licence key. |
+| §50 Performance profiling | Virtualisation is in place; no profiling at 1.000 / 10.000 / 50.000 rows yet. |
