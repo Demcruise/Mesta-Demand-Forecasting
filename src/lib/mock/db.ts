@@ -28,6 +28,7 @@ import { createAggregator, HISTORY_DAYS, productParams, simulate, summarise, typ
 import { addDays, DAY_MS, HOUR_MS, iso, isoDate, MINUTE_MS, startOfToday } from "./time";
 import { seedScenarios } from "./scenarios";
 import { seedBacktests } from "./backtests";
+import { seedPlatform, type PlatformState } from "./platform";
 
 export type WorkspaceSettings = {
   forecasting: {
@@ -82,6 +83,8 @@ export type WorkspaceDb = {
   settings: WorkspaceSettings;
   members: { userId: string; role: Role; status: "active" | "invited" | "suspended"; lastActiveAt: string | null }[];
   counter: number;
+  onboarding: { dismissed: boolean; workspaceConfirmed: boolean; readinessChecked: boolean; notificationsReviewed: boolean };
+  platform: PlatformState;
 };
 
 const dbs = new Map<string, WorkspaceDb>();
@@ -263,7 +266,14 @@ function createDb(workspaceId: string): WorkspaceDb {
     },
     members,
     counter: 100,
+    platform: { schedules: [], apiKeys: [], webhooks: [], savedViews: [], notificationRules: {} },
+    onboarding: { dismissed: !profile.fresh, workspaceConfirmed: !profile.fresh, readinessChecked: !profile.fresh, notificationsReviewed: !profile.fresh },
   };
+
+  if (profile.fresh) {
+    seedFreshWorkspace(db, now);
+    return db;
+  }
 
   seedSources(db, now);
   seedRuns(db, now);
@@ -275,7 +285,57 @@ function createDb(workspaceId: string): WorkspaceDb {
   db.backtests = seedBacktests(db, now);
   seedNotifications(db, now);
   seedAudit(db, now);
+  db.platform = seedPlatform(db, now, false);
   return db;
+}
+
+/** A new workspace: catalogue loaded from the warehouse, nothing else configured yet. */
+function seedFreshWorkspace(db: WorkspaceDb, now: number) {
+  seedSources(db, now);
+  db.sources = db.sources.map((s) =>
+    s.id === "src_dwh"
+      ? { ...s, status: "connected", lastSyncAt: iso(now - 50 * MINUTE_MS), lastSuccessAt: iso(now - 50 * MINUTE_MS), lastFailureAt: null, lastError: null }
+      : { ...s, status: "disconnected", lastSyncAt: null, lastSuccessAt: null, lastFailureAt: null, lastError: null, records: 0 },
+  );
+  db.plan = {
+    id: "plan_first",
+    name: "First replenishment plan",
+    periodStart: isoDate(db.today),
+    periodEnd: isoDate(addDays(db.today, 27)),
+    baselineRunId: "",
+    status: "draft",
+    ownerId: "u_rina",
+    updatedAt: iso(now),
+    lines: [],
+  };
+  db.notifications = [
+    {
+      id: "ntf_welcome",
+      category: "approval_completed",
+      title: "Workspace created: New Market Launch",
+      body: "Finish setup to load demand data and run the first forecast.",
+      href: "/onboarding",
+      createdAt: iso(now - 2 * HOUR_MS),
+      read: false,
+    },
+  ];
+  db.audit = [
+    {
+      eventId: "evt_seed_fresh_1",
+      workspaceId: db.workspace.id,
+      requestId: requestId(),
+      timestamp: iso(now - 2 * HOUR_MS),
+      actorId: "u_budi",
+      action: "change_settings",
+      entityType: "workspace",
+      entityId: db.workspace.id,
+      entityLabel: `${db.workspace.name} · ${db.workspace.environment}`,
+      previousState: null,
+      newState: "created",
+      reason: "New market pilot",
+      source: "web",
+    },
+  ];
 }
 
 function seedSources(db: WorkspaceDb, now: number) {

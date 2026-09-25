@@ -1,9 +1,10 @@
 "use client";
 
-import { Lock, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Lock, PanelLeftClose, PanelLeftOpen, Rocket } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getNavCounts } from "@/lib/api/governance";
+import { getOnboarding } from "@/lib/api/onboarding";
 import { useApiQuery } from "@/hooks/use-api";
 import { useSession } from "@/lib/session-context";
 import { usePreferences } from "@/lib/preferences";
@@ -32,6 +33,8 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
   const collapsed = sidebarCollapsed && !mobile;
   const { can } = useSession();
   const counts = useApiQuery(["nav-counts"], getNavCounts, { refetchInterval: 30_000 });
+  const onboarding = useApiQuery(["onboarding"], getOnboarding);
+  const setup = onboarding.data && !onboarding.data.dismissed && !onboarding.data.complete ? onboarding.data : null;
 
   return (
     <nav aria-label="Main" className={cn("flex h-full flex-col bg-surface", !mobile && "border-r border-border")}>
@@ -49,6 +52,26 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
       <div className={cn("shrink-0 border-b border-border", collapsed ? "p-2" : "p-3")}>
         <WorkspaceSwitcher collapsed={collapsed} />
       </div>
+      {setup && (
+        <div className={cn("shrink-0 border-b border-border", collapsed ? "p-2" : "p-3")}>
+          <Link
+            href="/onboarding"
+            onClick={onNavigate}
+            className={cn("flex items-center gap-2 rounded-md border border-primary/30 bg-primary-subtle text-[0.8125rem] font-semibold text-primary-subtle-fg hover:border-primary/60", collapsed ? "size-10 justify-center" : "px-2.5 py-2")}
+            aria-label={`Finish workspace setup, ${setup.steps.filter((s) => !s.optional && s.done).length} of ${setup.steps.filter((s) => !s.optional).length} steps done`}
+          >
+            <Rocket className="size-4 shrink-0" aria-hidden />
+            {!collapsed && (
+              <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                <span className="truncate">Finish setup</span>
+                <span className="tabular text-xs">
+                  {setup.steps.filter((s) => !s.optional && s.done).length}/{setup.steps.filter((s) => !s.optional).length}
+                </span>
+              </span>
+            )}
+          </Link>
+        </div>
+      )}
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-2">
         {NAV.map((group) => (
           <div key={group.label} className={cn("py-1.5", collapsed ? "px-2" : "px-3")}>

@@ -48,7 +48,7 @@ export function CreateRunView() {
   useBreadcrumbLeaf("New forecast run");
   const [step, setStep] = React.useState(0);
   const [completed, setCompleted] = React.useState<Set<number>>(new Set());
-  const [input, setInput] = React.useState<RunInput>(() => defaultRunInput(ctx));
+  const [input, setInput] = React.useState<RunInput>(() => ({ ...defaultRunInput(ctx), name: params.get("name") ?? "" }));
   const [showAdvanced, setShowAdvanced] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [touchedName, setTouchedName] = React.useState(false);

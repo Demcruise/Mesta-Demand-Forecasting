@@ -1,6 +1,7 @@
 import {
   Activity,
   BarChart3,
+  CalendarClock,
   Boxes,
   ClipboardCheck,
   Cpu,
@@ -51,6 +52,7 @@ export const NAV: NavGroup[] = [
     items: [
       { label: "Forecast runs", href: "/forecasting/runs", icon: Workflow },
       { label: "Forecast explorer", href: "/forecasting/explorer", icon: Table2, match: ["/forecasting/explorer", "/forecasting/detail"] },
+      { label: "Schedules", href: "/forecasting/schedules", icon: CalendarClock },
     ],
   },
   {
@@ -142,6 +144,8 @@ export const SEGMENT_LABELS: Record<string, string> = {
   audit: "Audit log",
   settings: "Settings",
   lineage: "Decision lineage",
+  onboarding: "Workspace setup",
+  schedules: "Forecast schedules",
 };
 
 /** Where a breadcrumb segment should link (some segments have no page of their own). */

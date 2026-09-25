@@ -201,7 +201,13 @@ export function setSourceConnection(ctx: ApiContext, id: string, connected: bool
     mutateSource(
       ctx,
       id,
-      (s) => (connected ? { ...s, status: "connected", lastSyncAt: iso(Date.now()), lastSuccessAt: iso(Date.now()), lastError: null } : { ...s, status: "disconnected" }),
+      (s) => {
+        if (!connected) return { ...s, status: "disconnected" };
+        const db = getDb(ctx.workspaceId);
+        // First connection backfills history (mock: records for the loaded window).
+        const records = s.records > 0 ? s.records : s.type === "POS" ? db.products.length * db.locations.length * 182 : Math.round(db.products.length * 410);
+        return { ...s, status: "connected", lastSyncAt: iso(Date.now()), lastSuccessAt: iso(Date.now()), lastError: null, records };
+      },
       connected ? "Connected" : "Disconnected",
     ),
   );

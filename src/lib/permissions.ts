@@ -27,6 +27,7 @@ export type Permission =
   | "users.manage"
   | "settings.workspace"
   | "audit.view"
+  | "api.manage"
   | "export";
 
 const GRANTS: Record<Role, readonly Permission[]> = {
@@ -79,6 +80,7 @@ const GRANTS: Record<Role, readonly Permission[]> = {
     "users.manage",
     "settings.workspace",
     "audit.view",
+    "api.manage",
     "export",
   ],
 };
@@ -128,6 +130,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "users.manage": "Manage users and roles",
   "settings.workspace": "Change workspace settings",
   "audit.view": "View the audit log",
+  "api.manage": "Manage API keys and webhooks",
   export: "Export data",
 };
 

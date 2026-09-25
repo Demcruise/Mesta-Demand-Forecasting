@@ -18,6 +18,7 @@ describe("permissions", () => {
     expect(rolesWith("users.manage")).toEqual(["admin"]);
     expect(rolesWith("integration.manage")).toEqual(["admin"]);
     expect(rolesWith("settings.workspace")).toEqual(["admin"]);
+    expect(rolesWith("api.manage")).toEqual(["admin"]);
   });
 
   it("denies everything without a role", () => {

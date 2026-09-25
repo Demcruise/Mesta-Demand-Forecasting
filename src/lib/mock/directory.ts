@@ -47,20 +47,30 @@ export const WORKSPACES: Workspace[] = [
     region: "Singapore (ap-southeast-1)",
     status: "degraded",
   },
+  {
+    id: "ws_new_market",
+    name: "New Market Launch",
+    organization: ORGANIZATION.name,
+    environment: "Sandbox",
+    region: "Jakarta (ap-southeast-3)",
+    status: "active",
+  },
 ];
 
 /** Per-workspace catalogue size, so switching workspaces visibly changes scope. */
-export const WORKSPACE_PROFILE: Record<string, { products: number; locations: number; seed: number }> = {
+/** `fresh` workspaces start empty (no connected sources, runs or plans) to demonstrate onboarding. */
+export const WORKSPACE_PROFILE: Record<string, { products: number; locations: number; seed: number; fresh?: boolean }> = {
   ws_retail_prod: { products: 2480, locations: 48, seed: 1101 },
   ws_retail_stg: { products: 1240, locations: 24, seed: 2202 },
   ws_conv_pilot: { products: 360, locations: 12, seed: 3303 },
+  ws_new_market: { products: 180, locations: 6, seed: 4404, fresh: true },
 };
 
 const ALL = WORKSPACES.map((w) => w.id);
 
 export const USERS: User[] = [
   { id: "u_rina", name: "Rina Wijaya", email: "rina.wijaya@mesta.click", title: "Demand Planner", role: "planner", workspaceIds: ALL, status: "active", lastActiveAt: null },
-  { id: "u_dimas", name: "Dimas Santoso", email: "dimas.santoso@mesta.click", title: "Category Manager, Beverages", role: "manager", workspaceIds: ["ws_retail_prod", "ws_retail_stg"], status: "active", lastActiveAt: null },
+  { id: "u_dimas", name: "Dimas Santoso", email: "dimas.santoso@mesta.click", title: "Category Manager, Beverages", role: "manager", workspaceIds: ["ws_retail_prod", "ws_retail_stg", "ws_new_market"], status: "active", lastActiveAt: null },
   { id: "u_sari", name: "Sari Halim", email: "sari.halim@mesta.click", title: "Forecast Analyst", role: "analyst", workspaceIds: ALL, status: "active", lastActiveAt: null },
   { id: "u_budi", name: "Budi Hartono", email: "budi.hartono@mesta.click", title: "Platform Administrator", role: "admin", workspaceIds: ALL, status: "active", lastActiveAt: null },
   { id: "u_maya", name: "Maya Lestari", email: "maya.lestari@mesta.click", title: "VP Supply Chain", role: "viewer", workspaceIds: ["ws_retail_prod"], status: "active", lastActiveAt: null },

@@ -14,8 +14,10 @@ import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { PageContainer, PageHeader } from "@/components/page/page";
-import { DataTable, downloadCsv, type ColumnMeta } from "@/components/tables/data-table";
+import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
+import { downloadExport, type ExportFormat } from "@/lib/export";
 import { FilterBar } from "@/components/tables/filter-bar";
+import { SavedViewsMenu } from "@/components/tables/saved-views";
 import { StatusBadge } from "@/components/feedback/status";
 import { EmptyState, InlineAlert } from "@/components/feedback/states";
 import { FreshnessIndicator } from "@/components/feedback/freshness";
@@ -45,16 +47,18 @@ export function ExplorerView() {
   const run = q.data?.run;
   React.useEffect(() => setSelection({}), [runParam]);
 
-  const exportMutation = useApiMutation((c, _v: void) => exportForecastRows(c, runParam, state.query), {
+  const exportMutation = useApiMutation(async (c, format: ExportFormat) => ({ format, ...(await exportForecastRows(c, runParam, state.query)) }), {
     failure: "Export failed.",
     success: (r) => `Exported ${formatNumber(r.rows.length)} rows`,
     successDescription: "Current filters and sort were applied.",
     onSuccess: (r) => {
-      track("export_requested", { rows: r.rows.length, surface: "explorer" });
-      downloadCsv(
-        `forecast-${r.run.id}.csv`,
+      track("export_requested", { rows: r.rows.length, surface: "explorer", format: r.format });
+      downloadExport(
+        r.format,
+        `forecast-${r.run.id}`,
         ["Run", "SKU", "Product", "Category", "Forecast", "Override", "Previous forecast", "Actual last period", "Change %", "Lower 80%", "Upper 80%", "Status", "Open exceptions"],
-        r.rows.map((x) => [r.run.id, x.product.sku, x.product.name, x.product.category, x.forecast, x.overrideUnits, x.previousForecast, x.actualLastPeriod, (x.deltaPercent * 100).toFixed(1), x.lowerBound, x.upperBound, x.status, x.exceptionCount]),
+        r.rows.map((x) => [r.run.id, x.product.sku, x.product.name, x.product.category, x.forecast, x.overrideUnits, x.previousForecast, x.actualLastPeriod, Number((x.deltaPercent * 100).toFixed(1)), x.lowerBound, x.upperBound, x.status, x.exceptionCount]),
+        r.run.id,
       );
     },
   });
@@ -218,8 +222,9 @@ export function ExplorerView() {
         bulkBar={bulkBar}
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.page.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
-        onExport={can("export") ? () => exportMutation.mutate() : undefined}
+        onExport={can("export") ? (format) => exportMutation.mutate(format) : undefined}
         exportLabel={exportMutation.isPending ? "Exporting…" : `Export ${q.data ? formatNumber(q.data.page.total) : ""} rows`}
+        toolbarEnd={<SavedViewsMenu surface="explorer" />}
         toolbarStart={
           <FilterBar
             state={state}

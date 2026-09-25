@@ -57,10 +57,15 @@ export function OverviewView() {
         <Panel>
           <EmptyState
             title="No forecast has been published in this workspace yet."
-            description="The overview summarises the latest published forecast run. Create and publish a run to see the demand outlook."
+            description="The overview summarises the latest published forecast run. Follow the setup guide to connect data, run the first forecast and publish it."
             action={
+              <Link href="/onboarding" className={buttonVariants({ variant: "primary" })}>
+                Continue workspace setup
+              </Link>
+            }
+            secondaryAction={
               can("forecast.run.create") ? (
-                <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "primary" })}>
+                <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "secondary" })}>
                   <Plus aria-hidden /> Create forecast run
                 </Link>
               ) : undefined

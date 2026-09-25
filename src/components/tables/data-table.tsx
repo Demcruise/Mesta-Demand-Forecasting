@@ -9,7 +9,7 @@ import {
   type RowSelectionState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Columns3, Download, Rows3 } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Columns3, Rows3 } from "lucide-react";
 import * as React from "react";
 import type { SortDirection } from "@/types/domain";
 import { usePreferences, type Density } from "@/lib/preferences";
@@ -20,6 +20,8 @@ import { Checkbox, Segmented } from "@/components/ui/controls";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger, Tooltip } from "@/components/ui/overlay";
 import { Select } from "@/components/ui/select";
 import { ErrorState, TableSkeleton } from "@/components/feedback/states";
+import type { ExportFormat } from "@/lib/export";
+import { ExportMenu } from "./export-menu";
 
 /**
  * Enterprise DataTable (TABLE-001).
@@ -67,7 +69,7 @@ type DataTableProps<T> = {
   onRowClick?: (row: T) => void;
   /** Currently opened row (e.g. in a drawer). */
   activeRowId?: string | null;
-  onExport?: () => void;
+  onExport?: (format: ExportFormat) => void;
   exportLabel?: string;
   toolbarStart?: React.ReactNode;
   toolbarEnd?: React.ReactNode;
@@ -120,7 +122,7 @@ export function DataTable<T>({
   onRowClick,
   activeRowId,
   onExport,
-  exportLabel = "Export CSV",
+  exportLabel = "Export",
   toolbarStart,
   toolbarEnd,
   bulkBar,
@@ -279,12 +281,7 @@ export function DataTable<T>({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            {onExport && (
-              <Button size="sm" variant="secondary" onClick={onExport}>
-                <Download aria-hidden />
-                <span className="hidden sm:inline">{exportLabel}</span>
-              </Button>
-            )}
+            {onExport && <ExportMenu label={exportLabel} onExport={onExport} />}
           </div>
         </div>
       )}
@@ -448,24 +445,3 @@ export function DataTable<T>({
   );
 }
 
-/* ── CSV export (EXPORT-001) ───────────────────────────────────────── */
-
-export function downloadCsv(filename: string, headers: string[], rows: (string | number | null | undefined)[][]) {
-  const esc = (v: string | number | null | undefined) => {
-    if (v == null) return "";
-    const s = String(v);
-    // Neutralise spreadsheet formula injection.
-    const safe = /^[=+\-@\t\r]/.test(s) && !/^-?\d/.test(s) ? `'${s}` : s;
-    return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-  };
-  const csv = [headers.map(esc).join(","), ...rows.map((r) => r.map(esc).join(","))].join("\n");
-  const blob = new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}

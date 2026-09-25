@@ -8,3 +8,7 @@ next-env.d.ts
 .env.local
 .env.*.local
 .DS_Store
+
+# React Bits Pro source must not be published (licence forbids public repos).
+# Install blocks locally for reference only; never commit them.
+src/components/blocks/

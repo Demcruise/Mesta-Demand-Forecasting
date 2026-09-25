@@ -19,6 +19,7 @@ import { Dialog, DialogContent, Drawer, DrawerContent } from "@/components/ui/ov
 import { DescriptionList, PageContainer, PageHeader } from "@/components/page/page";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
 import { FilterBar } from "@/components/tables/filter-bar";
+import { SavedViewsMenu } from "@/components/tables/saved-views";
 import { SeverityBadge, StatusBadge } from "@/components/feedback/status";
 import { DetailSkeleton, EmptyState, ErrorState, InlineAlert, PermissionNotice } from "@/components/feedback/states";
 import { EntityId, ProductIdentity, UserIdentity } from "@/components/entities/identity";
@@ -159,6 +160,7 @@ export function ExceptionsView() {
         }
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.page.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
+        toolbarEnd={<SavedViewsMenu surface="exceptions" />}
         toolbarStart={
           <FilterBar
             state={state}

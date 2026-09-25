@@ -16,7 +16,8 @@ import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent } from "@/components/ui/overlay";
 import { DescriptionList, PageContainer, PageHeader, Panel } from "@/components/page/page";
-import { DataTable, downloadCsv, type ColumnMeta } from "@/components/tables/data-table";
+import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
+import { downloadExport, type ExportFormat } from "@/lib/export";
 import { DateRangeFilter, FilterBar } from "@/components/tables/filter-bar";
 import { EmptyState, PermissionNotice } from "@/components/feedback/states";
 import { Tag } from "@/components/feedback/status";
@@ -32,15 +33,17 @@ export function AuditView() {
   const to = state.getParam("to") ?? isoDate(today);
   const q = useApiQuery(["audit", state.query, from, to], (c) => listAudit(c, { ...state.query, from, to }), { keepPrevious: true, enabled: can("audit.view") });
   const selected = q.data?.items.find((e) => e.eventId === state.getParam("event"));
-  const exp = useApiMutation((c, _v: void) => exportAudit(c, { ...state.query, from, to }), {
+  const exp = useApiMutation(async (c, format: ExportFormat) => ({ format, rows: await exportAudit(c, { ...state.query, from, to }) }), {
     failure: "The audit log was not exported.",
-    success: (r) => `Exported ${r.length} events`,
-    onSuccess: (rows) => {
-      track("export_requested", { surface: "audit", rows: rows.length });
-      downloadCsv(
-        "audit-log.csv",
+    success: (r) => `Exported ${r.rows.length} events`,
+    onSuccess: ({ format, rows }) => {
+      track("export_requested", { surface: "audit", rows: rows.length, format });
+      downloadExport(
+        format,
+        `audit-log-${from}-to-${to}`,
         ["eventId", "timestamp", "actor", "workspace", "action", "entityType", "entityId", "entityLabel", "previousState", "newState", "reason", "source", "requestId"],
         rows.map((e) => [e.eventId, e.timestamp, actorName(e.actorId), e.workspaceId, e.action, e.entityType, e.entityId, e.entityLabel, e.previousState, e.newState, e.reason, e.source, e.requestId]),
+        "Audit log",
       );
     },
   });
@@ -114,8 +117,8 @@ export function AuditView() {
         onRowClick={(e) => state.setParam("event", e.eventId)}
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page ?? 1, pageSize: state.query.pageSize ?? 50, total: q.data?.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
-        onExport={() => exp.mutate()}
-        exportLabel="Export CSV"
+        onExport={(format) => exp.mutate(format)}
+        exportLabel={q.data ? `Export ${q.data.total} events` : "Export"}
         toolbarStart={
           <FilterBar
             state={state}

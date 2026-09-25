@@ -150,8 +150,10 @@ export function listNotifications(ctx: ApiContext) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
     syncRuns(db);
-    const prefs = db.settings.notifications;
-    return db.notifications.filter((n) => prefs[n.category] !== false || n.category === "approval_requested");
+    // Per-user rules (PLAT-006) decide which categories reach the in-app feed.
+    const rules = db.platform.notificationRules[ctx.userId];
+    const inApp = (category: string) => (rules ? (rules.channels[category as keyof typeof rules.channels] ?? []).includes("in_app") : db.settings.notifications[category] !== false);
+    return db.notifications.filter((n) => n.category === "approval_requested" || inApp(n.category));
   });
 }
 

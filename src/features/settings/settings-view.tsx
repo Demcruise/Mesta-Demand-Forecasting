@@ -17,10 +17,12 @@ import { Select } from "@/components/ui/select";
 import { RadioCards, SwitchField } from "@/components/ui/controls";
 import { Dialog, DialogContent } from "@/components/ui/overlay";
 import { DescriptionList, PageContainer, PageHeader, Panel } from "@/components/page/page";
-import { EmptyState, ErrorState, InlineAlert, PageSkeleton, PermissionNotice } from "@/components/feedback/states";
+import { ErrorState, InlineAlert, PageSkeleton, PermissionNotice } from "@/components/feedback/states";
 import { Tag } from "@/components/feedback/status";
 import { ConsequenceSummary } from "@/components/governance/audit";
 import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
+import { ApiAccessSection } from "./api-access";
+import { NotificationRulesSection } from "./notification-rules";
 import type { SectionKey } from "./sections";
 
 
@@ -75,7 +77,17 @@ export function SettingsView({ section }: { section: SectionKey }) {
           ))}
         </nav>
         <div className="min-w-0">
-          {current.key === "personal" ? <PersonalSection /> : current.key === "api" ? <ApiSection /> : current.key === "roles" ? <RolesSection /> : <WorkspaceSections section={current.key} />}
+          {current.key === "personal" ? (
+            <PersonalSection />
+          ) : current.key === "notifications" ? (
+            <NotificationRulesSection />
+          ) : current.key === "api" ? (
+            <ApiAccessSection />
+          ) : current.key === "roles" ? (
+            <RolesSection />
+          ) : (
+            <WorkspaceSections section={current.key} />
+          )}
         </div>
       </div>
     </PageContainer>
@@ -154,21 +166,9 @@ function RolesSection() {
   );
 }
 
-function ApiSection() {
-  return (
-    <Panel>
-      <EmptyState
-        icon={KeyRound}
-        title="API access is not available yet."
-        description="API keys, service accounts and webhooks are planned (backlog PLAT-001 and PLAT-002). They will require explicit confirmation, scoped access and rotation."
-      />
-    </Panel>
-  );
-}
-
 type Draft = WorkspaceSettings;
 
-function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal" | "api" | "roles"> }) {
+function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal" | "api" | "roles" | "notifications"> }) {
   const { can, workspace } = useSession();
   const q = useApiQuery(["settings"], getSettings);
   const [draft, setDraft] = React.useState<Draft | null>(null);
@@ -179,10 +179,9 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
   }, [q.data, section]);
 
   const settingsKey: keyof WorkspaceSettings | null =
-    section === "forecasting" ? "forecasting" : section === "approvals" ? "approvals" : section === "notifications" ? "notifications" : section === "audit" ? "audit" : section === "security" ? "security" : null;
+    section === "forecasting" ? "forecasting" : section === "approvals" ? "approvals" : section === "audit" ? "audit" : section === "security" ? "security" : null;
   const secondaryKey: keyof WorkspaceSettings | null = section === "forecasting" ? "exceptions" : null;
-  const personal = section === "notifications";
-  const editable = personal || can("settings.workspace");
+  const editable = can("settings.workspace");
 
   const save = useApiMutation(
     async (c, v: { reason: string }) => {
@@ -190,7 +189,7 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
       await updateSettings(c, settingsKey, draft[settingsKey] as never, v.reason);
       if (secondaryKey) await updateSettings(c, secondaryKey, draft[secondaryKey] as never, v.reason);
     },
-    { invalidate: [["settings"], ["notifications"]], success: "Settings saved", successDescription: personal ? undefined : "The change is recorded in the audit log.", failure: "Settings were not saved.", onSuccess: () => setConfirm(false) },
+    { invalidate: [["settings"], ["notifications"]], success: "Settings saved", successDescription: "The change is recorded in the audit log.", failure: "Settings were not saved.", onSuccess: () => setConfirm(false) },
   );
 
   if (q.isPending || !draft) return <PageSkeleton />;
@@ -208,7 +207,7 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
           <Button variant="ghost" disabled={!dirty} onClick={() => setDraft(structuredClone(saved))}>
             Discard changes
           </Button>
-          <Button variant="primary" disabled={!dirty} onClick={() => (personal ? save.mutate({ reason: "" }) : (setReason(""), setConfirm(true)))} loading={personal && save.isPending}>
+          <Button variant="primary" disabled={!dirty} onClick={() => { setReason(""); setConfirm(true); }}>
             Save changes
           </Button>
         </div>
@@ -288,27 +287,6 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
             </Field>
           </fieldset>
           <SwitchField id="ap-plan" label="Plans need approval before publication" description="Turning this off lets planners publish plans directly." checked={draft.approvals.planPublishRequiresApproval} onCheckedChange={(v) => set("approvals", { planPublishRequiresApproval: v })} disabled={!editable} />
-        </Panel>
-      )}
-      {section === "notifications" && (
-        <Panel title="Notifications" description="Which events notify you in the app. Approval requests addressed to you are always shown." footer={footer}>
-          <div className="divide-y divide-border-subtle">
-            {(
-              [
-                ["forecast_completed", "Forecast completed", "A run you can see finished processing."],
-                ["forecast_failed", "Forecast failed", "A run stopped with an error."],
-                ["data_quality", "Data quality issue", "A blocking or warning data check failed."],
-                ["data_freshness", "Data freshness", "A source is delayed or failing."],
-                ["approval_requested", "Approval requested", "Always on."],
-                ["approval_completed", "Approval completed", "A request you made or follow was decided."],
-                ["exception_opened", "Exception opened", "Can be noisy after each daily refresh."],
-                ["scenario_completed", "Scenario simulated", "A scenario simulation finished."],
-                ["model_issue", "Model issue", "Drift or degradation detected on a production model."],
-              ] as const
-            ).map(([key, label, desc]) => (
-              <SwitchField key={key} id={`n-${key}`} label={label} description={desc} checked={draft.notifications[key] !== false} disabled={key === "approval_requested"} onCheckedChange={(v) => setDraft((d) => (d ? { ...d, notifications: { ...d.notifications, [key]: v } } : d))} />
-            ))}
-          </div>
         </Panel>
       )}
       {section === "audit" && (

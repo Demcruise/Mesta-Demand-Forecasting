@@ -588,3 +588,82 @@ export type Page<T> = {
   /** When the underlying data was last refreshed. */
   asOf: string | null;
 };
+
+/* ── Scheduling, API access, webhooks, saved views (P2) ────────────── */
+
+export type ScheduleCadence = { type: "daily" } | { type: "weekly"; weekday: number };
+
+export type ForecastSchedule = {
+  id: string;
+  name: string;
+  cadence: ScheduleCadence;
+  /** Local time, "HH:MM". */
+  time: string;
+  categories: string[];
+  regions: string[];
+  horizonDays: number;
+  /** null means "use the workspace default model at run time". */
+  modelId: string | null;
+  /** Publish automatically when validation passes and no critical exceptions are raised. */
+  autoPublish: boolean;
+  enabled: boolean;
+  ownerId: string;
+  createdAt: string;
+  lastRunId: string | null;
+  lastRunAt: string | null;
+};
+
+export type ApiScope = "forecasts:read" | "runs:write" | "demand:write" | "plans:read" | "audit:read";
+
+export type ApiKey = {
+  id: string;
+  name: string;
+  prefix: string;
+  scopes: ApiScope[];
+  createdBy: string;
+  createdAt: string;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  status: "active" | "revoked" | "expired";
+};
+
+export type WebhookEvent = "forecast_run.completed" | "forecast_run.failed" | "forecast_run.published" | "approval.decided" | "plan.published" | "data_quality.blocking";
+
+export type WebhookDelivery = {
+  id: string;
+  event: WebhookEvent;
+  at: string;
+  status: number;
+  durationMs: number;
+  attempt: number;
+};
+
+export type Webhook = {
+  id: string;
+  url: string;
+  description: string;
+  events: WebhookEvent[];
+  enabled: boolean;
+  createdBy: string;
+  createdAt: string;
+  deliveries: WebhookDelivery[];
+};
+
+export type SavedView = {
+  id: string;
+  name: string;
+  surface: "explorer" | "exceptions" | "runs";
+  query: string;
+  ownerId: string;
+  shared: boolean;
+  createdAt: string;
+};
+
+export type NotificationChannel = "in_app" | "email";
+
+export type NotificationRules = {
+  channels: Record<NotificationCategory, NotificationChannel[]>;
+  quietHours: { enabled: boolean; start: string; end: string };
+  minExceptionSeverity: Severity;
+  digest: "off" | "daily" | "weekly";
+};

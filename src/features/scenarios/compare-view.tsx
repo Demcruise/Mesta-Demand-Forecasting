@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, GitCompareArrows } from "lucide-react";
+import { GitCompareArrows } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import type { Scenario } from "@/types/domain";
@@ -11,14 +11,15 @@ import { useSession } from "@/lib/session-context";
 import { assumptionEffect, DRIVER_LABELS } from "@/lib/mock/scenarios";
 import { formatDate, formatDateTime, formatDeltaNumber, formatDeltaPercent, formatNumber } from "@/lib/format";
 import { track } from "@/lib/telemetry";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { PageContainer, PageHeader, PageSection, Panel } from "@/components/page/page";
 import { ChartDataTable, ChartFrame, LegendItem } from "@/components/charts/chart-frame";
 import { ScenarioChart, SCENARIO_COLORS } from "@/components/charts/scenario-chart";
 import { EmptyState, ErrorState, InlineAlert, PageSkeleton } from "@/components/feedback/states";
 import { StatusBadge } from "@/components/feedback/status";
-import { downloadCsv } from "@/components/tables/data-table";
+import { ExportMenu } from "@/components/tables/export-menu";
+import { downloadExport, type ExportFormat } from "@/lib/export";
 
 /**
  * PAGE-SCENARIO-COMPARISON: what changes between the baseline and each scenario?
@@ -79,12 +80,14 @@ export function CompareView() {
     ...base.byCategory.map((c) => ({ metric: c.category, baseline: c.baseline, values: scenarios.map((s) => s.result?.byCategory.find((x) => x.category === c.category)?.scenario ?? 0) })),
   ];
 
-  const exportCsv = () => {
-    track("export_requested", { surface: "scenario_compare" });
-    downloadCsv(
-      `scenario-comparison-${formatDate(new Date()).replace(/ /g, "-")}.csv`,
+  const exportFile = (format: ExportFormat) => {
+    track("export_requested", { surface: "scenario_compare", format });
+    downloadExport(
+      format,
+      `scenario-comparison-${formatDate(new Date()).replace(/ /g, "-")}`,
       ["Metric", "Baseline", ...scenarios.flatMap((s) => [s.name, `${s.name} delta`, `${s.name} delta %`])],
-      metricRows.map((r) => [r.metric, r.baseline, ...r.values.flatMap((v) => [v, v - r.baseline, r.baseline ? (((v - r.baseline) / r.baseline) * 100).toFixed(1) : ""])]),
+      metricRows.map((r) => [r.metric, r.baseline, ...r.values.flatMap((v) => [v, v - r.baseline, r.baseline ? Number((((v - r.baseline) / r.baseline) * 100).toFixed(1)) : null])]),
+      "Scenario comparison",
     );
   };
 
@@ -96,11 +99,7 @@ export function CompareView() {
         actions={
           <>
             {picker}
-            {can("export") && (
-              <Button variant="secondary" onClick={exportCsv}>
-                <Download aria-hidden /> Export CSV
-              </Button>
-            )}
+            {can("export") && <ExportMenu label="Export comparison" note="Totals by category for the selected scenarios." onExport={exportFile} />}
           </>
         }
       />

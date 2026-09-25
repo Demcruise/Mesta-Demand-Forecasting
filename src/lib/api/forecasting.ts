@@ -136,6 +136,16 @@ export function previewScope(ctx: ApiContext, input: Pick<RunInput, "regions" | 
 
 function checksFor(db: WorkspaceDb, input: RunInput): ValidationCheck[] {
   const checks: ValidationCheck[] = [];
+  const demandSources = db.sources.filter((s) => (s.type === "POS" || s.type === "ERP") && s.status !== "disconnected");
+  checks.push({
+    key: "source",
+    label: "Demand source",
+    result: demandSources.length === 0 ? "blocking" : "pass",
+    detail:
+      demandSources.length === 0
+        ? "No demand source is connected. Connect POS or ERP data in Integrations first."
+        : `Demand from ${demandSources.map((s) => s.name).join(" and ")}.`,
+  });
   const start = new Date(input.historicalStart).getTime();
   const end = new Date(input.historicalEnd).getTime();
   const days = Math.round((end - start) / DAY_MS) + 1;

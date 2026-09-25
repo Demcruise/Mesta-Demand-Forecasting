@@ -17,6 +17,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { PageContainer, PageHeader } from "@/components/page/page";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
 import { FilterBar } from "@/components/tables/filter-bar";
+import { SavedViewsMenu } from "@/components/tables/saved-views";
 import { StatusBadge } from "@/components/feedback/status";
 import { FreshnessIndicator } from "@/components/feedback/freshness";
 import { EmptyState } from "@/components/feedback/states";
@@ -155,6 +156,7 @@ export function RunsView() {
         onRowClick={(r) => router.push(`/forecasting/runs/${r.id}`)}
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
+        toolbarEnd={<SavedViewsMenu surface="runs" />}
         toolbarStart={
           <FilterBar
             state={state}
