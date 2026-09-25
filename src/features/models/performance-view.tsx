@@ -29,8 +29,8 @@ export function PerformanceView() {
   if (q.isError) {
     return (
       <PageContainer>
-        <PageHeader title="Model performance" />
-        <Panel><ErrorState what="Model performance could not be loaded." error={q.error} onRetry={() => q.refetch()} /></Panel>
+        <PageHeader title="Performa Model" />
+        <Panel><ErrorState what="Performa model tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} /></Panel>
       </PageContainer>
     );
   }
@@ -43,14 +43,14 @@ export function PerformanceView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Model performance"
-        description="How accurate and how biased each model has been, week by week, on the same population."
+        title="Performa Model"
+        description="Seberapa akurat dan seberapa bias tiap model dari minggu ke minggu, pada populasi yang sama."
         actions={
           <div className="w-[min(24rem,90vw)]">
             <MultiSelect
               value={selected}
               onChange={(v) => state.setParams({ models: v.length ? v.join(",") : null })}
-              allLabel="Choose models to compare"
+              allLabel="Pilih model untuk dibandingkan"
               options={(options.data ?? []).map((m) => ({ value: m.id, label: `${m.name} ${m.version}`, hint: m.status }))}
             />
           </div>
@@ -58,23 +58,23 @@ export function PerformanceView() {
       />
       {models.length === 0 ? (
         <Panel>
-          <EmptyState title="Choose at least one model to compare." description="Use the model picker above." />
+          <EmptyState title="Pilih minimal satu model untuk dibandingkan." description="Gunakan pemilih model di atas." />
         </Panel>
       ) : (
         <>
-          <InlineAlert tone="info" title="Metric definitions need agreement with analytics owners.">
+          <InlineAlert tone="info" title="Definisi metrik masih perlu disepakati dengan pemilik analitik.">
             Values below use the proposed definitions shown next to each metric. Compare models over identical windows; different windows can create false precision.
           </InlineAlert>
           <ChartFrame
             title={`${def.name} by week`}
-            question={metric === "wape" ? "Is forecast error improving or drifting?" : "Is any model consistently over- or under-forecasting?"}
+            question={metric === "wape" ? "Apakah selisih perkiraan membaik atau memburuk?" : "Apakah ada model yang konsisten terlalu tinggi atau terlalu rendah?"}
             unit={def.unit}
             timeframe={firstWeek && lastWeek ? `Weeks of ${formatDate(firstWeek)} – ${formatDate(lastWeek)}` : ""}
-            source="Weekly evaluation job"
+            source="Proses evaluasi mingguan"
             actions={
               <Segmented
                 size="sm"
-                aria-label="Metric"
+                aria-label="Metrik"
                 value={metric}
                 onValueChange={(v) => state.setParams({ metric: v })}
                 options={[
@@ -96,7 +96,7 @@ export function PerformanceView() {
             table={
               <ChartDataTable
                 caption={`${def.name} by week`}
-                columns={[{ key: "week", label: "Week of" }, ...series.map((s) => ({ key: s.key, label: s.label, numeric: true }))]}
+                columns={[{ key: "week", label: "Minggu" }, ...series.map((s) => ({ key: s.key, label: s.label, numeric: true }))]}
                 rows={q.data.series.map((r) => ({
                   week: formatDate(r.week as string),
                   ...Object.fromEntries(series.map((s) => [s.key, metric === "wape" ? formatPercent(r[s.key] as number) : formatDeltaPercent(r[s.key] as number)])),
@@ -104,14 +104,14 @@ export function PerformanceView() {
               />
             }
           />
-          <Panel title="Latest evaluation" description="Each model's latest completed backtest. Check that the windows match before comparing." flush>
+          <Panel title="Evaluasi terakhir" description="Uji model terakhir yang selesai untuk tiap model. Pastikan periodenya sama sebelum membandingkan." flush>
             <div className="p-4">
               <ChartDataTable
-                caption="Latest evaluation by model"
+                caption="Evaluasi terakhir per model"
                 maxHeight="none"
                 columns={[
                   { key: "model", label: "Model" },
-                  { key: "window", label: "Window" },
+                  { key: "window", label: "Periode" },
                   ...(Object.keys(METRIC_DEFINITIONS) as MetricKey[]).map((k) => ({ key: k, label: METRIC_DEFINITIONS[k].label, numeric: true })),
                   { key: "link", label: "" },
                 ]}
@@ -132,14 +132,14 @@ export function PerformanceView() {
               />
             </div>
           </Panel>
-          <Panel title="Performance by category" description="From each model's latest backtest. Volume share is the category's share of actual demand." flush>
+          <Panel title="Performa per kategori" description="Dari uji model terakhir tiap model. Bagian volume adalah porsi kategori terhadap permintaan aktual." flush>
             <div className="p-4">
               <ChartDataTable
-                caption="Performance by category"
+                caption="Performa per kategori"
                 maxHeight="none"
                 columns={[
-                  { key: "segment", label: "Category" },
-                  { key: "share", label: "Volume share", numeric: true },
+                  { key: "segment", label: "Kategori" },
+                  { key: "share", label: "Bagian volume", numeric: true },
                   ...models.flatMap((m) => [
                     { key: `${m.id}:wape`, label: `WAPE · ${m.version}`, numeric: true },
                     { key: `${m.id}:bias`, label: `Bias · ${m.version}`, numeric: true },

@@ -40,13 +40,13 @@ export function metricValue(m: ModelMetrics, key: MetricKey) {
 export function MetricTable({ metrics }: { metrics: ModelMetrics }) {
   return (
     <ChartDataTable
-      caption="Model performance metrics"
+      caption="Metrik performa model"
       maxHeight="none"
       columns={[
-        { key: "metric", label: "Metric" },
-        { key: "value", label: "Value", numeric: true },
-        { key: "definition", label: "Definition" },
-        { key: "baseline", label: "Comparison baseline" },
+        { key: "metric", label: "Metrik" },
+        { key: "value", label: "Nilai", numeric: true },
+        { key: "definition", label: "Penjelasan" },
+        { key: "baseline", label: "Pembanding" },
       ]}
       rows={(Object.keys(METRIC_DEFINITIONS) as MetricKey[]).map((k) => ({
         metric: (
@@ -72,12 +72,12 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
   const [rationale, setRationale] = React.useState("");
   const promote = useApiMutation((c, v: string) => requestDefaultModel(c, modelId, v), {
     invalidate: [["model"], ["approvals"], ["nav-counts"]],
-    success: "Promotion requested",
+    success: "Permintaan promosi dikirim",
     successDescription: "A Manager must approve before new runs use this model by default.",
-    failure: "The request was not created.",
+    failure: "Permintaan tidak dapat dibuat.",
     onSuccess: () => setDialog(null),
   });
-  const archive = useApiMutation((c, _v: void) => archiveModel(c, modelId), { invalidate: [["model"], ["models"]], success: "Model archived", failure: "The model was not archived.", onSuccess: () => setDialog(null) });
+  const archive = useApiMutation((c, _v: void) => archiveModel(c, modelId), { invalidate: [["model"], ["models"]], success: "Model diarsipkan", failure: "Model tidak dapat diarsipkan.", onSuccess: () => setDialog(null) });
 
   if (q.isPending) return <PageContainer><PageSkeleton /></PageContainer>;
   if (q.isError) {
@@ -85,7 +85,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
       <PageContainer>
         <PageHeader title="Model" />
         <Panel>
-          <ErrorState what="This model could not be loaded." error={q.error} onRetry={() => q.refetch()} recovery={<Link href="/models" className={buttonVariants({ variant: "secondary" })}>Back to model registry</Link>} />
+          <ErrorState what="Model ini tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} recovery={<Link href="/models" className={buttonVariants({ variant: "secondary" })}>Kembali ke Daftar Model</Link>} />
         </Panel>
       </PageContainer>
     );
@@ -102,10 +102,10 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
         meta={
           <>
             <StatusBadge status={m.status} />
-            {m.isDefault && <Tag tone="primary">Default model</Tag>}
-            <MetaItem>Last trained {formatDateTime(m.lastTrainedAt)}</MetaItem>
+            {m.isDefault && <Tag tone="primary">Model bawaan</Tag>}
+            <MetaItem>Terakhir dilatih {formatDateTime(m.lastTrainedAt)}</MetaItem>
             <MetaItem>
-              Owner <UserIdentity userId={m.owner} className="ml-1" />
+              Penanggung jawab <UserIdentity userId={m.owner} className="ml-1" />
             </MetaItem>
           </>
         }
@@ -113,44 +113,44 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
           <>
             {can("backtest.run") && (
               <Link href={`/models/backtesting?model=${m.id}`} className={buttonVariants({ variant: "secondary" })}>
-                <FlaskConical aria-hidden /> Run backtest
+                <FlaskConical aria-hidden /> Jalankan Uji Model
               </Link>
             )}
             {can("model.manage") && !m.isDefault && m.status !== "archived" && (
               <Button variant="secondary" onClick={() => setDialog("archive")}>
-                <Archive aria-hidden /> Archive
+                <Archive aria-hidden /> Arsipkan
               </Button>
             )}
             {can("model.manage") && !m.isDefault && m.status !== "archived" && (
               <Button variant="primary" onClick={() => { setRationale(""); setDialog("default"); }} disabled={!!pendingApproval}>
-                <Star aria-hidden /> Request as default
+                <Star aria-hidden /> Ajukan sebagai bawaan
               </Button>
             )}
           </>
         }
       />
       {pendingApproval && (
-        <InlineAlert tone="info" title="A request to make this model the default is waiting for approval." action={<Link href={`/planning/approvals?id=${pendingApproval.id}`} className={buttonVariants({ size: "sm" })}>View request</Link>}>
-          Requested {formatDateTime(pendingApproval.requestedAt)}.
+        <InlineAlert tone="info" title="Permintaan menjadikan model ini bawaan sedang menunggu persetujuan." action={<Link href={`/planning/approvals?id=${pendingApproval.id}`} className={buttonVariants({ size: "sm" })}>Lihat permintaan</Link>}>
+          Diajukan {formatDateTime(pendingApproval.requestedAt)}.
         </InlineAlert>
       )}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Panel title="Performance" description={`Latest evaluation ${formatDateRange(m.metrics.evaluationStart, m.metrics.evaluationEnd)} · ${m.metrics.population}`}>
+        <Panel title="Performa" description={`Evaluasi terakhir ${formatDateRange(m.metrics.evaluationStart, m.metrics.evaluationEnd)} · ${m.metrics.population}`}>
           <MetricTable metrics={m.metrics} />
         </Panel>
-        <Panel title="Version metadata">
+        <Panel title="Detail versi">
           <DescriptionList
             items={[
-              { label: "Version", value: m.version },
-              { label: "Training period", value: formatDateRange(m.trainingStart, m.trainingEnd) },
+              { label: "Versi", value: m.version },
+              { label: "Periode pelatihan", value: formatDateRange(m.trainingStart, m.trainingEnd) },
               { label: "Dataset", value: m.dataset },
-              { label: "Forecast horizon", value: `Up to ${m.horizonDays} days` },
-              { label: "Frequency", value: m.frequency === "daily" ? "Daily" : "Weekly" },
+              { label: "Rentang perkiraan", value: `Hingga ${m.horizonDays} hari` },
+              { label: "Frekuensi", value: m.frequency === "daily" ? "Harian" : "Mingguan" },
             ]}
           />
           <div className="mt-4">
-            <p className="mb-1.5 metadata">Features</p>
+            <p className="mb-1.5 metadata">Fitur</p>
             <div className="flex flex-wrap gap-1.5">
               {m.features.map((f) => (
                 <Tag key={f}>{f}</Tag>
@@ -162,22 +162,22 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
 
       {latest ? (
         <ForecastChart
-          title={`Backtest ${latest.id}: forecast vs actual`}
-          question="How closely did this model's forecasts track actual demand in the past?"
+          title={`Uji model ${latest.id}: perkiraan vs aktual`}
+          question="Seberapa dekat perkiraan model ini mengikuti permintaan aktual sebelumnya?"
           points={latest.points}
-          unit="units per day"
-          source={`Backtest ${latest.id}`}
-          summary={`Over ${formatDateRange(latest.windowStart, latest.windowEnd)}, WAPE was ${formatPercent(latest.metrics?.wape ?? 0)} and ${formatPercent(latest.metrics?.coverage80 ?? 0, 0)} of days fell inside the 80% interval.`}
+          unit="unit per hari"
+          source={`Uji model ${latest.id}`}
+          summary={`Selama ${formatDateRange(latest.windowStart, latest.windowEnd)}, WAPE sebesar ${formatPercent(latest.metrics?.wape ?? 0)} dan ${formatPercent(latest.metrics?.coverage80 ?? 0, 0)} hari berada di dalam rentang 80%.`}
           height={260}
         />
       ) : (
-        <Panel title="Backtesting">
-          <p className="caption">No completed backtest for this model yet.</p>
+        <Panel title="Uji Model">
+          <p className="caption">Belum ada uji model yang selesai untuk model ini.</p>
         </Panel>
       )}
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Panel title="Known limitations">
+        <Panel title="Batasan yang diketahui">
           <ul className="list-disc pl-5 body-sm text-fg-secondary">
             {m.limitations.map((l) => (
               <li key={l} className="mb-1">
@@ -186,9 +186,9 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
             ))}
           </ul>
         </Panel>
-        <Panel title="Usage" description={`${formatNumber(m.usage.runs)} forecast runs · last used ${formatDate(m.usage.lastUsedAt)}`} flush>
+        <Panel title="Penggunaan" description={`${formatNumber(m.usage.runs)} proses perkiraan · terakhir dipakai ${formatDate(m.usage.lastUsedAt)}`} flush>
           {runs.length === 0 ? (
-            <p className="px-4 py-6 caption">No runs in this workspace used this model.</p>
+            <p className="px-4 py-6 caption">Belum ada proses di ruang kerja ini yang memakai model ini.</p>
           ) : (
             <ul>
               {runs.map((r) => (
@@ -201,54 +201,54 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
           )}
         </Panel>
       </div>
-      <Panel title="Audit">
-        <AuditTimeline events={audit} emptyText="No audited changes to this model." />
+      <Panel title="Riwayat">
+        <AuditTimeline events={audit} emptyText="Belum ada perubahan tercatat pada model ini." />
       </Panel>
 
       <Dialog open={dialog === "default"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent
-          title={`Request ${m.name} ${m.version} as the default model?`}
-          description="Model promotion always goes through Manager approval."
+          title={`Ajukan ${m.name} ${m.version} sebagai model bawaan?`}
+          description="Promosi model selalu melalui persetujuan Manajer."
           footer={
             <>
               <Button variant="ghost" onClick={() => setDialog(null)}>
-                Cancel
+                Batal
               </Button>
               <Button variant="primary" disabled={rationale.trim().length < 10} loading={promote.isPending} onClick={() => promote.mutate(rationale)}>
-                Submit for approval
+                Kirim untuk persetujuan
               </Button>
             </>
           }
         >
           <ConsequenceSummary
             rows={[
-              { label: "What changes", value: "New forecast runs use this model unless another is chosen." },
-              { label: "What does not change", value: "Existing runs, the current baseline and open plans." },
-              { label: "Evidence attached", value: backtests.length ? backtests.map((b) => b.id).join(", ") : "No backtests. Run one first." },
-              { label: "Approval", value: "Manager" },
+              { label: "Yang berubah", value: "Proses perkiraan baru memakai model ini kecuali memilih model lain." },
+              { label: "Yang tidak berubah", value: "Proses yang sudah ada, acuan saat ini, dan rencana yang terbuka." },
+              { label: "Bukti terlampir", value: backtests.length ? backtests.map((b) => b.id).join(", ") : "Belum ada uji model. Jalankan dulu." },
+              { label: "Persetujuan", value: "Manajer" },
             ]}
           />
-          <Field className="mt-4" label="Rationale" htmlFor="promo-why" required hint="At least 10 characters. Recorded with the request.">
-            <Textarea id="promo-why" value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder="e.g. Lower WAPE and better-calibrated intervals over the last 90 days." />
+          <Field className="mt-4" label="Alasan" htmlFor="promo-why" required hint="Minimal 10 karakter. Tercatat bersama permintaan.">
+            <Textarea id="promo-why" value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder="mis. WAPE lebih rendah dan rentang lebih terkalibrasi dalam 90 hari terakhir." />
           </Field>
         </DialogContent>
       </Dialog>
       <Dialog open={dialog === "archive"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent
           size="sm"
-          title={`Archive ${m.name} ${m.version}?`}
+          title={`Arsipkan ${m.name} ${m.version}?`}
           footer={
             <>
               <Button variant="ghost" onClick={() => setDialog(null)}>
-                Cancel
+                Batal
               </Button>
               <Button variant="primary" loading={archive.isPending} onClick={() => archive.mutate()}>
-                Archive model
+                Arsipkan model
               </Button>
             </>
           }
         >
-          <p className="body-sm text-fg-secondary">Archived models cannot be selected for new forecast runs. Existing runs and backtests keep their reference to this model.</p>
+          <p className="body-sm text-fg-secondary">Model yang diarsipkan tidak dapat dipilih untuk proses perkiraan baru. Proses dan uji model yang sudah ada tetap merujuk ke model ini.</p>
         </DialogContent>
       </Dialog>
     </PageContainer>
