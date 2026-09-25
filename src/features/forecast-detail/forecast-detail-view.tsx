@@ -15,7 +15,7 @@ import { DescriptionList, MetaItem, PageContainer, PageHeader, PageSection, Pane
 import { ErrorState, PageSkeleton } from "@/components/feedback/states";
 import { SeverityBadge, StatusBadge } from "@/components/feedback/status";
 import { FreshnessIndicator } from "@/components/feedback/freshness";
-import { EntityId, ModelIdentity, ProductIdentity } from "@/components/entities/identity";
+import { EntityId, ModelIdentity } from "@/components/entities/identity";
 import { ForecastDelta, ForecastInterval, MetricCard, MetricStrip } from "@/components/forecasting/metrics";
 import { ForecastChart } from "@/components/charts/forecast-chart";
 import { AuditTimeline } from "@/components/governance/audit";
@@ -67,7 +67,12 @@ export function ForecastDetailView({ productId }: { productId: string }) {
   return (
     <PageContainer>
       <PageHeader
-        title={<ProductIdentity product={d.product} variant="detail" />}
+        eyebrow={
+          <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
+            {d.product.category} · <span className="mono-id">{d.product.sku}</span>
+          </span>
+        }
+        title={d.product.name}
         meta={
           <>
             {d.row && <StatusBadge status={d.row.status} />}

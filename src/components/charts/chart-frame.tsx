@@ -115,7 +115,7 @@ export function ChartDataTable({ columns, rows, caption, maxHeight = "20rem" }: 
         <thead className="sticky top-0 bg-subtle">
           <tr>
             {columns.map((c) => (
-              <th key={c.key} scope="col" className={cn("border-b border-border px-3 py-2 text-xs font-semibold text-fg-secondary", c.numeric ? "text-right" : "text-left")}>
+              <th key={c.key} scope="col" className={cn("whitespace-nowrap border-b border-border px-3 py-2 text-xs font-semibold text-fg-secondary", c.numeric ? "text-right" : "text-left")}>
                 {c.label}
               </th>
             ))}

@@ -99,7 +99,10 @@ export function seedScenarios(db: WorkspaceDb, now: number): Scenario[] {
   const mk = (s: Omit<Scenario, "result" | "baselineRunId"> & { simulate: boolean }): Scenario => {
     const { simulate, ...rest } = s;
     const scenario: Scenario = { ...rest, baselineRunId: base.id, result: null };
-    if (simulate) scenario.result = simulateScenario(db, scenario);
+    if (simulate) {
+      scenario.result = simulateScenario(db, scenario);
+      if (scenario.result) scenario.result.simulatedAt = scenario.modifiedAt;
+    }
     return scenario;
   };
   return [
