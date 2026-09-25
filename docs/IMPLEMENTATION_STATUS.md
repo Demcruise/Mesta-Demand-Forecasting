@@ -139,8 +139,8 @@ Status of the [Frontend-Only Backlog v3](Mesta_Demand_Forecasting_Frontend_Only_
 
 | Area | Status |
 |---|---|
-| Page-level copy — **done** | Auth flow (sign-in, IdP, callback, workspace picker, unauthorized, signed-out), Overview (FE-P0-013), Proses Perkiraan (FE-P0-014), Perkiraan Permintaan / explorer (FE-P0-017), plus the forecast step labels and shared scope/entity copy. |
-| Page-level copy — **remaining** | Create forecast (FE-P0-015), Processing / run detail (FE-P0-016), Forecast detail (FE-P0-018), Demand data + Kualitas Data (FE-P0-019/020), Models (FE-P1-001…004), Scenarios (FE-P1-005…007), Planning / Override / Approval / Monitoring / Notifications (FE-P1-008…013), Governance (FE-P1-014…019), Insights, Onboarding, Schedules. Route `metadata.title` values are also still English. This is why the UI remains partly mixed-language. |
+| Page-level copy — **done** | Auth flow (sign-in, IdP, callback, workspace picker, unauthorized, signed-out), Ringkasan (FE-P0-013), Proses Perkiraan (FE-P0-014), Buat Perkiraan wizard + validation results (FE-P0-015), Processing / run detail + run actions (FE-P0-016), Perkiraan Permintaan / explorer (FE-P0-017). Shared copy: forecast step labels, scope/entity labels, role and permission labels. |
+| Page-level copy — **remaining** | Forecast detail (FE-P0-018), Demand data + Kualitas Data + Sumber Data (FE-P0-019/020), Models (FE-P1-001…004), Scenarios (FE-P1-005…007), Planning / Override / Approval / Monitoring / Notifications (FE-P1-008…013), Governance (FE-P1-014…019), Insights, Onboarding, Schedules. Route `metadata.title` values are also still English. This is why the UI remains partly mixed-language. |
 | §58 Visual regression viewports | Only 1440 × 900 is covered; 1280 / 1024 / 768 / 390 baselines are outstanding. |
 | §44 Manual accessibility | The axe pass is automated only; a manual keyboard and screen-reader review is still required. |
 | FE-P1-027…031 React Bits | Registry configured; blocks cannot be installed without a licence key. |

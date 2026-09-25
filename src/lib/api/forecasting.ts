@@ -139,12 +139,12 @@ function checksFor(db: WorkspaceDb, input: RunInput): ValidationCheck[] {
   const demandSources = db.sources.filter((s) => (s.type === "POS" || s.type === "ERP") && s.status !== "disconnected");
   checks.push({
     key: "source",
-    label: "Demand source",
+    label: "Sumber data permintaan",
     result: demandSources.length === 0 ? "blocking" : "pass",
     detail:
       demandSources.length === 0
-        ? "No demand source is connected. Connect POS or ERP data in Integrations first."
-        : `Demand from ${demandSources.map((s) => s.name).join(" and ")}.`,
+        ? "Belum ada sumber data permintaan yang terhubung. Sambungkan data POS atau ERP di Integrasi lebih dulu."
+        : `Permintaan berasal dari ${demandSources.map((s) => s.name).join(" dan ")}.`,
   });
   const start = new Date(input.historicalStart).getTime();
   const end = new Date(input.historicalEnd).getTime();
@@ -155,69 +155,69 @@ function checksFor(db: WorkspaceDb, input: RunInput): ValidationCheck[] {
   const windowCoversGap = end >= db.today - 9 * DAY_MS;
   checks.push({
     key: "availability",
-    label: "Data availability",
+    label: "Ketersediaan data",
     result: days < 90 ? "blocking" : days < 180 ? "warning" : "pass",
     detail:
       days < 90
-        ? `Only ${days} days of history selected. At least 90 days are required.`
+        ? `Hanya ${days} hari riwayat yang dipilih. Minimal 90 hari diperlukan.`
         : days < 180
-          ? `${days} days of history. Seasonality is estimated less reliably below 180 days.`
-          : `${days} days of history available for ${scoped.length.toLocaleString("en-US")} SKUs.`,
+          ? `${days} hari riwayat. Pola musiman kurang andal bila di bawah 180 hari.`
+          : `${days} hari riwayat tersedia untuk ${scoped.length.toLocaleString("id-ID")} SKU.`,
   });
   checks.push({
     key: "missing",
-    label: "Missing records",
+    label: "Data belum lengkap",
     result: missingInScope > 0 && windowCoversGap ? (input.horizonDays > 60 ? "blocking" : "warning") : "pass",
     detail:
       missingInScope > 0 && windowCoversGap
-        ? `${missingInScope} SKUs are missing daily demand for 6 days (DQ-001).${input.horizonDays > 60 ? " Horizons over 60 days require complete recent history." : " They will use interpolated history."}`
-        : "No missing records in the selected window.",
+        ? `${missingInScope} SKU tidak memiliki permintaan harian selama 6 hari (DQ-001).${input.horizonDays > 60 ? " Rentang di atas 60 hari memerlukan riwayat terbaru yang lengkap." : " Data yang kosong akan diisi dengan interpolasi."}`
+        : "Tidak ada data yang kosong pada periode yang dipilih.",
   });
   const dup = db.dqIssues.find((i) => i.type === "duplicate_records" && i.status !== "resolved");
   checks.push({
     key: "duplicates",
-    label: "Duplicate records",
+    label: "Data duplikat",
     result: dup ? "warning" : "pass",
-    detail: dup ? `${dup.description} Duplicates are removed before modelling.` : "No duplicate records detected.",
+    detail: dup ? `${dup.description} Data duplikat dihapus sebelum pemodelan.` : "Tidak ada data duplikat.",
   });
   const outliers = db.dqIssues.find((i) => i.type === "extreme_outlier" && i.status !== "resolved");
   checks.push({
     key: "outliers",
-    label: "Outliers",
+    label: "Nilai ekstrem",
     result: "pass",
-    detail: outliers ? `${outliers.affectedSkus} extreme values will be capped at the 99th percentile.` : "No extreme values detected.",
+    detail: outliers ? `${outliers.affectedSkus} nilai ekstrem akan dibatasi pada persentil ke-99.` : "Tidak ada nilai ekstrem.",
   });
   const promo = db.sources.find((s) => s.id === "src_promo");
   const promoAge = promo?.lastSuccessAt ? (Date.now() - new Date(promo.lastSuccessAt).getTime()) / DAY_MS : 0;
   checks.push({
     key: "freshness",
-    label: "Freshness",
+    label: "Terakhir diperbarui",
     result: promoAge > 1 ? "warning" : "pass",
-    detail: promoAge > 1 ? `Promotions calendar is ${Math.floor(promoAge)} days old. Recent promotions will be missing.` : "All sources updated within 24 hours.",
+    detail: promoAge > 1 ? `Kalender promosi berumur ${Math.floor(promoAge)} hari. Promosi terbaru tidak akan terbaca.` : "Semua sumber diperbarui dalam 24 jam terakhir.",
   });
   checks.push({
     key: "fields",
-    label: "Required fields",
+    label: "Kolom wajib",
     result: input.name.trim().length === 0 ? "blocking" : "pass",
-    detail: input.name.trim().length === 0 ? "Give the run a name so it can be found later." : "Run name, scope, window, horizon and model are set.",
+    detail: input.name.trim().length === 0 ? "Beri nama proses agar mudah ditemukan lagi." : "Nama proses, cakupan, periode, rentang, dan model sudah diisi.",
   });
   const model = db.models.find((m) => m.id === input.modelId);
   const compatible = model && model.status !== "archived" && input.horizonDays <= model.horizonDays && model.frequency === input.frequency;
   checks.push({
     key: "model",
-    label: "Model compatibility",
+    label: "Kompatibilitas model",
     result: !model ? "blocking" : compatible ? (model.status === "candidate" ? "warning" : "pass") : "blocking",
     detail: !model
-      ? "Select a model."
+      ? "Pilih model."
       : !compatible
         ? model.status === "archived"
-          ? `${model.name} ${model.version} is archived.`
+          ? `${model.name} ${model.version} sudah diarsipkan.`
           : model.frequency !== input.frequency
-            ? `${model.name} ${model.version} only supports ${model.frequency} forecasts.`
-            : `${model.name} ${model.version} supports horizons up to ${model.horizonDays} days.`
+            ? `${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency === "daily" ? "harian" : "mingguan"}.`
+            : `${model.name} ${model.version} mendukung rentang hingga ${model.horizonDays} hari.`
         : model.status === "candidate"
-          ? `${model.name} ${model.version} is a candidate. Results should not be published without review.`
-          : `${model.name} ${model.version} is in production and supports this horizon.`,
+          ? `${model.name} ${model.version} masih kandidat. Hasilnya sebaiknya tidak diterbitkan sebelum ditinjau.`
+          : `${model.name} ${model.version} sudah produksi dan mendukung rentang ini.`,
   });
   return checks;
 }

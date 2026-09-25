@@ -71,8 +71,8 @@ test.describe("key workflows", () => {
 
   test("forecast run wizard starts on the scope step", async ({ page }) => {
     await page.goto("/forecasting/runs/new");
-    await expect(page.getByRole("heading", { name: "Create forecast run" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Define scope" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Progress" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Buat Perkiraan" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Pilih Cakupan" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Progres" })).toBeVisible();
   });
 });

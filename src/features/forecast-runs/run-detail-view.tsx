@@ -62,7 +62,7 @@ export function RunDetailView({ runId }: { runId: string }) {
   if (q.isError || !run) {
     return (
       <PageContainer>
-        <PageHeader title="Forecast run" />
+        <PageHeader title="Proses Perkiraan" />
         <Panel>
           <ErrorState
             what={`Forecast run ${runId} could not be loaded.`}
@@ -129,40 +129,40 @@ export function RunDetailView({ runId }: { runId: string }) {
       {run.status === "draft" && (
         <InlineAlert
           tone="info"
-          title="This run is a draft and has not been started."
+          title="Proses ini masih draft dan belum dijalankan."
           action={
             can("forecast.run.create") ? (
               <Link href={`/forecasting/runs/new?from=${run.id}`} className={buttonVariants({ variant: "primary", size: "sm" })}>
-                Continue configuring
+                Lanjutkan pengaturan
               </Link>
             ) : undefined
           }
         >
-          Drafts keep a saved configuration. Validate and run it to generate forecasts.
+          Draft menyimpan pengaturan yang sudah diisi. Periksa lalu jalankan untuk membuat perkiraan.
         </InlineAlert>
       )}
       {run.status === "completed" && (
-        <InlineAlert tone="info" title="Results are ready but not published.">
-          The planning baseline is still the last published run. Review the results, then publish if they are fit for planning.
-          {!can("forecast.run.publish") && " Publishing needs a Manager or Administrator."}
+        <InlineAlert tone="info" title="Hasil sudah siap tetapi belum diterbitkan.">
+          Acuan perencanaan masih memakai proses terbit terakhir. Tinjau hasilnya, lalu terbitkan bila sudah layak dipakai.
+          {!can("forecast.run.publish") && " Penerbitan memerlukan Manajer atau Administrator."}
         </InlineAlert>
       )}
       {run.status === "failed" && (
         <InlineAlert
           tone="critical"
-          title={`Forecast run failed during ${run.steps.find((s) => s.status === "failed")?.label.toLowerCase() ?? "processing"}.`}
+          title={`Proses perkiraan gagal saat ${run.steps.find((s) => s.status === "failed")?.label.toLowerCase() ?? "pemrosesan"}.`}
           action={
             <Link href="/demand-data/quality?severity=blocking" className={buttonVariants({ variant: "secondary", size: "sm" })}>
-              View data issues
+              Lihat masalah data
             </Link>
           }
         >
-          {run.failureReason} The run was not published and no results were written. Resolve the data issue or change the historical window, then retry.
+          {run.failureReason} Proses tidak diterbitkan dan tidak ada hasil yang disimpan. Selesaikan masalah datanya atau ubah periode historis, lalu jalankan ulang.
         </InlineAlert>
       )}
       {run.status === "cancelled" && (
-        <InlineAlert tone="warning" title="This run was cancelled.">
-          No results were written. Retry to process it again with the same configuration.
+        <InlineAlert tone="warning" title="Proses ini dibatalkan.">
+          Tidak ada hasil yang disimpan. Jalankan ulang untuk memproses lagi dengan pengaturan yang sama.
         </InlineAlert>
       )}
 
@@ -173,73 +173,73 @@ export function RunDetailView({ runId }: { runId: string }) {
           {result.isPending ? (
             <Panel>
               <p className="flex items-center gap-2 body-sm text-fg-secondary" role="status">
-                <Loader2 className="size-4 animate-spin" aria-hidden /> Loading results…
+                <Loader2 className="size-4 animate-spin" aria-hidden /> Memuat hasil…
               </p>
             </Panel>
           ) : result.isError ? (
             <Panel>
-              <ErrorState what="Run results could not be loaded." error={result.error} onRetry={() => result.refetch()} />
+              <ErrorState what="Hasil proses tidak dapat dimuat." error={result.error} onRetry={() => result.refetch()} />
             </Panel>
           ) : (
             <>
               <MetricStrip>
                 <MetricCard
-                  label={`Forecast · ${run.horizonDays} days`}
+                  label={`Perkiraan · ${run.horizonDays} hari`}
                   value={formatNumber(result.data.summary.forecastValue)}
-                  unit="units"
+                  unit="unit"
                   delta={<ForecastDelta percent={result.data.summary.deltaPercent} size="sm" />}
-                  context={`80% interval ${formatNumber(result.data.summary.lowerBound)} – ${formatNumber(result.data.summary.upperBound)}`}
+                  context={`Rentang 80% ${formatNumber(result.data.summary.lowerBound)} – ${formatNumber(result.data.summary.upperBound)}`}
                 />
-                <MetricCard label="Previous run" value={formatNumber(result.data.summary.previousForecast)} unit="units" context={`${formatDeltaPercent(result.data.summary.deltaPercent)} change`} />
-                <MetricCard label={`Actual · last ${run.horizonDays} days`} value={formatNumber(result.data.summary.actualLastPeriod)} unit="units" context="Same length as the horizon" />
+                <MetricCard label="Perkiraan sebelumnya" value={formatNumber(result.data.summary.previousForecast)} unit="unit" context={`perubahan ${formatDeltaPercent(result.data.summary.deltaPercent)}`} />
+                <MetricCard label={`Aktual · ${run.horizonDays} hari terakhir`} value={formatNumber(result.data.summary.actualLastPeriod)} unit="unit" context="Sama panjang dengan rentang perkiraan" />
                 <MetricCard
-                  label="SKUs needing review"
+                  label="SKU perlu ditinjau"
                   value={formatNumber(result.data.counts.needsReview)}
-                  context={`${result.data.counts.increases} up >5% · ${result.data.counts.decreases} down >5%`}
+                  context={`${result.data.counts.increases} naik >5% · ${result.data.counts.decreases} turun >5%`}
                   href={`/forecasting/explorer?run=${run.id}&status=needs_review`}
-                  hrefLabel="Review in explorer"
+                  hrefLabel="Tinjau di Perkiraan Permintaan"
                 />
               </MetricStrip>
               <ForecastChart
-                title="Scope forecast"
+                title="Perkiraan Cakupan"
                 points={result.data.points.slice(-(91 + run.horizonDays))}
-                unit="units per day"
-                source="POS transactions, ERP sales orders"
+                unit="unit per hari"
+                source="Transaksi POS, pesanan penjualan ERP"
                 asOf={run.dataAsOf}
-                summary={`${run.id} expects ${formatNumber(result.data.summary.forecastValue)} units over ${run.horizonDays} days (80% interval ${formatNumber(result.data.summary.lowerBound)}–${formatNumber(result.data.summary.upperBound)}), ${formatDeltaPercent(result.data.summary.deltaPercent)} versus the previous run.`}
+                summary={`${run.id} memperkirakan ${formatNumber(result.data.summary.forecastValue)} unit selama ${run.horizonDays} hari (rentang 80% ${formatNumber(result.data.summary.lowerBound)}–${formatNumber(result.data.summary.upperBound)}), ${formatDeltaPercent(result.data.summary.deltaPercent)} dibanding proses sebelumnya.`}
               />
               <div className="grid gap-4 xl:grid-cols-2">
                 <ChartFrame
-                  title="Forecast by category"
-                  question="Where does this run differ from the previous run?"
-                  unit="units"
-                  timeframe={`${run.horizonDays}-day horizon`}
+                  title="Perkiraan per kategori"
+                  question="Di mana proses ini berbeda dari proses sebelumnya?"
+                  unit="unit"
+                  timeframe={`periode ${run.horizonDays} hari`}
                   legend={
                     <>
-                      <LegendItem color="var(--chart-previous)" label="Previous run" variant="bar" />
-                      <LegendItem color="var(--chart-forecast)" label="This run" variant="bar" />
+                      <LegendItem color="var(--chart-previous)" label="Proses sebelumnya" variant="bar" />
+                      <LegendItem color="var(--chart-forecast)" label="Proses ini" variant="bar" />
                     </>
                   }
-                  chart={<PairedBars rows={result.data.byCategory.map((c) => ({ label: c.category, a: c.previous, b: c.forecast }))} aLabel="Previous run" bLabel="This run" />}
+                  chart={<PairedBars rows={result.data.byCategory.map((c) => ({ label: c.category, a: c.previous, b: c.forecast }))} aLabel="Proses sebelumnya" bLabel="Proses ini" />}
                   table={
                     <ChartDataTable
-                      caption="Forecast by category"
+                      caption="Perkiraan per kategori"
                       columns={[
-                        { key: "c", label: "Category" },
-                        { key: "p", label: "Previous", numeric: true },
-                        { key: "f", label: "This run", numeric: true },
-                        { key: "d", label: "Change", numeric: true },
+                        { key: "c", label: "Kategori" },
+                        { key: "p", label: "Sebelumnya", numeric: true },
+                        { key: "f", label: "Proses ini", numeric: true },
+                        { key: "d", label: "Perubahan", numeric: true },
                       ]}
                       rows={result.data.byCategory.map((c) => ({ c: c.category, p: formatNumber(c.previous), f: formatNumber(c.forecast), d: formatDeltaPercent(c.previous ? (c.forecast - c.previous) / c.previous : 0) }))}
                     />
                   }
                 />
                 <Panel
-                  title="Largest changes versus previous run"
+                  title="Perubahan terbesar dibanding sebelumnya"
                   flush
                   actions={
                     <Link href={`/forecasting/explorer?run=${run.id}&sort=delta&dir=desc`} className="text-xs font-semibold text-primary hover:underline">
-                      Open in explorer
+                      Buka di Perkiraan Permintaan
                     </Link>
                   }
                 >
@@ -264,24 +264,24 @@ export function RunDetailView({ runId }: { runId: string }) {
       )}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <Panel title="Configuration">
+        <Panel title="Pengaturan">
           <DescriptionList
             columns={2}
             items={[
-              { label: "Business unit", value: run.scope.businessUnit },
-              { label: "Scope", value: scopeLabel(run) },
-              { label: "Historical window", value: formatDateRange(run.historicalStart, run.historicalEnd) },
-              { label: "Horizon", value: `${run.horizonDays} days · ${run.frequency}` },
+              { label: "Unit bisnis", value: run.scope.businessUnit },
+              { label: "Cakupan", value: scopeLabel(run) },
+              { label: "Rentang historis", value: formatDateRange(run.historicalStart, run.historicalEnd) },
+              { label: "Rentang perkiraan", value: `${run.horizonDays} hari · ${run.frequency === "daily" ? "harian" : "mingguan"}` },
               { label: "Model", value: <ModelIdentity model={q.data.model} /> },
-              { label: "Input data", value: <FreshnessIndicator timestamp={run.dataAsOf} label="Data as of" /> },
-              { label: "Started", value: formatDateTime(run.startedAt) },
-              { label: "Completed", value: formatDateTime(run.completedAt) },
-              ...(run.publishedAt ? [{ label: "Published", value: formatDateTime(run.publishedAt) }] : []),
+              { label: "Data masukan", value: <FreshnessIndicator timestamp={run.dataAsOf} label="Data per" /> },
+              { label: "Dimulai", value: formatDateTime(run.startedAt) },
+              { label: "Selesai", value: formatDateTime(run.completedAt) },
+              ...(run.publishedAt ? [{ label: "Diterbitkan", value: formatDateTime(run.publishedAt) }] : []),
             ]}
           />
           {run.warnings.length > 0 && (
             <div className="mt-4">
-              <p className="mb-1.5 metadata">Validation warnings</p>
+              <p className="mb-1.5 metadata">Peringatan pemeriksaan</p>
               <ul className="flex flex-col gap-1.5">
                 {run.warnings.map((w) => (
                   <li key={w} className="flex items-start gap-2 body-sm text-fg-secondary">
@@ -293,10 +293,10 @@ export function RunDetailView({ runId }: { runId: string }) {
             </div>
           )}
         </Panel>
-        <Panel title="Run history">{events.data ? <AuditTimeline events={events.data} emptyText="No recorded events for this run." /> : <p className="caption">Loading…</p>}</Panel>
+        <Panel title="Riwayat proses">{events.data ? <AuditTimeline events={events.data} emptyText="Belum ada aktivitas tercatat untuk proses ini." /> : <p className="caption">Memuat…</p>}</Panel>
       </div>
       {actions.dialog}
-      {!hasResults && !active && run.status !== "failed" && run.status !== "cancelled" && run.status !== "draft" && <EmptyState title="No results for this run." />}
+      {!hasResults && !active && run.status !== "failed" && run.status !== "cancelled" && run.status !== "draft" && <EmptyState title="Belum ada hasil untuk proses ini." />}
     </PageContainer>
   );
 }
@@ -315,23 +315,23 @@ function RunProgress({ run }: { run: ForecastRun }) {
   const elapsed = started && now > started ? (run.completedAt ? new Date(run.completedAt).getTime() : now) - started : 0;
   const expected = runDurationMs(run.scope.skuCount, run.horizonDays);
   return (
-    <PageSection title={active ? "Processing" : "Processing steps"} description={active ? "Status is read from the forecasting job every 2 seconds. You can leave this page; you will be notified when it finishes." : undefined}>
+    <PageSection title={active ? "Memproses" : "Langkah pemrosesan"} description={active ? "Status dibaca dari proses perkiraan setiap 2 detik. Anda boleh meninggalkan halaman ini; Anda akan diberi tahu saat selesai." : undefined}>
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Panel flush>
-          <ol aria-label="Run steps">
+          <ol aria-label="Langkah proses">
             {run.steps.map((s, i) => (
               <StepRow key={s.key} step={s} index={i} now={now} />
             ))}
           </ol>
         </Panel>
-        <Panel title="Job">
+        <Panel title="Proses">
           <DescriptionList
             items={[
-              { label: "Steps completed", value: `${p.done} of ${p.total}` },
-              { label: "Current step", value: p.current?.label ?? (run.status === "queued" ? "Waiting for a worker" : "—") },
-              { label: "Elapsed", value: started ? formatDuration(elapsed) : "Not started" },
-              { label: "Typical duration", value: `About ${formatDuration(expected)} for ${formatNumber(run.scope.skuCount)} SKUs` },
-              { label: "Series", value: formatNumber(run.scope.skuCount * run.scope.locationCount) },
+              { label: "Langkah selesai", value: `${p.done} dari ${p.total}` },
+              { label: "Langkah saat ini", value: p.current?.label ?? (run.status === "queued" ? "Menunggu antrean" : "—") },
+              { label: "Waktu berjalan", value: started ? formatDuration(elapsed) : "Belum dimulai" },
+              { label: "Durasi umumnya", value: `Sekitar ${formatDuration(expected)} untuk ${formatNumber(run.scope.skuCount)} SKU` },
+              { label: "Seri", value: formatNumber(run.scope.skuCount * run.scope.locationCount) },
             ]}
           />
         </Panel>

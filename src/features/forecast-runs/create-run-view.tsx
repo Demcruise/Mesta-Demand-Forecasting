@@ -28,12 +28,12 @@ import { ConsequenceSummary } from "@/components/governance/audit";
 import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
 
 const STEPS: WizardStep[] = [
-  { key: "scope", label: "Define scope", description: "What to forecast" },
-  { key: "period", label: "Data period", description: "History to learn from" },
-  { key: "horizon", label: "Horizon", description: "How far ahead" },
-  { key: "model", label: "Model", description: "Which model and version" },
-  { key: "validate", label: "Validate data", description: "Check inputs" },
-  { key: "review", label: "Review", description: "Confirm configuration" },
+  { key: "scope", label: "Cakupan", description: "Yang ingin diperkirakan" },
+  { key: "period", label: "Periode", description: "Data historis yang dipakai" },
+  { key: "horizon", label: "Rentang", description: "Seberapa jauh ke depan" },
+  { key: "model", label: "Model", description: "Model dan versinya" },
+  { key: "validate", label: "Periksa Data", description: "Periksa masukan" },
+  { key: "review", label: "Tinjau", description: "Konfirmasi pengaturan" },
 ];
 
 /** Large runs get an explicit consequence confirmation before starting (backlog §20). */
@@ -45,7 +45,7 @@ export function CreateRunView() {
   const params = useSearchParams();
   const fromId = params.get("from");
   const { ctx, can } = useSession();
-  useBreadcrumbLeaf("New forecast run");
+  useBreadcrumbLeaf("Perkiraan Baru");
   const [step, setStep] = React.useState(0);
   const [completed, setCompleted] = React.useState<Set<number>>(new Set());
   const [input, setInput] = React.useState<RunInput>(() => ({ ...defaultRunInput(ctx), name: params.get("name") ?? "" }));
@@ -67,8 +67,8 @@ export function CreateRunView() {
   const create = useApiMutation((c, v: RunInput) => createRun(c, v), {
     invalidate: [["runs"], ["overview"]],
     success: (r) => `Forecast run ${r.id} queued`,
-    successDescription: "Processing starts shortly. You can leave this page; you will be notified when it finishes.",
-    failure: "The forecast run was not created.",
+    successDescription: "Proses akan segera dimulai. Anda boleh meninggalkan halaman ini; Anda akan diberi tahu saat selesai.",
+    failure: "Proses perkiraan tidak dapat dibuat.",
     onSuccess: (r) => {
       track("forecast_run_started", { horizon: r.horizonDays, skus: r.scope.skuCount });
       router.push(`/forecasting/runs/${r.id}`);
@@ -78,7 +78,7 @@ export function CreateRunView() {
   if (!can("forecast.run.create")) {
     return (
       <PageContainer width="narrow">
-        <PageHeader title="Create forecast run" />
+        <PageHeader title="Buat Perkiraan" />
         <PermissionNotice permission="forecast.run.create" />
       </PageContainer>
     );
@@ -90,7 +90,7 @@ export function CreateRunView() {
   const checks = validation.data ?? [];
   const blocking = checks.filter((c) => c.result === "blocking");
   const warnings = checks.filter((c) => c.result === "warning");
-  const nameError = touchedName && input.name.trim().length === 0 ? "Name the run so it can be found later." : null;
+  const nameError = touchedName && input.name.trim().length === 0 ? "Beri nama proses agar mudah ditemukan lagi." : null;
 
   const stepValid = (i: number) => {
     if (i === 0) return input.name.trim().length > 0 && (scope.data?.skuCount ?? 0) > 0;
@@ -113,35 +113,35 @@ export function CreateRunView() {
     else create.mutate(input);
   };
 
-  const nextLabel = ["Set data period", "Configure horizon", "Choose model", "Validate data", "Review configuration"][step];
-  const backLabel = ["", "Back to scope", "Back to data period", "Back to horizon", "Back to model", "Back to validation"][step];
+  const nextLabel = ["Lanjut ke Periode", "Lanjut ke Rentang", "Lanjut ke Model", "Periksa Data", "Lanjut ke Tinjau"][step];
+  const backLabel = ["", "Kembali ke Cakupan", "Kembali ke Periode", "Kembali ke Rentang", "Kembali ke Model", "Kembali ke Pemeriksaan"][step];
 
   const summaryRows = [
     { label: "Name", value: input.name || "—" },
-    { label: "Scope", value: `${input.businessUnit} · ${input.categories.length ? input.categories.join(", ") : "All categories"} · ${input.regions.length ? input.regions.join(", ") : "All regions"}` },
+    { label: "Cakupan", value: `${input.businessUnit} · ${input.categories.length ? input.categories.join(", ") : "Semua kategori"} · ${input.regions.length ? input.regions.join(", ") : "Semua wilayah"}` },
     { label: "Size", value: scope.data ? `${pluralize(scope.data.skuCount, "SKU")} × ${scope.data.locationCount} locations` : "…" },
-    { label: "Historical period", value: `${formatDateRange(input.historicalStart, input.historicalEnd)} (${historyDays} days)` },
-    { label: "Forecast horizon", value: `${input.horizonDays} days · ${input.frequency}` },
+    { label: "Periode historis", value: `${formatDateRange(input.historicalStart, input.historicalEnd)} (${historyDays} hari)` },
+    { label: "Rentang perkiraan", value: `${input.horizonDays} hari · ${input.frequency === "daily" ? "harian" : "mingguan"}` },
     { label: "Model", value: selectedModel ? `${selectedModel.name} ${selectedModel.version}` : "—" },
-    { label: "Expected output", value: scope.data ? `${formatNumber(scope.data.skuCount * input.horizonDays)} SKU-day forecasts with 80% prediction intervals` : "…" },
-    { label: "Known warnings", value: warnings.length ? warnings.map((w) => w.detail).join(" ") : "None", emphasis: warnings.length > 0 },
+    { label: "Hasil yang diharapkan", value: scope.data ? `${formatNumber(scope.data.skuCount * input.horizonDays)} perkiraan SKU-hari dengan rentang 80%` : "…" },
+    { label: "Peringatan yang diketahui", value: warnings.length ? warnings.map((w) => w.detail).join(" ") : "Tidak ada", emphasis: warnings.length > 0 },
   ];
 
   return (
     <PageContainer>
       <PageHeader
-        title={fromId ? "Create forecast run from a copy" : "Create forecast run"}
-        description="Configure what to forecast, validate the inputs, then run. Nothing is published until a manager publishes the results."
+        title={fromId ? "Buat Perkiraan dari Salinan" : "Buat Perkiraan"}
+        description="Pilih data dan model untuk membuat perkiraan permintaan. Belum ada yang diterbitkan sampai manajer menerbitkan hasilnya."
       />
-      {fromId && source.isError && <ErrorState compact what="The run to copy could not be loaded." error={source.error} />}
+      {fromId && source.isError && <ErrorState compact what="Proses yang ingin disalin tidak dapat dimuat." error={source.error} />}
       <WizardLayout steps={<WizardSteps steps={STEPS} current={step} completed={completed} onSelect={setStep} />}>
         {step === 0 && (
           <WizardPanel
-            title="Define scope"
-            description="Choose the products and locations to forecast. Leave a dimension empty to include all of it."
+            title="Pilih Cakupan"
+            description="Tentukan produk atau kategori yang ingin diperkirakan. Biarkan kosong untuk mencakup semuanya."
             footer={
               <>
-                <span className="caption tabular">{scope.data ? `${pluralize(scope.data.skuCount, "SKU")} · ${scope.data.locationCount} locations · ${formatNumber(scope.data.seriesCount)} series` : "Calculating scope…"}</span>
+                <span className="caption tabular">{scope.data ? `${pluralize(scope.data.skuCount, "SKU")} · ${scope.data.locationCount} lokasi · ${formatNumber(scope.data.seriesCount)} seri` : "Menghitung cakupan…"}</span>
                 <Button variant="primary" onClick={goNext}>
                   {nextLabel}
                 </Button>
@@ -149,18 +149,18 @@ export function CreateRunView() {
             }
           >
             <div className="grid gap-5">
-              <Field label="Run name" htmlFor="run-name" required error={nameError} hint="Shown in run lists, notifications and audit history.">
+              <Field label="Nama proses" htmlFor="run-name" required error={nameError} hint="Tampil di daftar proses, pemberitahuan, dan riwayat aktivitas.">
                 <Input id="run-name" value={input.name} onChange={(e) => set("name", e.target.value)} onBlur={() => setTouchedName(true)} placeholder="e.g. Beverages · 60-day promo horizon" aria-invalid={!!nameError} aria-describedby={nameError ? "run-name-error" : "run-name-hint"} maxLength={80} />
               </Field>
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Business unit" htmlFor="bu">
+                <Field label="Unit bisnis" htmlFor="bu">
                   <Select id="bu" value={input.businessUnit} onValueChange={(v) => set("businessUnit", v)} options={RUN_FORM_OPTIONS.businessUnits.map((b) => ({ value: b, label: b }))} />
                 </Field>
-                <Field label="Categories" htmlFor="cats" hint="Empty means all categories.">
-                  <MultiSelect id="cats" aria-describedby="cats-hint" value={input.categories} onChange={(v) => set("categories", v)} allLabel="All categories" options={RUN_FORM_OPTIONS.categories.map((c) => ({ value: c, label: c }))} placeholder="Search categories" />
+                <Field label="Kategori" htmlFor="cats" hint="Kosong berarti semua kategori.">
+                  <MultiSelect id="cats" aria-describedby="cats-hint" value={input.categories} onChange={(v) => set("categories", v)} allLabel="Semua kategori" options={RUN_FORM_OPTIONS.categories.map((c) => ({ value: c, label: c }))} placeholder="Cari kategori" />
                 </Field>
-                <Field label="Regions" htmlFor="regions" hint="Empty means all regions.">
-                  <MultiSelect id="regions" aria-describedby="regions-hint" value={input.regions} onChange={(v) => set("regions", v)} allLabel="All regions" options={RUN_FORM_OPTIONS.regions.map((c) => ({ value: c, label: c }))} placeholder="Search regions" />
+                <Field label="Wilayah" htmlFor="regions" hint="Kosong berarti semua wilayah.">
+                  <MultiSelect id="regions" aria-describedby="regions-hint" value={input.regions} onChange={(v) => set("regions", v)} allLabel="Semua wilayah" options={RUN_FORM_OPTIONS.regions.map((c) => ({ value: c, label: c }))} placeholder="Cari wilayah" />
                 </Field>
               </div>
               <div>
@@ -169,7 +169,7 @@ export function CreateRunView() {
                   {showAdvanced ? "Hide" : "Show"} store group, product group and SKU filters
                 </button>
                 {showAdvanced && (
-                  <InlineAlert tone="info" title="Store group, product group and SKU filters are not available yet." className="mt-3">
+                  <InlineAlert tone="info" title="Filter grup toko, grup produk, dan SKU belum tersedia." className="mt-3">
                     These dimensions depend on the confirmed product and location hierarchy (backlog §93 items 3 and 4). Use categories and regions for now.
                   </InlineAlert>
                 )}
@@ -180,8 +180,8 @@ export function CreateRunView() {
 
         {step === 1 && (
           <WizardPanel
-            title="Select data period"
-            description="The historical window the model learns from."
+            title="Pilih Periode"
+            description="Pilih data historis yang akan digunakan model."
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
@@ -194,37 +194,37 @@ export function CreateRunView() {
             }
           >
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Historical start" htmlFor="hs" required>
+              <Field label="Awal historis" htmlFor="hs" required>
                 <Input id="hs" type="date" value={input.historicalStart} max={input.historicalEnd} onChange={(e) => set("historicalStart", e.target.value)} />
               </Field>
-              <Field label="Historical end" htmlFor="he" required hint="Latest complete day of data.">
+              <Field label="Akhir historis" htmlFor="he" required hint="Hari terakhir dengan data lengkap.">
                 <Input id="he" type="date" value={input.historicalEnd} min={input.historicalStart} onChange={(e) => set("historicalEnd", e.target.value)} />
               </Field>
-              <Field label="Data source" htmlFor="src" hint="Demand combines POS and ERP orders. Configure sources in Data sources.">
-                <Select id="src" value="combined" onValueChange={() => undefined} options={[{ value: "combined", label: "POS transactions + ERP sales orders" }]} />
+              <Field label="Sumber data" htmlFor="src" hint="Permintaan menggabungkan data POS dan pesanan ERP. Atur sumbernya di Sumber Data.">
+                <Select id="src" value="combined" onValueChange={() => undefined} options={[{ value: "combined", label: "Transaksi POS + pesanan penjualan ERP" }]} />
               </Field>
-              <Field label="Frequency" htmlFor="freq">
+              <Field label="Frekuensi" htmlFor="freq">
                 <Select
                   id="freq"
                   value={input.frequency}
                   onValueChange={(v) => set("frequency", v as RunInput["frequency"])}
                   options={[
-                    { value: "daily", label: "Daily" },
-                    { value: "weekly", label: "Weekly", description: "Only intermittent-demand models" },
+                    { value: "daily", label: "Harian" },
+                    { value: "weekly", label: "Mingguan", description: "Hanya untuk model permintaan intermiten" },
                   ]}
                 />
               </Field>
             </div>
             <Panel className="mt-5 shadow-none" bodyClassName="grid gap-4 sm:grid-cols-4">
-              <Stat label="Historical window" value={`${historyDays} days`} />
-              <Stat label="Data available through" value={formatDate(input.historicalEnd)} />
+              <Stat label="Rentang historis" value={`${historyDays} hari`} />
+              <Stat label="Data tersedia sampai" value={formatDate(input.historicalEnd)} />
               <div>
-                <p className="caption">Data freshness</p>
-                <FreshnessIndicator timestamp={sources.data?.find((x) => x.id === "src_pos")?.lastSuccessAt} label="POS updated" source="POS transactions" />
+                <p className="caption">Terakhir diperbarui</p>
+                <FreshnessIndicator timestamp={sources.data?.find((x) => x.id === "src_pos")?.lastSuccessAt} label="POS diperbarui" source="Transaksi POS" />
               </div>
               <Stat
-                label="Missing periods"
-                value={dq.data ? (dq.data.page.total === 0 ? "None detected" : pluralize(dq.data.page.items.reduce((n, i) => n + i.affectedSkus, 0), "SKU") + " affected") : "…"}
+                label="Periode yang kosong"
+                value={dq.data ? (dq.data.page.total === 0 ? "Tidak ditemukan" : pluralize(dq.data.page.items.reduce((n, i) => n + i.affectedSkus, 0), "SKU") + " terdampak") : "…"}
                 hint={dq.data?.page.items[0]?.title}
               />
             </Panel>
@@ -233,8 +233,8 @@ export function CreateRunView() {
 
         {step === 2 && (
           <WizardPanel
-            title="Configure horizon"
-            description="How many days ahead to forecast. Longer horizons have wider prediction intervals."
+            title="Pilih Rentang Perkiraan"
+            description="Tentukan berapa lama ke depan yang ingin diperkirakan. Rentang lebih panjang memiliki rentang perkiraan yang lebih lebar."
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
@@ -247,20 +247,20 @@ export function CreateRunView() {
             }
           >
             <RadioCards
-              aria-label="Forecast horizon"
+              aria-label="Rentang perkiraan"
               columns={3}
               value={RUN_FORM_OPTIONS.horizons.includes(input.horizonDays) ? String(input.horizonDays) : "custom"}
               onValueChange={(v) => v !== "custom" && set("horizonDays", Number(v))}
               options={[
                 ...RUN_FORM_OPTIONS.horizons.map((h) => ({
                   value: String(h),
-                  label: `${h} days`,
-                  description: h <= 14 ? "Replenishment" : h <= 30 ? "Monthly planning" : "Seasonal build",
+                  label: `${h} hari`,
+                  description: h <= 14 ? "Pengisian ulang" : h <= 30 ? "Perencanaan bulanan" : "Persiapan musiman",
                 })),
-                { value: "custom", label: "Custom", description: "Enter a value below" },
+                { value: "custom", label: "Khusus", description: "Masukkan nilai di bawah" },
               ]}
             />
-            <Field className="mt-4 max-w-xs" label="Custom horizon (days)" htmlFor="h-custom" hint="1–180 days. Allowed values need confirmation (backlog §93 item 6).">
+            <Field className="mt-4 max-w-xs" label="Rentang khusus (hari)" htmlFor="h-custom" hint="1–180 hari. Nilai yang diizinkan masih perlu dikonfirmasi.">
               <Input id="h-custom" type="number" min={1} max={180} value={input.horizonDays} onChange={(e) => set("horizonDays", Math.max(1, Math.min(180, Number(e.target.value) || 1)))} />
             </Field>
           </WizardPanel>
@@ -268,8 +268,8 @@ export function CreateRunView() {
 
         {step === 3 && (
           <WizardPanel
-            title="Select model"
-            description="Compare models on historical performance, not a single score. Candidate models should be reviewed before publishing."
+            title="Pilih Model"
+            description="Bandingkan model berdasarkan performa historis, bukan satu angka saja. Model kandidat sebaiknya ditinjau sebelum diterbitkan."
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
@@ -284,7 +284,7 @@ export function CreateRunView() {
             {models.isPending ? (
               <p className="caption">Loading models…</p>
             ) : models.isError ? (
-              <ErrorState compact what="Models could not be loaded." error={models.error} onRetry={() => models.refetch()} />
+              <ErrorState compact what="Model tidak dapat dimuat." error={models.error} onRetry={() => models.refetch()} />
             ) : (
               <RadioCards
                 aria-label="Model"
@@ -319,8 +319,8 @@ export function CreateRunView() {
 
         {step === 4 && (
           <WizardPanel
-            title="Validate data"
-            description="Checks run against the selected scope, window and model. Blocking results must be resolved before running."
+            title="Periksa Data"
+            description="Pemeriksaan dijalankan pada cakupan, periode, dan model yang dipilih. Temuan yang menghambat harus diselesaikan sebelum dijalankan."
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
@@ -337,15 +337,15 @@ export function CreateRunView() {
                 <Loader2 className="size-4 animate-spin" aria-hidden /> Running validation checks…
               </p>
             ) : validation.isError ? (
-              <ErrorState compact what="Validation could not run." error={validation.error} onRetry={() => validation.refetch()} retryLabel="Retry validation" />
+              <ErrorState compact what="Pemeriksaan tidak dapat dijalankan." error={validation.error} onRetry={() => validation.refetch()} retryLabel="Coba periksa lagi" />
             ) : (
               <>
                 {blocking.length > 0 ? (
-                  <InlineAlert tone="critical" title={`${pluralize(blocking.length, "blocking issue")} must be resolved before running.`} className="mb-4">
-                    Change the scope, window, horizon or model, or resolve the data issue first.
+                  <InlineAlert tone="critical" title={`${pluralize(blocking.length, "temuan")} menghambat dan harus diselesaikan sebelum dijalankan.`} className="mb-4">
+                    Ubah cakupan, periode, rentang, atau model, atau selesaikan masalah datanya lebih dulu.
                   </InlineAlert>
                 ) : (
-                  <InlineAlert tone={warnings.length ? "warning" : "success"} title={warnings.length ? `Ready to run with ${pluralize(warnings.length, "warning")}.` : "All checks passed."} className="mb-4" />
+                  <InlineAlert tone={warnings.length ? "warning" : "success"} title={warnings.length ? `Siap dijalankan dengan ${pluralize(warnings.length, "peringatan")}.` : "Semua pemeriksaan lolos."} className="mb-4" />
                 )}
                 <ul className="divide-y divide-border-subtle rounded-lg border border-border">
                   {checks.map((c) => (
@@ -359,15 +359,15 @@ export function CreateRunView() {
 
         {step === 5 && (
           <WizardPanel
-            title="Review configuration"
-            description="Check the configuration before starting. The run can be cancelled while it is processing."
+            title="Tinjau Perkiraan"
+            description="Periksa pengaturan sebelum dijalankan. Proses dapat dibatalkan selama masih berjalan."
             footer={
               <>
                 <Button variant="ghost" onClick={goBack}>
                   {backLabel}
                 </Button>
-                <Button variant="primary" onClick={start} loading={create.isPending} loadingText="Starting forecast run" disabled={blocking.length > 0}>
-                  <Play aria-hidden /> Run forecast
+                <Button variant="primary" onClick={start} loading={create.isPending} loadingText="Menjalankan perkiraan" disabled={blocking.length > 0}>
+                  <Play aria-hidden /> Jalankan Perkiraan
                 </Button>
               </>
             }
@@ -379,27 +379,27 @@ export function CreateRunView() {
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent
-          title="Run this forecast?"
-          description={`This run will generate forecasts for ${pluralize(scope.data?.skuCount ?? 0, "SKU")}.`}
+          title="Jalankan perkiraan ini?"
+          description={`Proses ini akan membuat perkiraan untuk ${pluralize(scope.data?.skuCount ?? 0, "SKU")}.`}
           footer={
             <>
               <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
-                Back to configuration
+                Kembali ke pengaturan
               </Button>
-              <Button variant="primary" loading={create.isPending} loadingText="Starting forecast run" onClick={() => create.mutate(input)}>
-                <Play aria-hidden /> Run forecast
+              <Button variant="primary" loading={create.isPending} loadingText="Menjalankan perkiraan" onClick={() => create.mutate(input)}>
+                <Play aria-hidden /> Jalankan Perkiraan
               </Button>
             </>
           }
         >
           <ConsequenceSummary
             rows={[
-              { label: "SKUs", value: formatNumber(scope.data?.skuCount ?? 0), emphasis: true },
-              { label: "Historical window", value: formatDateRange(input.historicalStart, input.historicalEnd) },
-              { label: "Forecast horizon", value: `${input.horizonDays} days` },
+              { label: "SKU", value: formatNumber(scope.data?.skuCount ?? 0), emphasis: true },
+              { label: "Rentang historis", value: formatDateRange(input.historicalStart, input.historicalEnd) },
+              { label: "Rentang perkiraan", value: `${input.horizonDays} hari` },
               { label: "Model", value: selectedModel ? `${selectedModel.name} ${selectedModel.version}` : "—" },
-              { label: "Warnings", value: warnings.length ? warnings.map((w) => w.detail).join(" ") : "None" },
-              { label: "What happens next", value: "The run is queued, processed and saved as Completed. It does not replace the planning baseline until it is published." },
+              { label: "Peringatan", value: warnings.length ? warnings.map((w) => w.detail).join(" ") : "Tidak ada" },
+              { label: "Yang terjadi berikutnya", value: "Proses masuk antrean, diproses, lalu disimpan sebagai Selesai. Proses ini tidak menggantikan acuan perencanaan sampai diterbitkan." },
             ]}
           />
         </DialogContent>
@@ -421,7 +421,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 function CheckRow({ check }: { check: ValidationCheck }) {
   const icon =
     check.result === "pass" ? <CheckCircle2 className="size-4 text-success" aria-hidden /> : check.result === "warning" ? <AlertTriangle className="size-4 text-warning" aria-hidden /> : <AlertOctagon className="size-4 text-critical" aria-hidden />;
-  const label = check.result === "pass" ? "Pass" : check.result === "warning" ? "Warning" : "Blocking";
+  const label = check.result === "pass" ? "Lolos" : check.result === "warning" ? "Peringatan" : "Menghambat";
   return (
     <li className="grid grid-cols-[1.25rem_minmax(8rem,12rem)_1fr_auto] items-start gap-3 px-4 py-3">
       <span className="mt-0.5">{icon}</span>

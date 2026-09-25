@@ -22,10 +22,10 @@ export function WizardSteps({
   onSelect: (index: number) => void;
 }) {
   return (
-    <nav aria-label="Progress">
+    <nav aria-label="Progres">
       {/* Mobile: compact counter */}
       <p className="mb-2 caption lg:hidden" aria-live="polite">
-        Step {current + 1} of {steps.length}: <span className="font-semibold text-fg">{steps[current]?.label}</span>
+        Langkah {current + 1} dari {steps.length}: <span className="font-semibold text-fg">{steps[current]?.label}</span>
       </p>
       <div className="h-1 overflow-hidden rounded-full bg-muted lg:hidden" aria-hidden>
         <div className="h-full bg-primary transition-[width]" style={{ width: `${((current + 1) / steps.length) * 100}%` }} />

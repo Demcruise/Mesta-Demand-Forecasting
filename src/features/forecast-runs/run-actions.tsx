@@ -28,15 +28,15 @@ export function useRunActions(baselineId?: string | null) {
   const cancel = useApiMutation((ctx, v: { id: string; reason: string }) => cancelRun(ctx, v.id, v.reason), {
     invalidate: RUN_KEYS,
     success: (r) => `Cancelled ${r.id}`,
-    successDescription: "No results were written. You can retry the run later.",
-    failure: "The run was not cancelled.",
+    successDescription: "Tidak ada hasil yang disimpan. Anda dapat menjalankan ulang nanti.",
+    failure: "Proses tidak dapat dibatalkan.",
     onSuccess: () => setConfirm(null),
   });
   const retry = useApiMutation((ctx, id: string) => retryRun(ctx, id), {
     invalidate: RUN_KEYS,
     success: (r) => `Retrying ${r.id}`,
-    successDescription: "The run is queued and will start shortly.",
-    failure: "The run could not be retried.",
+    successDescription: "Proses masuk antrean dan akan segera dimulai.",
+    failure: "Proses tidak dapat dijalankan ulang.",
     onSuccess: (r) => {
       track("forecast_run_started", { retry: true });
       router.push(`/forecasting/runs/${r.id}`);
@@ -45,14 +45,14 @@ export function useRunActions(baselineId?: string | null) {
   const publish = useApiMutation((ctx, v: { id: string; reason: string }) => publishRun(ctx, v.id, v.reason), {
     invalidate: RUN_KEYS,
     success: (r) => `Published ${r.id}`,
-    successDescription: "It is now the planning baseline for this workspace.",
-    failure: "The run was not published.",
+    successDescription: "Proses ini kini menjadi acuan perencanaan ruang kerja.",
+    failure: "Proses tidak dapat diterbitkan.",
     onSuccess: () => setConfirm(null),
   });
   const archive = useApiMutation((ctx, id: string) => archiveRun(ctx, id), {
     invalidate: RUN_KEYS,
     success: (r) => `Archived ${r.id}`,
-    failure: "The run was not archived.",
+    failure: "Proses tidak dapat diarsipkan.",
     onSuccess: () => setConfirm(null),
   });
 
@@ -66,18 +66,18 @@ export function useRunActions(baselineId?: string | null) {
       {confirm && (
         <DialogContent
           size="md"
-          title={confirm.kind === "cancel" ? `Cancel ${confirm.run.id}?` : confirm.kind === "publish" ? `Publish ${confirm.run.id} as the planning baseline?` : `Archive ${confirm.run.id}?`}
+          title={confirm.kind === "cancel" ? `Batalkan ${confirm.run.id}?` : confirm.kind === "publish" ? `Terbitkan ${confirm.run.id} sebagai acuan perencanaan?` : `Arsipkan ${confirm.run.id}?`}
           description={
             confirm.kind === "publish"
-              ? "Publishing replaces the current baseline used by the overview, explorer, exceptions and plans."
+              ? "Menerbitkan akan menggantikan acuan yang dipakai Ringkasan, Perkiraan Permintaan, Perlu Ditinjau, dan rencana."
               : confirm.kind === "cancel"
-                ? "Processing stops and no results are written."
-                : "Archived runs stay available for reference but cannot be published."
+                ? "Pemrosesan berhenti dan tidak ada hasil yang disimpan."
+                : "Proses yang diarsipkan tetap dapat dilihat untuk referensi, tetapi tidak dapat diterbitkan."
           }
           footer={
             <>
               <Button variant="ghost" onClick={() => setConfirm(null)}>
-                {confirm.kind === "cancel" ? "Keep running" : "Back"}
+                {confirm.kind === "cancel" ? "Tetap jalankan" : "Kembali"}
               </Button>
               {confirm.kind === "cancel" && (
                 <Button variant="danger" loading={cancel.isPending} onClick={() => cancel.mutate({ id: confirm.run.id, reason })}>
@@ -99,30 +99,30 @@ export function useRunActions(baselineId?: string | null) {
         >
           <ConsequenceSummary
             rows={[
-              { label: "Run", value: `${confirm.run.name} (${confirm.run.id})` },
-              { label: "Scope", value: `${scopeLabel(confirm.run)} · ${formatNumber(confirm.run.scope.skuCount)} SKUs` },
-              { label: "Horizon", value: `${confirm.run.horizonDays} days · model ${confirm.run.modelVersion}` },
+              { label: "Proses", value: `${confirm.run.name} (${confirm.run.id})` },
+              { label: "Cakupan", value: `${scopeLabel(confirm.run)} · ${formatNumber(confirm.run.scope.skuCount)} SKU` },
+              { label: "Rentang", value: `${confirm.run.horizonDays} hari · model ${confirm.run.modelVersion}` },
               ...(confirm.kind === "publish"
                 ? [
-                    { label: "Replaces", value: baselineId && baselineId !== confirm.run.id ? baselineId : "No current baseline" },
-                    { label: "Consequence", value: "Exceptions are re-evaluated against this run. Open plans keep their current baseline until rebuilt.", emphasis: true },
-                    { label: "Permission", value: "Publish forecast runs (Manager or Administrator)" },
+                    { label: "Menggantikan", value: baselineId && baselineId !== confirm.run.id ? baselineId : "Belum ada acuan" },
+                    { label: "Dampak", value: "Item yang perlu ditinjau dievaluasi ulang terhadap proses ini. Rencana yang terbuka tetap memakai acuannya sampai dibangun ulang.", emphasis: true },
+                    { label: "Izin", value: "Menerbitkan proses perkiraan (Manajer atau Administrator)" },
                   ]
                 : confirm.kind === "cancel"
-                  ? [{ label: "Started", value: formatDateTime(confirm.run.startedAt) }, { label: "Consequence", value: "Work done so far is discarded.", emphasis: true }]
-                  : [{ label: "Consequence", value: "The run is hidden from default lists and cannot become a baseline.", emphasis: true }]),
+                  ? [{ label: "Dimulai", value: formatDateTime(confirm.run.startedAt) }, { label: "Dampak", value: "Pekerjaan yang sudah berjalan akan dibuang.", emphasis: true }]
+                  : [{ label: "Dampak", value: "Proses disembunyikan dari daftar bawaan dan tidak dapat menjadi acuan.", emphasis: true }]),
             ]}
           />
           {(confirm.kind === "publish" || confirm.kind === "cancel") && (
             <Field
               className="mt-4"
-              label={confirm.kind === "publish" ? "Reason for publishing" : "Reason for cancelling"}
+              label={confirm.kind === "publish" ? "Alasan menerbitkan" : "Alasan membatalkan"}
               htmlFor="run-reason"
               optional={confirm.kind === "cancel"}
               required={confirm.kind === "publish"}
-              hint={confirm.kind === "publish" ? "Recorded in the audit log. At least 5 characters." : "Recorded in the audit log."}
+              hint={confirm.kind === "publish" ? "Tercatat di riwayat aktivitas. Minimal 5 karakter." : "Tercatat di riwayat aktivitas."}
             >
-              <Textarea id="run-reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={confirm.kind === "publish" ? "e.g. Validated against yesterday's actuals" : "e.g. Wrong region selected"} />
+              <Textarea id="run-reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={confirm.kind === "publish" ? "mis. Sudah divalidasi dengan aktual kemarin" : "mis. Wilayah yang dipilih salah"} />
             </Field>
           )}
         </DialogContent>
@@ -142,43 +142,43 @@ export function RunActionMenu({ run, actions, baselineId }: { run: ForecastRun; 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="icon-sm" variant="ghost" aria-label={`Actions for ${run.id}`} onClick={(e) => e.stopPropagation()}>
+        <Button size="icon-sm" variant="ghost" aria-label={`Aksi untuk ${run.id}`} onClick={(e) => e.stopPropagation()}>
           <MoreHorizontal aria-hidden />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
         <DropdownMenuItem icon={<Eye />} onSelect={() => router.push(`/forecasting/runs/${run.id}`)}>
-          {active ? "View progress" : "Open run"}
+          {active ? "Lihat progres" : "Buka proses"}
         </DropdownMenuItem>
         {hasResults && (
           <DropdownMenuItem icon={<Eye />} onSelect={() => router.push(`/forecasting/explorer?run=${run.id}`)}>
-            View results
+            Lihat hasil
           </DropdownMenuItem>
         )}
         {can("forecast.run.create") && (
           <DropdownMenuItem icon={<Copy />} onSelect={() => router.push(`/forecasting/runs/new?from=${run.id}`)}>
-            Duplicate configuration
+            Duplikat pengaturan
           </DropdownMenuItem>
         )}
         {(run.status === "failed" || run.status === "cancelled") && can("forecast.run.create") && (
           <DropdownMenuItem icon={<RotateCcw />} onSelect={() => actions.retry.mutate(run.id)}>
-            Retry run
+            Jalankan ulang
           </DropdownMenuItem>
         )}
         {run.status === "completed" && can("forecast.run.publish") && (
           <DropdownMenuItem icon={<Send />} onSelect={() => actions.open("publish", run)}>
-            Publish as baseline
+            Terbitkan sebagai acuan
           </DropdownMenuItem>
         )}
         {(active || (can("forecast.run.archive") && run.status !== "archived" && run.id !== baselineId)) && <DropdownMenuSeparator />}
         {active && can("forecast.run.cancel") && (
           <DropdownMenuItem icon={<Ban />} destructive onSelect={() => actions.open("cancel", run)}>
-            Cancel run
+            Batalkan proses
           </DropdownMenuItem>
         )}
         {!active && run.status !== "archived" && run.id !== baselineId && can("forecast.run.archive") && (
           <DropdownMenuItem icon={<Archive />} onSelect={() => actions.open("archive", run)}>
-            Archive
+            Arsipkan
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
