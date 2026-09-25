@@ -27,7 +27,7 @@ import { UserIdentity } from "@/components/entities/identity";
 import { TypedConfirmDialog } from "@/components/governance/typed-confirm";
 
 export function cadenceLabel(s: Pick<ForecastSchedule, "cadence" | "time">) {
-  return s.cadence.type === "daily" ? `Every day at ${s.time}` : `Every ${WEEKDAYS[s.cadence.weekday]} at ${s.time}`;
+  return s.cadence.type === "daily" ? `Setiap hari pukul ${s.time}` : `Setiap ${WEEKDAYS[s.cadence.weekday]} pukul ${s.time}`;
 }
 
 const EMPTY: ScheduleInput = { name: "", cadence: { type: "daily" }, time: "05:30", categories: [], regions: [], horizonDays: 28, modelId: null, autoPublish: false, enabled: true };
@@ -47,15 +47,15 @@ export function SchedulesView() {
     invalidate: inv,
     success: (s) => `Schedule “${s.name}” saved`,
     successDescription: (s) => `Next run ${s.enabled ? "as scheduled" : "paused"}.`,
-    failure: "The schedule was not saved.",
+    failure: "Jadwal tidak dapat disimpan.",
     onSuccess: () => setEditing(null),
   });
-  const toggle = useApiMutation((c, v: { id: string; enabled: boolean }) => setScheduleEnabled(c, v.id, v.enabled), { invalidate: inv, success: (s) => `${s.name} ${s.enabled ? "resumed" : "paused"}`, failure: "The schedule was not changed." });
-  const remove = useApiMutation((c, id: string) => deleteSchedule(c, id), { invalidate: inv, success: "Schedule deleted", failure: "The schedule was not deleted.", onSuccess: () => setDeleting(null) });
+  const toggle = useApiMutation((c, v: { id: string; enabled: boolean }) => setScheduleEnabled(c, v.id, v.enabled), { invalidate: inv, success: (s) => `${s.name} ${s.enabled ? "dilanjutkan" : "dijeda"}`, failure: "Jadwal tidak dapat diubah." });
+  const remove = useApiMutation((c, id: string) => deleteSchedule(c, id), { invalidate: inv, success: "Jadwal dihapus", failure: "Jadwal tidak dapat dihapus.", onSuccess: () => setDeleting(null) });
   const runNow = useApiMutation((c, id: string) => runScheduleNow(c, id), {
     invalidate: inv,
     success: (r) => `Started ${r.id}`,
-    failure: "The run did not start.",
+    failure: "Proses tidak dimulai.",
     onSuccess: (r) => {
       track("forecast_run_started", { source: "schedule" });
       router.push(`/forecasting/runs/${r.id}`);
@@ -66,27 +66,27 @@ export function SchedulesView() {
     () => [
       {
         id: "name",
-        header: "Schedule",
-        meta: { width: "minmax(240px, 2fr)", pinned: true, label: "Schedule" } satisfies ColumnMeta,
+        header: "Jadwal",
+        meta: { width: "minmax(240px, 2fr)", pinned: true, label: "Jadwal" } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-[0.8125rem] font-semibold">{row.original.name}</span>
             <span className="truncate text-xs text-fg-tertiary">
-              {row.original.categories.length ? row.original.categories.join(", ") : "All categories"} · {row.original.regions.length ? row.original.regions.join(", ") : "All regions"} · {row.original.horizonDays} d
+              {row.original.categories.length ? row.original.categories.join(", ") : "Semua kategori"} · {row.original.regions.length ? row.original.regions.join(", ") : "Semua wilayah"} · {row.original.horizonDays} h
             </span>
           </span>
         ),
       },
-      { id: "cadence", header: "Cadence", meta: { width: "minmax(170px, 1fr)" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{cadenceLabel(row.original)}</span> },
+      { id: "cadence", header: "Irama", meta: { width: "minmax(170px, 1fr)" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{cadenceLabel(row.original)}</span> },
       {
         id: "next",
-        header: "Next run",
+        header: "Proses berikutnya",
         meta: { width: "170px" } satisfies ColumnMeta,
-        cell: ({ row }) => (row.original.nextRunAt ? <span className="tabular" title={formatDateTime(row.original.nextRunAt)}>{formatRelative(row.original.nextRunAt)}</span> : <span className="text-fg-tertiary">Paused</span>),
+        cell: ({ row }) => (row.original.nextRunAt ? <span className="tabular" title={formatDateTime(row.original.nextRunAt)}>{formatRelative(row.original.nextRunAt)}</span> : <span className="text-fg-tertiary">Dijeda</span>),
       },
       {
         id: "last",
-        header: "Last run",
+        header: "Proses terakhir",
         meta: { width: "190px", hideBelow: "lg" } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.lastRunId && row.original.lastRunStatus ? (
@@ -102,11 +102,11 @@ export function SchedulesView() {
       },
       {
         id: "publish",
-        header: "Publication",
-        meta: { width: "140px", hideBelow: "md", description: "Automatic publication replaces the planning baseline without review." } satisfies ColumnMeta,
-        cell: ({ row }) => (row.original.autoPublish ? <Tag tone="warning">Automatic</Tag> : <Tag>Manual review</Tag>),
+        header: "Penerbitan",
+        meta: { width: "140px", hideBelow: "md", description: "Penerbitan otomatis menggantikan acuan perencanaan tanpa ditinjau." } satisfies ColumnMeta,
+        cell: ({ row }) => (row.original.autoPublish ? <Tag tone="warning">Otomatis</Tag> : <Tag>Tinjau manual</Tag>),
       },
-      { id: "owner", header: "Owner", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
+      { id: "owner", header: "Penanggung jawab", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
       {
         id: "status",
         header: "Status",
@@ -115,8 +115,8 @@ export function SchedulesView() {
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
-        meta: { width: "52px", pinned: true, label: "Actions" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">Aksi</span>,
+        meta: { width: "52px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
         cell: ({ row }) => {
           const s = row.original;
           if (!manage) return null;
@@ -157,8 +157,8 @@ export function SchedulesView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Forecast schedules"
-        description="Runs that start automatically. Scheduled runs are validated like manual runs and wait for review unless automatic publication is on."
+        title="Jadwal Perkiraan"
+        description="Proses yang berjalan otomatis. Proses terjadwal diperiksa seperti proses manual dan menunggu tinjauan kecuali penerbitan otomatis aktif."
         actions={
           manage ? (
             <Button variant="primary" onClick={() => setEditing({ id: null, input: { ...EMPTY } })}>
@@ -167,23 +167,23 @@ export function SchedulesView() {
           ) : undefined
         }
       />
-      {!manage && <PermissionNotice permission="forecast.run.create" compact message="You can see schedules but not change them." />}
+      {!manage && <PermissionNotice permission="forecast.run.create" compact message="Anda dapat melihat jadwal, tetapi tidak mengubahnya." />}
       <DataTable
-        label="Forecast schedules"
+        label="Jadwal perkiraan"
         columns={columns}
         data={q.data}
         getRowId={(s) => s.id}
         isLoading={q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Schedules could not be loaded."
+        errorWhat="Jadwal tidak dapat dimuat."
         hideDensityToggle
         empty={
           <EmptyState
             icon={CalendarClock}
-            title="No forecast schedules in this workspace."
-            description="Schedule a daily refresh so the planning baseline stays current without manual runs."
-            action={manage ? <Button variant="primary" onClick={() => setEditing({ id: null, input: { ...EMPTY } })}>Create schedule</Button> : undefined}
+            title="Belum ada jadwal perkiraan di ruang kerja ini."
+            description="Jadwalkan penyegaran harian agar acuan perencanaan tetap terbaru tanpa proses manual."
+            action={manage ? <Button variant="primary" onClick={() => setEditing({ id: null, input: { ...EMPTY } })}>Buat jadwal</Button> : undefined}
           />
         }
       />
@@ -192,15 +192,15 @@ export function SchedulesView() {
         {editing && e && (
           <DialogContent
             size="lg"
-            title={editing.id ? `Edit schedule · ${e.name}` : "Create schedule"}
-            description="Times use the workspace time zone. Scheduled runs use the workspace history window."
+            title={editing.id ? `Ubah jadwal · ${e.name}` : "Buat jadwal"}
+            description="Waktu memakai zona waktu ruang kerja. Proses terjadwal memakai rentang historis ruang kerja."
             footer={
               <>
                 <Button variant="ghost" onClick={() => setEditing(null)}>
                   Cancel
                 </Button>
                 <Button variant="primary" loading={save.isPending} onClick={() => save.mutate(editing)}>
-                  {editing.id ? "Save schedule" : "Create schedule"}
+                  {editing.id ? "Simpan jadwal" : "Buat jadwal"}
                 </Button>
               </>
             }
@@ -209,22 +209,22 @@ export function SchedulesView() {
               <Field className="sm:col-span-2" label="Name" htmlFor="sch-name" required>
                 <Input id="sch-name" value={e.name} onChange={(x) => set({ name: x.target.value })} placeholder="e.g. Daily refresh · All categories" autoFocus />
               </Field>
-              <Field label="Frequency" htmlFor="sch-freq">
+              <Field label="Frekuensi" htmlFor="sch-freq">
                 <Select
                   id="sch-freq"
                   value={e.cadence.type === "daily" ? "daily" : String(e.cadence.weekday)}
                   onValueChange={(v) => set({ cadence: v === "daily" ? { type: "daily" } : { type: "weekly", weekday: Number(v) } })}
-                  options={[{ value: "daily", label: "Every day" }, ...WEEKDAYS.map((d, i) => ({ value: String(i), label: `Every ${d}` }))]}
+                  options={[{ value: "daily", label: "Setiap hari" }, ...WEEKDAYS.map((d, i) => ({ value: String(i), label: `Setiap ${d}` }))]}
                 />
               </Field>
-              <Field label="Time" htmlFor="sch-time" hint="24-hour, HH:MM. Data sources finish loading by 05:00.">
+              <Field label="Waktu" htmlFor="sch-time" hint="Format 24 jam, HH:MM. Sumber data selesai dimuat paling lambat pukul 05:00.">
                 <Input id="sch-time" type="time" value={e.time} onChange={(x) => set({ time: x.target.value })} />
               </Field>
-              <Field label="Categories" htmlFor="sch-cats" hint="Empty means all.">
-                <MultiSelect id="sch-cats" value={e.categories} onChange={(v) => set({ categories: v })} allLabel="All categories" options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
+              <Field label="Kategori" htmlFor="sch-cats" hint="Kosong berarti semua.">
+                <MultiSelect id="sch-cats" value={e.categories} onChange={(v) => set({ categories: v })} allLabel="Semua kategori" options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
               </Field>
-              <Field label="Regions" htmlFor="sch-regions" hint="Empty means all.">
-                <MultiSelect id="sch-regions" value={e.regions} onChange={(v) => set({ regions: v })} allLabel="All regions" options={REGIONS.map((c) => ({ value: c, label: c }))} />
+              <Field label="Wilayah" htmlFor="sch-regions" hint="Kosong berarti semua.">
+                <MultiSelect id="sch-regions" value={e.regions} onChange={(v) => set({ regions: v })} allLabel="Semua wilayah" options={REGIONS.map((c) => ({ value: c, label: c }))} />
               </Field>
               <Field label="Horizon" htmlFor="sch-h">
                 <Select id="sch-h" value={String(e.horizonDays)} onValueChange={(v) => set({ horizonDays: Number(v) })} options={[7, 14, 28, 30, 60, 90].map((d) => ({ value: String(d), label: `${d} days` }))} />
@@ -234,23 +234,23 @@ export function SchedulesView() {
                   id="sch-model"
                   value={e.modelId ?? "default"}
                   onValueChange={(v) => set({ modelId: v === "default" ? null : v })}
-                  options={[{ value: "default", label: "Workspace default" }, ...(models.data ?? []).filter((m) => m.status !== "archived").map((m) => ({ value: m.id, label: `${m.name} ${m.version}`, description: m.status }))]}
+                  options={[{ value: "default", label: "Bawaan ruang kerja" }, ...(models.data ?? []).filter((m) => m.status !== "archived").map((m) => ({ value: m.id, label: `${m.name} ${m.version}`, description: m.status }))]}
                 />
               </Field>
             </div>
             <div className="mt-4 divide-y divide-border-subtle border-t border-border-subtle">
-              <SwitchField id="sch-enabled" label="Enabled" description="Paused schedules keep their configuration but do not start runs." checked={e.enabled} onCheckedChange={(v) => set({ enabled: v })} />
+              <SwitchField id="sch-enabled" label="Aktif" description="Jadwal yang dijeda menyimpan pengaturannya, tetapi tidak menjalankan proses." checked={e.enabled} onCheckedChange={(v) => set({ enabled: v })} />
               <SwitchField
                 id="sch-auto"
-                label="Publish automatically"
-                description={can("forecast.run.publish") ? "Only when validation has no warnings and no critical exceptions are raised. Otherwise the run waits for review." : "Needs publish rights (Manager or Administrator)."}
+                label="Terbitkan otomatis"
+                description={can("forecast.run.publish") ? "Hanya bila pemeriksaan tidak menemukan peringatan dan tidak ada item kritis. Jika tidak, proses menunggu tinjauan." : "Memerlukan hak menerbitkan (Manajer atau Administrator)."}
                 checked={e.autoPublish}
                 disabled={!can("forecast.run.publish")}
                 onCheckedChange={(v) => set({ autoPublish: v })}
               />
             </div>
             {e.autoPublish && (
-              <InlineAlert tone="warning" title="Automatic publication replaces the planning baseline without a person reviewing it." className="mt-3">
+              <InlineAlert tone="warning" title="Penerbitan otomatis menggantikan acuan perencanaan tanpa ditinjau orang." className="mt-3">
                 Overview, exceptions and new plans switch to the new run as soon as it completes. Every automatic publication is still recorded in the audit log.
               </InlineAlert>
             )}
@@ -263,12 +263,12 @@ export function SchedulesView() {
         onOpenChange={(o) => !o && setDeleting(null)}
         title={`Delete schedule “${deleting?.name ?? ""}”?`}
         resourceName={deleting?.name ?? ""}
-        confirmLabel="Delete schedule"
+        confirmLabel="Hapus jadwal"
         loading={remove.isPending}
         onConfirm={() => deleting && remove.mutate(deleting.id)}
         consequences={[
-          { label: "Consequence", value: "No further runs start from this schedule. Past runs are kept.", emphasis: true },
-          { label: "Alternative", value: "Pause the schedule to keep its configuration." },
+          { label: "Dampak", value: "Tidak ada proses lagi yang dijalankan dari jadwal ini. Proses sebelumnya tetap disimpan.", emphasis: true },
+          { label: "Alternatif", value: "Jeda jadwalnya untuk menyimpan pengaturannya." },
         ]}
       />
     </PageContainer>

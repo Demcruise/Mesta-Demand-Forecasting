@@ -26,10 +26,10 @@ import { Select } from "@/components/ui/select";
 import { METRIC_DEFINITIONS } from "@/features/models/metric-definitions";
 
 const LIFECYCLE_LABELS: Record<Product["lifecycle"], string> = {
-  new: "New listings",
-  core: "Core range",
-  seasonal: "Seasonal",
-  "end-of-life": "End of life",
+  new: "Produk baru",
+  core: "Rangkaian inti",
+  seasonal: "Musiman",
+  "end-of-life": "Akhir masa",
 };
 
 const chartTooltip = { background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: 6, fontSize: 12 } as const;
@@ -52,38 +52,38 @@ export function ForecastInsightsView() {
     () => [
       {
         id: "product",
-        header: "Product",
-        meta: { width: "minmax(240px, 2.2fr)", pinned: true, label: "Product" } satisfies ColumnMeta,
+        header: "Produk",
+        meta: { width: "minmax(240px, 2.2fr)", pinned: true, label: "Produk" } satisfies ColumnMeta,
         cell: ({ row }) => {
           const m = row.original;
           return <ProductIdentity product={{ id: m.productId, name: m.name, sku: m.sku, category: m.category }} />;
         },
       },
-      { id: "category", header: "Category", meta: { width: "140px", hideBelow: "lg", label: "Category" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.category}</span> },
-      { id: "lifecycle", header: "Lifecycle", meta: { width: "130px", hideBelow: "xl", label: "Lifecycle" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{LIFECYCLE_LABELS[row.original.lifecycle]}</span> },
+      { id: "category", header: "Kategori", meta: { width: "140px", hideBelow: "lg", label: "Kategori" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.category}</span> },
+      { id: "lifecycle", header: "Siklus produk", meta: { width: "130px", hideBelow: "xl", label: "Siklus produk" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{LIFECYCLE_LABELS[row.original.lifecycle]}</span> },
       {
         id: "forecast",
-        header: "Forecast",
-        meta: { width: "110px", numeric: true, description: "Total forecast over the run horizon." } satisfies ColumnMeta,
+        header: "Perkiraan",
+        meta: { width: "110px", numeric: true, description: "Total perkiraan selama periode perkiraan." } satisfies ColumnMeta,
         cell: ({ row }) => <span className="font-semibold">{formatNumber(row.original.forecast)}</span>,
       },
-      { id: "previous", header: "Previous", meta: { width: "110px", numeric: true, hideBelow: "md", description: "Forecast from the previous published run." } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{formatNumber(row.original.previousForecast)}</span> },
+      { id: "previous", header: "Sebelumnya", meta: { width: "110px", numeric: true, hideBelow: "md", description: "Perkiraan dari proses terbit sebelumnya." } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{formatNumber(row.original.previousForecast)}</span> },
       {
         id: "change",
-        header: "Change",
-        meta: { width: "100px", numeric: true, description: "Change versus the previous run. Highlighted above the 15% review threshold." } satisfies ColumnMeta,
+        header: "Perubahan",
+        meta: { width: "100px", numeric: true, description: "Perubahan dibanding proses sebelumnya. Ditandai bila melewati batas tinjauan 15%." } satisfies ColumnMeta,
         cell: ({ row }) => <ForecastDelta percent={row.original.deltaPercent} size="sm" />,
       },
       {
         id: "interval",
-        header: "Interval",
-        meta: { width: "110px", numeric: true, description: "Width of the 80% prediction interval as a share of the forecast. Larger means less certain." } satisfies ColumnMeta,
+        header: "Rentang",
+        meta: { width: "110px", numeric: true, description: "Lebar rentang perkiraan 80% sebagai bagian dari perkiraan. Semakin lebar semakin tidak pasti." } satisfies ColumnMeta,
         cell: ({ row }) => <span className="tabular text-fg-secondary">{formatPercent(row.original.intervalPercent)}</span>,
       },
       {
         id: "exceptions",
-        header: "Exceptions",
-        meta: { width: "110px", label: "Open exceptions", description: "Open forecast exceptions for this product in this run." } satisfies ColumnMeta,
+        header: "Perlu Ditinjau",
+        meta: { width: "110px", label: "Perlu ditinjau", description: "Item terbuka untuk produk ini pada proses ini." } satisfies ColumnMeta,
         cell: ({ row }) => (row.original.exceptions > 0 ? <Tag tone="warning">{row.original.exceptions} open</Tag> : <span className="text-xs text-fg-tertiary">None</span>),
       },
     ],
@@ -94,9 +94,9 @@ export function ForecastInsightsView() {
   if (q.isError) {
     return (
       <PageContainer>
-        <PageHeader title="Forecast insights" />
+        <PageHeader title="Wawasan Perkiraan" />
         <Panel>
-          <ErrorState what="Forecast insights could not be loaded." error={q.error} onRetry={() => q.refetch()} />
+          <ErrorState what="Wawasan perkiraan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />
         </Panel>
       </PageContainer>
     );
@@ -108,33 +108,33 @@ export function ForecastInsightsView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Forecast insights"
-        description="Why the outlook moved, where it is least certain and where the model is weakest — for one forecast run."
+        title="Wawasan Perkiraan"
+        description="Mengapa perkiraan berubah, di mana paling tidak pasti, dan di mana model paling lemah — untuk satu proses perkiraan."
         meta={
           <>
             <StatusBadge status={run.status} size="sm" />
             <span className="text-xs font-medium text-fg-secondary">
               {scopeLabel(run)} · {run.horizonDays}-day horizon from {formatDate(summary.periodStart)}
             </span>
-            <FreshnessIndicator timestamp={run.completedAt} label="Generated" />
+            <FreshnessIndicator timestamp={run.completedAt} label="Dibuat" />
           </>
         }
         actions={
           <Select
             className="w-[min(26rem,90vw)]"
-            aria-label="Forecast run"
+            aria-label="Proses perkiraan"
             prefix="Run:"
             value={run.id}
             onValueChange={(v) => state.setParams({ run: v })}
-            placeholder="Latest published run"
-            options={(runs.data?.items ?? []).map((r) => ({ value: r.id, label: `${r.id} · ${r.name}`, description: `${r.status === "published" ? "Published" : "Completed, not published"} · ${formatDateTime(r.completedAt)}` }))}
+            placeholder="Perkiraan terbit terakhir"
+            options={(runs.data?.items ?? []).map((r) => ({ value: r.id, label: `${r.id} · ${r.name}`, description: `${r.status === "published" ? "Diterbitkan" : "Selesai, belum diterbitkan"} · ${formatDateTime(r.completedAt)}` }))}
           />
         }
       />
 
       <MetricStrip>
         <MetricCard
-          label="Forecast · horizon total"
+          label="Perkiraan · total periode"
           value={formatNumber(summary.forecast)}
           unit="units"
           context={`${formatDate(summary.periodStart)} – ${formatDate(summary.periodEnd)}`}
@@ -142,41 +142,41 @@ export function ForecastInsightsView() {
           footnote={`${formatNumber(summary.skuCount)} SKUs in scope`}
         />
         <MetricCard
-          label="Change vs previous run"
+          label="Perubahan vs proses sebelumnya"
           value={formatDeltaNumber(summary.delta)}
           unit="units"
           context={<span>{formatDeltaPercent(summary.deltaPercent)} versus the previous published run</span>}
-          footnote="Review threshold 15%"
+          footnote="Batas tinjauan 15%"
         />
         <MetricCard
           label="80% prediction interval"
           value={`${formatNumber(summary.lower)} – ${formatNumber(summary.upper)}`}
           context={`${formatPercent(summary.intervalPercent)} of the forecast`}
-          footnote="Widens with lead time and cross-SKU correlation"
+          footnote="Melebar seiring horizon dan korelasi antar-SKU"
         />
         <MetricCard
-          label="Change concentration"
+          label="Konsentrasi perubahan"
           value={formatPercent(concentration.top10Share)}
           context="of total movement comes from the 10 largest SKUs"
           footnote={`50 largest: ${formatPercent(concentration.top50Share)}`}
           href={`/forecasting/explorer?sort=deltaPercent&dir=desc&run=${run.id}`}
-          hrefLabel="Open in explorer"
+          hrefLabel="Buka di Perkiraan Permintaan"
         />
       </MetricStrip>
 
-      <PageSection title="Why the outlook moved" description="Change versus the previous published run, split by category and by product lifecycle.">
+      <PageSection title="Mengapa perkiraan berubah" description="Perubahan dibanding proses terbit sebelumnya, dipecah per kategori dan siklus produk.">
         <div className="grid gap-4 xl:grid-cols-2">
           <ChartFrame
-            title="Change by category"
-            question="Which categories account for the movement in the outlook?"
+            title="Perubahan per kategori"
+            question="Kategori mana yang menyebabkan pergerakan perkiraan?"
             unit="units (change vs previous run)"
             timeframe={`${formatDate(summary.periodStart)} – ${formatDate(summary.periodEnd)}`}
             source={`Run ${run.id}`}
             asOf={run.completedAt}
             legend={
               <>
-                <LegendItem color="var(--chart-series-1)" label="Increase" variant="bar" />
-                <LegendItem color="var(--chart-series-5)" label="Decrease" variant="bar" />
+                <LegendItem color="var(--chart-series-1)" label="Naik" variant="bar" />
+                <LegendItem color="var(--chart-series-5)" label="Turun" variant="bar" />
               </>
             }
             summary={`Total change ${formatDeltaNumber(summary.delta)} units (${formatDeltaPercent(summary.deltaPercent)}). ${changeByCategory[0] ? `${changeByCategory[0].label} moves the most at ${formatDeltaNumber(changeByCategory[0].delta)} units.` : ""}`}
@@ -199,13 +199,13 @@ export function ForecastInsightsView() {
             }
             table={
               <ChartDataTable
-                caption="Forecast change by category"
-                columns={[{ key: "c", label: "Category" }, { key: "f", label: "Forecast", numeric: true }, { key: "p", label: "Previous", numeric: true }, { key: "d", label: "Change", numeric: true }, { key: "dp", label: "Change %", numeric: true }]}
+                caption="Perubahan perkiraan per kategori"
+                columns={[{ key: "c", label: "Kategori" }, { key: "f", label: "Perkiraan", numeric: true }, { key: "p", label: "Sebelumnya", numeric: true }, { key: "d", label: "Perubahan", numeric: true }, { key: "dp", label: "Perubahan %", numeric: true }]}
                 rows={changeByCategory.map((c) => ({ c: c.label, f: formatNumber(c.forecast), p: formatNumber(c.previous), d: formatDeltaNumber(c.delta), dp: formatDeltaPercent(c.deltaPercent) }))}
               />
             }
           />
-          <Panel title="Change by lifecycle" description="New listings and end-of-life range carry different risk from the core range." flush>
+          <Panel title="Perubahan per siklus produk" description="Produk baru dan produk akhir masa memiliki risiko berbeda dari rangkaian inti." flush>
             <ul>
               {changeByLifecycle.map((s) => (
                 <li key={s.key} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-border-subtle px-4 py-3 last:border-b-0">
@@ -222,12 +222,12 @@ export function ForecastInsightsView() {
         </div>
       </PageSection>
 
-      <PageSection title="Where to focus review" description="Categories whose 80% interval is widest relative to their forecast. Review these before the plan is published.">
+      <PageSection title="Fokus tinjauan" description="Kategori dengan rentang 80% paling lebar dibanding perkiraannya. Tinjau ini sebelum rencana diterbitkan.">
         <Panel
           flush
           actions={
             <Link href={`/forecasting/explorer?sort=width&dir=desc&run=${run.id}`} className="text-xs font-semibold text-primary hover:underline">
-              Explore by interval width
+              Telusuri menurut lebar rentang
             </Link>
           }
         >
@@ -241,7 +241,7 @@ export function ForecastInsightsView() {
                 <span className="h-2 rounded-full bg-muted" aria-hidden>
                   <span className="block h-2 rounded-full" style={{ width: `${Math.max(4, (s.intervalPercent / maxInterval) * 100)}%`, background: "var(--chart-series-1)" }} />
                 </span>
-                <span className="w-16 text-right tabular body-sm text-fg-secondary" title="Interval width as a share of the forecast">
+                <span className="w-16 text-right tabular body-sm text-fg-secondary" title="Lebar rentang sebagai bagian dari perkiraan">
                   {formatPercent(s.intervalPercent)}
                 </span>
               </li>
@@ -250,9 +250,9 @@ export function ForecastInsightsView() {
         </Panel>
       </PageSection>
 
-      <PageSection title="Largest movers" description="Products with the biggest change versus the previous run. Open a product to investigate the driver.">
+      <PageSection title="Perubahan terbesar" description="Produk dengan perubahan terbesar dibanding proses sebelumnya. Buka produk untuk menelusuri penyebabnya.">
         <DataTable
-          label="Largest forecast movers"
+          label="Perubahan perkiraan terbesar"
           columns={moverColumns}
           data={movers}
           getRowId={(m) => m.productId}
@@ -265,19 +265,19 @@ export function ForecastInsightsView() {
           empty={
             <EmptyState
               icon={ChartSpline}
-              title="No movers to show for this run."
-              description="The run has no products in scope, or every product is within ±0.1% of the previous run."
+              title="Tidak ada perubahan untuk ditampilkan pada proses ini."
+              description="Proses ini tidak mencakup produk, atau semua produk berada dalam ±0,1% dari proses sebelumnya."
             />
           }
         />
       </PageSection>
 
-      <PageSection title="Where the model is weakest" description="Latest backtest for the model that produced this run, by segment.">
+      <PageSection title="Titik terlemah model" description="Uji model terakhir untuk model yang menghasilkan proses ini, per segmen.">
         <Panel
           flush
           actions={
             <Link href="/models/backtesting" className="text-xs font-semibold text-primary hover:underline">
-              Open backtesting
+              Buka Uji Model
             </Link>
           }
         >
@@ -285,11 +285,11 @@ export function ForecastInsightsView() {
             <div className="p-4">
               <EmptyState
                 icon={ChartSpline}
-                title="No completed backtest is available for this model."
-                description="Run a backtest to see where the model performs worst before trusting segment-level forecasts."
+                title="Belum ada uji model yang selesai untuk model ini."
+                description="Jalankan uji model untuk melihat di mana performanya paling lemah sebelum memercayai perkiraan per segmen."
                 action={
                   <Link href="/models/backtesting" className="text-xs font-semibold text-primary hover:underline">
-                    Run a backtest
+                    Jalankan uji model
                   </Link>
                 }
               />
@@ -301,10 +301,10 @@ export function ForecastInsightsView() {
                   <caption className="sr-only">Backtest accuracy by segment{accuracyWindow ? `, window ${formatDate(accuracyWindow.start)} to ${formatDate(accuracyWindow.end)}` : ""}</caption>
                   <thead>
                     <tr className="border-b border-border bg-subtle text-xs text-fg-secondary">
-                      <th scope="col" className="px-4 py-2 text-left font-semibold">Segment</th>
+                      <th scope="col" className="px-4 py-2 text-left font-semibold">Segmen</th>
                       <th scope="col" className="px-4 py-2 text-right font-semibold">WAPE</th>
                       <th scope="col" className="px-4 py-2 text-right font-semibold">Bias</th>
-                      <th scope="col" className="px-4 py-2 text-right font-semibold">Volume share</th>
+                      <th scope="col" className="px-4 py-2 text-right font-semibold">Bagian volume</th>
                     </tr>
                   </thead>
                   <tbody>

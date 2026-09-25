@@ -58,8 +58,8 @@ test.describe("key workflows", () => {
 
   test("forecast insights virtualises the movers table", async ({ page }) => {
     await page.goto("/forecasting/insights");
-    await expect(page.getByRole("heading", { name: "Forecast insights" })).toBeVisible();
-    const table = page.getByRole("table", { name: "Largest forecast movers" });
+    await expect(page.getByRole("heading", { name: "Wawasan Perkiraan" })).toBeVisible();
+    const table = page.getByRole("table", { name: "Perubahan perkiraan terbesar" });
     await expect(table).toBeVisible();
     const rowCount = Number(await table.getAttribute("aria-rowcount"));
     expect(rowCount).toBeGreaterThan(60);

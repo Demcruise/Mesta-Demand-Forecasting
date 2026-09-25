@@ -124,7 +124,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
   };
 }
 
-export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+export const WEEKDAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
 /** Next execution time for a schedule, in local time. */
 export function nextRunAt(s: Pick<ForecastSchedule, "cadence" | "time" | "enabled">, now = Date.now()): string | null {
