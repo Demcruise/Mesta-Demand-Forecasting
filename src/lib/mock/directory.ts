@@ -69,21 +69,21 @@ export const WORKSPACE_PROFILE: Record<string, { products: number; locations: nu
 const ALL = WORKSPACES.map((w) => w.id);
 
 export const USERS: User[] = [
-  { id: "u_rina", name: "Rina Wijaya", email: "rina.wijaya@mesta.click", title: "Demand Planner", role: "planner", workspaceIds: ALL, status: "active", lastActiveAt: null },
-  { id: "u_dimas", name: "Dimas Santoso", email: "dimas.santoso@mesta.click", title: "Category Manager, Beverages", role: "manager", workspaceIds: ["ws_retail_prod", "ws_retail_stg", "ws_new_market"], status: "active", lastActiveAt: null },
-  { id: "u_sari", name: "Sari Halim", email: "sari.halim@mesta.click", title: "Forecast Analyst", role: "analyst", workspaceIds: ALL, status: "active", lastActiveAt: null },
-  { id: "u_budi", name: "Budi Hartono", email: "budi.hartono@mesta.click", title: "Platform Administrator", role: "admin", workspaceIds: ALL, status: "active", lastActiveAt: null },
-  { id: "u_maya", name: "Maya Lestari", email: "maya.lestari@mesta.click", title: "VP Supply Chain", role: "viewer", workspaceIds: ["ws_retail_prod"], status: "active", lastActiveAt: null },
-  { id: "u_arif", name: "Arif Nugroho", email: "arif.nugroho@mesta.click", title: "Supply Planner", role: "planner", workspaceIds: ["ws_retail_prod"], status: "active", lastActiveAt: null },
+  { id: "u_rina", name: "Rina Wijaya", email: "rina.wijaya@mesta.click", title: "Perencana Permintaan", role: "planner", workspaceIds: ALL, status: "active", lastActiveAt: null },
+  { id: "u_dimas", name: "Dimas Santoso", email: "dimas.santoso@mesta.click", title: "Manajer Kategori, Minuman", role: "manager", workspaceIds: ["ws_retail_prod", "ws_retail_stg", "ws_new_market"], status: "active", lastActiveAt: null },
+  { id: "u_sari", name: "Sari Halim", email: "sari.halim@mesta.click", title: "Analis Perkiraan", role: "analyst", workspaceIds: ALL, status: "active", lastActiveAt: null },
+  { id: "u_budi", name: "Budi Hartono", email: "budi.hartono@mesta.click", title: "Administrator Platform", role: "admin", workspaceIds: ALL, status: "active", lastActiveAt: null },
+  { id: "u_maya", name: "Maya Lestari", email: "maya.lestari@mesta.click", title: "VP Rantai Pasok", role: "viewer", workspaceIds: ["ws_retail_prod"], status: "active", lastActiveAt: null },
+  { id: "u_arif", name: "Arif Nugroho", email: "arif.nugroho@mesta.click", title: "Perencana Pasokan", role: "planner", workspaceIds: ["ws_retail_prod"], status: "active", lastActiveAt: null },
   { id: "u_lina", name: "Lina Kusuma", email: "lina.kusuma@mesta.click", title: "Data Engineer", role: "analyst", workspaceIds: ["ws_retail_prod", "ws_retail_stg"], status: "active", lastActiveAt: null },
-  { id: "u_yoga", name: "Yoga Pratama", email: "yoga.pratama@mesta.click", title: "Category Manager, Staples", role: "manager", workspaceIds: ["ws_retail_prod"], status: "active", lastActiveAt: null },
-  { id: "u_dewi", name: "Dewi Anggraini", email: "dewi.anggraini@mesta.click", title: "Demand Planner", role: "planner", workspaceIds: ["ws_retail_prod", "ws_conv_pilot"], status: "active", lastActiveAt: null },
-  { id: "u_hendra", name: "Hendra Gunawan", email: "hendra.gunawan@mesta.click", title: "Operations Planner", role: "planner", workspaceIds: ["ws_conv_pilot"], status: "active", lastActiveAt: null },
-  { id: "u_putri", name: "Putri Ramadhani", email: "putri.ramadhani@mesta.click", title: "Commercial Analyst", role: "viewer", workspaceIds: ["ws_retail_prod"], status: "invited", lastActiveAt: null },
-  { id: "u_eko", name: "Eko Saputra", email: "eko.saputra@mesta.click", title: "Demand Planner (former)", role: "planner", workspaceIds: ["ws_retail_prod"], status: "suspended", lastActiveAt: null },
+  { id: "u_yoga", name: "Yoga Pratama", email: "yoga.pratama@mesta.click", title: "Manajer Kategori, Sembako", role: "manager", workspaceIds: ["ws_retail_prod"], status: "active", lastActiveAt: null },
+  { id: "u_dewi", name: "Dewi Anggraini", email: "dewi.anggraini@mesta.click", title: "Perencana Permintaan", role: "planner", workspaceIds: ["ws_retail_prod", "ws_conv_pilot"], status: "active", lastActiveAt: null },
+  { id: "u_hendra", name: "Hendra Gunawan", email: "hendra.gunawan@mesta.click", title: "Perencana Operasional", role: "planner", workspaceIds: ["ws_conv_pilot"], status: "active", lastActiveAt: null },
+  { id: "u_putri", name: "Putri Ramadhani", email: "putri.ramadhani@mesta.click", title: "Analis Komersial", role: "viewer", workspaceIds: ["ws_retail_prod"], status: "invited", lastActiveAt: null },
+  { id: "u_eko", name: "Eko Saputra", email: "eko.saputra@mesta.click", title: "Perencana Permintaan (mantan)", role: "planner", workspaceIds: ["ws_retail_prod"], status: "suspended", lastActiveAt: null },
 ];
 
-export const SYSTEM_ACTOR = { id: "system", name: "Mesta scheduler", title: "Automated job" };
+export const SYSTEM_ACTOR = { id: "system", name: "Penjadwal Mesta", title: "Proses otomatis" };
 
 /** Identities offered by the demo IdP. One per role, plus a disabled account. */
 export const DEMO_IDENTITIES = ["u_rina", "u_dimas", "u_sari", "u_budi", "u_maya", "u_eko"];

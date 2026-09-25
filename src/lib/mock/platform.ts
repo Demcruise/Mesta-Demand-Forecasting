@@ -57,7 +57,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
     schedules: [
       {
         id: "sch_daily",
-        name: "Daily refresh · All categories",
+        name: "Penyegaran harian · Semua kategori",
         cadence: { type: "daily" },
         time: "05:30",
         categories: [],
@@ -73,7 +73,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
       },
       {
         id: "sch_weekly_90",
-        name: "Weekly 90-day outlook",
+        name: "Perkiraan mingguan 90 hari",
         cadence: { type: "weekly", weekday: 1 },
         time: "06:00",
         categories: [],
@@ -89,15 +89,15 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
       },
     ],
     apiKeys: [
-      { id: "key_1", name: "Replenishment system (read forecasts)", prefix: "mdf_live_7Kq2", scopes: ["forecasts:read", "plans:read"], createdBy: "u_budi", createdAt: iso(now - 90 * DAY_MS), expiresAt: iso(now + 275 * DAY_MS), lastUsedAt: iso(now - 12 * MINUTE_MS), status: "active" },
-      { id: "key_2", name: "Data warehouse loader", prefix: "mdf_live_P9xa", scopes: ["demand:write"], createdBy: "u_lina", createdAt: iso(now - 200 * DAY_MS), expiresAt: iso(now + 20 * DAY_MS), lastUsedAt: iso(now - 9 * HOUR_MS), status: "active" },
-      { id: "key_3", name: "Old BI export", prefix: "mdf_live_m1Tz", scopes: ["forecasts:read", "audit:read"], createdBy: "u_budi", createdAt: iso(now - 400 * DAY_MS), expiresAt: iso(now - 35 * DAY_MS), lastUsedAt: iso(now - 40 * DAY_MS), status: "expired" },
+      { id: "key_1", name: "Sistem pengisian ulang (baca perkiraan)", prefix: "mdf_live_7Kq2", scopes: ["forecasts:read", "plans:read"], createdBy: "u_budi", createdAt: iso(now - 90 * DAY_MS), expiresAt: iso(now + 275 * DAY_MS), lastUsedAt: iso(now - 12 * MINUTE_MS), status: "active" },
+      { id: "key_2", name: "Pemuatan gudang data", prefix: "mdf_live_P9xa", scopes: ["demand:write"], createdBy: "u_lina", createdAt: iso(now - 200 * DAY_MS), expiresAt: iso(now + 20 * DAY_MS), lastUsedAt: iso(now - 9 * HOUR_MS), status: "active" },
+      { id: "key_3", name: "Ekspor BI lama", prefix: "mdf_live_m1Tz", scopes: ["forecasts:read", "audit:read"], createdBy: "u_budi", createdAt: iso(now - 400 * DAY_MS), expiresAt: iso(now - 35 * DAY_MS), lastUsedAt: iso(now - 40 * DAY_MS), status: "expired" },
     ],
     webhooks: [
       {
         id: "whk_1",
         url: "https://replenishment.mestaretail.example/hooks/forecast",
-        description: "Notify replenishment when a baseline is published",
+        description: "Beri tahu pengisian ulang saat acuan diterbitkan",
         events: ["forecast_run.published", "plan.published"],
         enabled: true,
         createdBy: "u_budi",
@@ -107,7 +107,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
       {
         id: "whk_2",
         url: "https://alerts.mestaretail.example/mesta",
-        description: "Operations alerting",
+        description: "Peringatan operasional",
         events: ["forecast_run.failed", "data_quality.blocking"],
         enabled: true,
         createdBy: "u_lina",
@@ -116,9 +116,9 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
       },
     ],
     savedViews: [
-      { id: "view_1", name: "Beverages needing review", surface: "explorer", query: "category=Beverages&status=needs_review", ownerId: "u_rina", shared: true, createdAt: iso(now - 10 * DAY_MS) },
-      { id: "view_2", name: "Biggest decreases", surface: "explorer", query: "sort=deltaPercent&dir=asc&delta=decrease", ownerId: "u_dimas", shared: true, createdAt: iso(now - 4 * DAY_MS) },
-      { id: "view_3", name: "My open critical exceptions", surface: "exceptions", query: "severity=critical&status=open,investigating", ownerId: "u_rina", shared: false, createdAt: iso(now - 2 * DAY_MS) },
+      { id: "view_1", name: "Minuman perlu ditinjau", surface: "explorer", query: "category=Beverages&status=needs_review", ownerId: "u_rina", shared: true, createdAt: iso(now - 10 * DAY_MS) },
+      { id: "view_2", name: "Penurunan terbesar", surface: "explorer", query: "sort=deltaPercent&dir=asc&delta=decrease", ownerId: "u_dimas", shared: true, createdAt: iso(now - 4 * DAY_MS) },
+      { id: "view_3", name: "Item kritis saya yang terbuka", surface: "exceptions", query: "severity=critical&status=open,investigating", ownerId: "u_rina", shared: false, createdAt: iso(now - 2 * DAY_MS) },
     ],
     notificationRules: {},
   };
