@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { THEME_BOOTSTRAP } from "@/lib/preferences";
+import { THEME_BOOTSTRAP } from "@/lib/preferences-core";
 import "./globals.css";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
