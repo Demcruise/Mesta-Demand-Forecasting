@@ -5,7 +5,7 @@ import { Archive, Copy, Eye, GitCompareArrows, MoreHorizontal, Plus, SlidersHori
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import type { Scenario } from "@/types/domain";
+import type { Scenario, StatusKey } from "@/types/domain";
 import { archiveScenario, duplicateScenario, listScenarios } from "@/lib/api/planning";
 import { useApiMutation, useApiQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { PageContainer, PageHeader } from "@/components/page/page";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
 import { FilterBar } from "@/components/tables/filter-bar";
-import { StatusBadge } from "@/components/feedback/status";
+import { StatusBadge, STATUS } from "@/components/feedback/status";
 import { EmptyState } from "@/components/feedback/states";
 import { DateCell, ScenarioIdentity, UserIdentity } from "@/components/entities/identity";
 import { ForecastDelta } from "@/components/forecasting/metrics";
@@ -33,23 +33,23 @@ export function ScenariosView() {
   const duplicate = useApiMutation((c, id: string) => duplicateScenario(c, id), {
     invalidate: [["scenarios"]],
     success: (s) => `Created “${s.name}”`,
-    failure: "The scenario was not duplicated.",
+    failure: "Skenario tidak dapat diduplikat.",
     onSuccess: (s) => router.push(`/scenarios/${s.id}?edit=1`),
   });
-  const archive = useApiMutation((c, id: string) => archiveScenario(c, id), { invalidate: [["scenarios"]], success: (s) => `Archived “${s.name}”`, failure: "The scenario was not archived." });
+  const archive = useApiMutation((c, id: string) => archiveScenario(c, id), { invalidate: [["scenarios"]], success: (s) => `Mengarsipkan “${s.name}”`, failure: "Skenario tidak dapat diarsipkan." });
 
   const columns = React.useMemo<ColumnDef<Scenario, unknown>[]>(
     () => [
-      { id: "scenario", header: "Scenario", meta: { width: "minmax(260px, 2.5fr)", sortKey: "name", pinned: true, label: "Scenario" } satisfies ColumnMeta, cell: ({ row }) => <ScenarioIdentity scenario={row.original} /> },
-      { id: "baseline", header: "Baseline", meta: { width: "160px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="mono-id text-fg-secondary">{row.original.baselineRunId}</span> },
-      { id: "assumptions", header: "Assumptions", meta: { width: "120px", numeric: true, hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => row.original.assumptions.length },
-      { id: "owner", header: "Owner", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
+      { id: "scenario", header: "Skenario", meta: { width: "minmax(260px, 2.5fr)", sortKey: "name", pinned: true, label: "Skenario" } satisfies ColumnMeta, cell: ({ row }) => <ScenarioIdentity scenario={row.original} /> },
+      { id: "baseline", header: "Acuan", meta: { width: "160px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="mono-id text-fg-secondary">{row.original.baselineRunId}</span> },
+      { id: "assumptions", header: "Asumsi", meta: { width: "120px", numeric: true, hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => row.original.assumptions.length },
+      { id: "owner", header: "Penanggung jawab", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
       { id: "status", header: "Status", meta: { width: "130px", sortKey: "status" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
-      { id: "modified", header: "Modified", meta: { width: "120px", sortKey: "modifiedAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.modifiedAt} relative /> },
+      { id: "modified", header: "Diubah", meta: { width: "120px", sortKey: "modifiedAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.modifiedAt} relative /> },
       {
         id: "impact",
-        header: "Impact",
-        meta: { width: "150px", numeric: true, sortKey: "impact", description: "Change in total demand versus the baseline over the horizon." } satisfies ColumnMeta,
+        header: "Dampak",
+        meta: { width: "150px", numeric: true, sortKey: "impact", description: "Perubahan total permintaan dibanding acuan selama periode perkiraan." } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.result ? (
             <span className="flex flex-col items-end">
@@ -57,13 +57,13 @@ export function ScenariosView() {
               <span className="text-[0.6875rem] tabular text-fg-tertiary">{formatDeltaNumber(row.original.result.deltaUnits)} units</span>
             </span>
           ) : (
-            <span className="text-xs text-fg-tertiary">Not simulated</span>
+            <span className="text-xs text-fg-tertiary">Belum disimulasikan</span>
           ),
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
-        meta: { width: "52px", pinned: true, label: "Actions" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">Aksi</span>,
+        meta: { width: "52px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
         cell: ({ row }) => {
           const s = row.original;
           return (
@@ -107,23 +107,23 @@ export function ScenariosView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Scenarios"
-        description="Alternate assumptions applied to a published baseline, simulated and compared before they are adopted into a plan."
+        title="Skenario"
+        description="Buat dan bandingkan beberapa kemungkinan permintaan berdasarkan acuan yang sudah diterbitkan."
         actions={
           <>
             <Link href="/scenarios/compare" className={buttonVariants({ variant: "secondary" })}>
-              <GitCompareArrows aria-hidden /> Compare scenarios
+              <GitCompareArrows aria-hidden /> Bandingkan Skenario
             </Link>
             {can("scenario.create") && (
               <Link href="/scenarios/new" className={buttonVariants({ variant: "primary" })}>
-                <Plus aria-hidden /> Create scenario
+                <Plus aria-hidden /> Buat Skenario
               </Link>
             )}
           </>
         }
       />
       <DataTable
-        label="Scenarios"
+        label="Skenario"
         columns={columns}
         data={q.data?.items}
         getRowId={(s) => s.id}
@@ -131,18 +131,18 @@ export function ScenariosView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="Scenarios could not be loaded."
+        errorWhat="Skenario tidak dapat dimuat."
         onRowClick={(s) => router.push(`/scenarios/${s.id}`)}
         selection={{ selected: selection, onChange: setSelection, isSelectable: (s) => !!s.result }}
         bulkBar={
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="body-sm font-semibold">{selectedIds.length} selected</span>
+            <span className="body-sm font-semibold">{selectedIds.length} dipilih</span>
             <div className="flex gap-2">
               <Link href={`/scenarios/compare?ids=${selectedIds.join(",")}`} className={buttonVariants({ size: "sm", variant: "primary" })}>
-                <GitCompareArrows aria-hidden /> Compare selected
+                <GitCompareArrows aria-hidden /> Bandingkan yang dipilih
               </Link>
               <Button size="sm" variant="ghost" onClick={() => setSelection({})}>
-                Clear selection
+                Hapus pilihan
               </Button>
             </div>
           </div>
@@ -153,16 +153,16 @@ export function ScenariosView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Search scenarios"
-            facets={[{ key: "status", label: "Status", primary: true, options: ["draft", "simulated", "in_review", "approved", "rejected", "archived"].map((s) => ({ value: s, label: s.replace("_", " ").replace(/^./, (c) => c.toUpperCase()) })) }]}
+            searchPlaceholder="Cari skenario"
+            facets={[{ key: "status", label: "Status", primary: true, options: (["draft", "simulated", "in_review", "approved", "rejected", "archived"] as StatusKey[]).map((s) => ({ value: s, label: STATUS[s].label })) }]}
           />
         }
         empty={
           <EmptyState
             icon={SlidersHorizontal}
-            title={state.activeFilterCount ? "No scenarios match the current filters." : "No scenarios have been created in this workspace."}
-            description="A scenario applies assumptions such as a price change or promotion to a published forecast and shows the impact."
-            action={can("scenario.create") ? <Link href="/scenarios/new" className={buttonVariants({ variant: "primary" })}>Create scenario</Link> : undefined}
+            title={state.activeFilterCount ? "Tidak ada skenario yang cocok dengan filter." : "Belum ada skenario di ruang kerja ini."}
+            description="Skenario menerapkan asumsi seperti perubahan harga atau promosi pada perkiraan terbit, lalu menunjukkan dampaknya."
+            action={can("scenario.create") ? <Link href="/scenarios/new" className={buttonVariants({ variant: "primary" })}>Buat Skenario</Link> : undefined}
           />
         }
       />

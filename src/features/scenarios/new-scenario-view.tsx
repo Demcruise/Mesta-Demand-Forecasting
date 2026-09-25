@@ -5,10 +5,10 @@ import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
 import { ScenarioBuilder } from "./scenario-builder";
 
 export function NewScenarioView() {
-  useBreadcrumbLeaf("New scenario");
+  useBreadcrumbLeaf("Skenario Baru");
   return (
     <PageContainer>
-      <PageHeader title="Create scenario" description="Apply assumptions to a published forecast, simulate the impact, then save. Nothing changes in plans until the scenario is approved and adopted." />
+      <PageHeader title="Buat Skenario" description="Terapkan asumsi pada perkiraan terbit, simulasikan dampaknya, lalu simpan. Tidak ada perubahan pada rencana sampai skenario disetujui dan dipakai." />
       <ScenarioBuilder initial={null} />
     </PageContainer>
   );

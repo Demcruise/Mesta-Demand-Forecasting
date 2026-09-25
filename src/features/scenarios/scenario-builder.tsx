@@ -54,11 +54,11 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
   const stale = preview && preview.signature !== signature;
 
   const errors = {
-    name: name.trim().length < 3 ? "Give the scenario a name of at least 3 characters." : null,
-    assumptions: assumptions.length === 0 ? "Add at least one assumption." : null,
+    name: name.trim().length < 3 ? "Beri nama skenario minimal 3 karakter." : null,
+    assumptions: assumptions.length === 0 ? "Tambahkan minimal satu asumsi." : null,
     rows: assumptions.map((a) => ({
-      value: a.value === a.baselineValue ? "Change the value, or remove this assumption." : null,
-      rationale: a.rationale.trim().length === 0 ? "Add the source or rationale." : null,
+      value: a.value === a.baselineValue ? "Ubah nilainya, atau hapus asumsi ini." : null,
+      rationale: a.rationale.trim().length === 0 ? "Tambahkan sumber atau alasannya." : null,
     })),
   };
   const invalid = !!errors.name || !!errors.assumptions || errors.rows.some((r) => r.value || r.rationale);
@@ -96,12 +96,12 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
     }
   };
 
-  const simulate = useApiMutation((c, id: string) => simulateSavedScenario(c, id), { invalidate: [["scenarios"], ["scenario"]], failure: "The scenario was saved but the simulation did not run." });
+  const simulate = useApiMutation((c, id: string) => simulateSavedScenario(c, id), { invalidate: [["scenarios"], ["scenario"]], failure: "Skenario tersimpan, tetapi simulasi tidak berjalan." });
   const save = useApiMutation((c, _v: void) => saveScenario(c, initial?.id ?? null, { name, description, baselineRunId, assumptions }), {
     invalidate: [["scenarios"], ["scenario"]],
     success: (s) => `Saved “${s.name}”`,
-    successDescription: () => (preview && !stale ? "Simulation results were saved with the scenario." : "Run the simulation from the scenario page to see its impact."),
-    failure: "The scenario was not saved.",
+    successDescription: () => (preview && !stale ? "Hasil simulasi tersimpan bersama skenario." : "Jalankan simulasi dari halaman skenario untuk melihat dampaknya."),
+    failure: "Skenario tidak dapat disimpan.",
     onSuccess: async (s) => {
       if (!initial) track("scenario_created", {});
       if (preview && !stale) await simulate.mutateAsync(s.id).catch(() => undefined);
@@ -114,23 +114,23 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(22rem,2fr)]">
       <div className="flex min-w-0 flex-col gap-6">
-        <PageSection title="1. Baseline and name" description="Scenarios apply assumptions on top of a published forecast run.">
+        <PageSection title="1. Acuan dan nama" description="Skenario menerapkan asumsi di atas proses perkiraan yang sudah diterbitkan.">
           <Panel>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Baseline forecast run" htmlFor="scn-base" required hint="Only published runs can be a baseline.">
+              <Field label="Proses perkiraan acuan" htmlFor="scn-base" required hint="Hanya proses yang sudah diterbitkan yang dapat menjadi acuan.">
                 <Select
                   id="scn-base"
                   value={baselineRunId || undefined}
                   onValueChange={setBaselineRunId}
-                  placeholder={baselines.isPending ? "Loading runs…" : "Select a run"}
+                  placeholder={baselines.isPending ? "Memuat proses…" : "Pilih proses"}
                   options={(baselines.data ?? []).map((r, i) => ({ value: r.id, label: `${r.id}${i === 0 ? " · current baseline" : ""}`, description: `${r.name} · ${formatDateTime(r.publishedAt)}` }))}
                 />
               </Field>
-              <Field label="Scenario name" htmlFor="scn-name" required error={showErrors ? errors.name : null}>
+              <Field label="Nama skenario" htmlFor="scn-name" required error={showErrors ? errors.name : null}>
                 <Input id="scn-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Year-end holiday uplift" maxLength={80} aria-invalid={showErrors && !!errors.name} />
               </Field>
-              <Field className="sm:col-span-2" label="Description" htmlFor="scn-desc" optional>
-                <Textarea id="scn-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="What question does this scenario answer?" />
+              <Field className="sm:col-span-2" label="Deskripsi" htmlFor="scn-desc" optional>
+                <Textarea id="scn-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Pertanyaan apa yang ingin dijawab skenario ini?" />
               </Field>
             </div>
           </Panel>
@@ -138,7 +138,7 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
 
         <PageSection
           title="2. Assumptions"
-          description="Each assumption changes one driver for one scope. Drivers and their effects are placeholders until confirmed with the domain team."
+          description="Setiap asumsi mengubah satu pendorong untuk satu cakupan. Pendorong dan efeknya masih placeholder sampai dikonfirmasi dengan tim domain."
           actions={
             <Button size="sm" variant="secondary" onClick={() => setAssumptions((p) => [...p, newAssumption()])} disabled={assumptions.length >= 12}>
               <Plus aria-hidden /> Add assumption
@@ -154,14 +154,14 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
                 <li key={a.id} className="rounded-lg border border-border bg-surface p-4">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <span className="metadata">Assumption {i + 1}</span>
-                    <Tooltip content="Remove assumption">
+                    <Tooltip content="Hapus asumsi">
                       <Button size="icon-sm" variant="ghost" aria-label={`Remove assumption ${i + 1}`} onClick={() => setAssumptions((p) => p.filter((x) => x.id !== a.id))}>
                         <Trash2 aria-hidden />
                       </Button>
                     </Tooltip>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.4fr)_6rem_6rem_7rem]">
-                    <Field label="Driver" htmlFor={`${a.id}-driver`} hint={DRIVER_HELP[a.driver]}>
+                    <Field label="Pendorong" htmlFor={`${a.id}-driver`} hint={DRIVER_HELP[a.driver]}>
                       <Select id={`${a.id}-driver`} value={a.driver} onValueChange={(v) => update(a.id, { driver: v as ScenarioDriver })} options={DRIVERS.map((d) => ({ value: d, label: DRIVER_LABELS[d] }))} />
                     </Field>
                     <Field label="Scope" htmlFor={`${a.id}-scope`}>
@@ -172,19 +172,19 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
                         options={SCOPES.filter((s) => (a.driver === "regional" ? s.startsWith(REGION_SCOPE_PREFIX) : true)).map((s) => ({ value: s, label: s }))}
                       />
                     </Field>
-                    <Field label="Baseline" htmlFor={`${a.id}-base`}>
+                    <Field label="Acuan" htmlFor={`${a.id}-base`}>
                       <Input id={`${a.id}-base`} value={`${a.baselineValue}${a.unit === "pp" ? "%" : a.unit}`} readOnly disabled aria-readonly />
                     </Field>
                     <Field label={`New (${a.unit === "pp" ? "%" : a.unit})`} htmlFor={`${a.id}-val`}>
                       <Input id={`${a.id}-val`} type="number" step="0.5" value={a.value} onChange={(e) => update(a.id, { value: Number(e.target.value) })} aria-invalid={!!rowErr?.value} aria-describedby={rowErr?.value ? `${a.id}-val-error` : undefined} />
                     </Field>
                     <div className="flex flex-col gap-1.5">
-                      <span className="label">Demand effect</span>
+                      <span className="label">Efek permintaan</span>
                       <span className={cn("flex h-[var(--control-h-md)] items-center rounded-md border border-border bg-subtle px-3 text-sm font-semibold tabular", effect === 0 ? "text-fg-tertiary" : "text-fg")}>{formatDeltaPercent(effect)}</span>
                     </div>
                   </div>
                   {rowErr?.value && <p id={`${a.id}-val-error`} className="mt-1.5 text-xs font-medium text-critical-fg" role="alert">{rowErr.value}</p>}
-                  <Field className="mt-3" label="Source or rationale" htmlFor={`${a.id}-why`} required error={rowErr?.rationale}>
+                  <Field className="mt-3" label="Sumber atau alasan" htmlFor={`${a.id}-why`} required error={rowErr?.rationale}>
                     <Input id={`${a.id}-why`} value={a.rationale} onChange={(e) => update(a.id, { rationale: e.target.value })} placeholder="e.g. Supplier notice: +8% list price from next month" aria-invalid={!!rowErr?.rationale} />
                   </Field>
                   <p className="mt-2 caption">
@@ -202,18 +202,18 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
       <aside className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-[calc(var(--topbar-h)+1.5rem)] xl:self-start">
         <Panel
           title="3. Simulate and review impact"
-          description="Simulation applies the assumptions to the baseline. Run it again after changing assumptions."
+          description="Simulasi menerapkan asumsi pada acuan. Jalankan lagi setelah mengubah asumsi."
           footer={
             <>
               <span className="caption">{pluralize(assumptions.length, "assumption")}</span>
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={runPreview} loading={previewing} loadingText="Simulating">
+                <Button variant="secondary" onClick={runPreview} loading={previewing} loadingText="Menyimulasikan">
                   <Play aria-hidden /> Run simulation
                 </Button>
                 <Button
                   variant="primary"
                   loading={save.isPending || simulate.isPending}
-                  loadingText="Saving"
+                  loadingText="Menyimpan"
                   onClick={() => {
                     setShowErrors(true);
                     if (!invalid && baselineRunId) save.mutate();
@@ -225,8 +225,8 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
             </>
           }
         >
-          {previewError && <InlineAlert tone="critical" title="Simulation failed." className="mb-3">{previewError}</InlineAlert>}
-          {stale && <InlineAlert tone="warning" title="Assumptions changed since the last simulation." className="mb-3">Run the simulation again to update the impact.</InlineAlert>}
+          {previewError && <InlineAlert tone="critical" title="Simulasi gagal." className="mb-3">{previewError}</InlineAlert>}
+          {stale && <InlineAlert tone="warning" title="Asumsi berubah sejak simulasi terakhir." className="mb-3">Jalankan simulasi lagi untuk memperbarui dampaknya.</InlineAlert>}
           {preview ? (
             <ImpactPreview result={preview.result} compact />
           ) : (

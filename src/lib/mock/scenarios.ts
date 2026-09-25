@@ -12,25 +12,25 @@ export const REGION_SCOPE_PREFIX = "Region · ";
 export const PRICE_ELASTICITY = -1.2;
 
 export const DRIVER_LABELS: Record<ScenarioDriver, string> = {
-  demand_change: "Demand change",
-  price: "Price / commercial",
-  promotion: "Promotion uplift",
-  seasonality: "Seasonality",
-  external: "External factor",
-  availability: "Availability",
-  regional: "Regional adjustment",
-  lifecycle: "Product lifecycle",
+  demand_change: "Perubahan permintaan",
+  price: "Harga / komersial",
+  promotion: "Kenaikan promosi",
+  seasonality: "Musiman",
+  external: "Faktor eksternal",
+  availability: "Ketersediaan",
+  regional: "Penyesuaian wilayah",
+  lifecycle: "Siklus produk",
 };
 
 export const DRIVER_HELP: Record<ScenarioDriver, string> = {
-  demand_change: "Direct change to expected demand, in percent.",
-  price: `Change in shelf price, in percent. Converted to demand with an elasticity of ${PRICE_ELASTICITY}.`,
-  promotion: "Additional uplift from promotions not in the promotions calendar, in percent.",
-  seasonality: "Change to the seasonal peak, in percent.",
-  external: "Weather, events or macro effects, in percent.",
-  availability: "Change in on-shelf availability, in percentage points. Lower availability caps demand.",
-  regional: "Change to demand in a region, in percent. Scaled by the region's share of volume.",
-  lifecycle: "Ramp-up or phase-out effect, in percent.",
+  demand_change: "Perubahan langsung pada perkiraan permintaan, dalam persen.",
+  price: `Perubahan harga jual, dalam persen. Dikonversi ke permintaan dengan elastisitas ${PRICE_ELASTICITY}.`,
+  promotion: "Tambahan kenaikan dari promosi yang belum ada di kalender promosi, dalam persen.",
+  seasonality: "Perubahan pada puncak musiman, dalam persen.",
+  external: "Efek cuaca, acara, atau kondisi makro, dalam persen.",
+  availability: "Perubahan ketersediaan di rak, dalam poin persentase. Ketersediaan rendah membatasi permintaan.",
+  regional: "Perubahan permintaan di suatu wilayah, dalam persen. Diskalakan menurut porsi volume wilayah.",
+  lifecycle: "Efek kenaikan awal atau penghentian produk, dalam persen.",
 };
 
 export const DRIVER_UNITS: Record<ScenarioDriver, Assumption["unit"]> = {

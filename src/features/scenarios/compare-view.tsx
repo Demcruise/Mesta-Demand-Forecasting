@@ -36,16 +36,16 @@ export function CompareView() {
 
   const picker = (
     <div className="w-[min(28rem,90vw)]">
-      <MultiSelect value={ids} onChange={(v) => state.setParams({ ids: v.length ? v.slice(0, 4).join(",") : null })} allLabel="Choose up to 4 scenarios" options={options} placeholder="Search simulated scenarios" />
+      <MultiSelect value={ids} onChange={(v) => state.setParams({ ids: v.length ? v.slice(0, 4).join(",") : null })} allLabel="Pilih maksimal 4 skenario" options={options} placeholder="Cari skenario tersimulasi" />
     </div>
   );
 
   if (ids.length === 0) {
     return (
       <PageContainer>
-        <PageHeader title="Scenario comparison" description="Compare simulated scenarios against their shared baseline." actions={picker} />
+        <PageHeader title="Bandingkan Skenario" description="Bandingkan skenario tersimulasi terhadap acuan yang sama." actions={picker} />
         <Panel>
-          <EmptyState icon={GitCompareArrows} title="Choose scenarios to compare." description="Only simulated scenarios can be compared. Pick up to four with the selector above." action={<Link href="/scenarios" className={buttonVariants({ variant: "secondary" })}>Go to scenarios</Link>} />
+          <EmptyState icon={GitCompareArrows} title="Pilih skenario untuk dibandingkan." description="Hanya skenario yang sudah disimulasikan yang dapat dibandingkan. Pilih maksimal empat lewat pemilih di atas." action={<Link href="/scenarios" className={buttonVariants({ variant: "secondary" })}>Buka Skenario</Link>} />
         </Panel>
       </PageContainer>
     );
@@ -54,8 +54,8 @@ export function CompareView() {
   if (q.isError) {
     return (
       <PageContainer>
-        <PageHeader title="Scenario comparison" actions={picker} />
-        <Panel><ErrorState what="The comparison could not be loaded." error={q.error} onRetry={() => q.refetch()} /></Panel>
+        <PageHeader title="Bandingkan Skenario" actions={picker} />
+        <Panel><ErrorState what="Perbandingan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} /></Panel>
       </PageContainer>
     );
   }
@@ -64,8 +64,8 @@ export function CompareView() {
   if (!first || !base) {
     return (
       <PageContainer>
-        <PageHeader title="Scenario comparison" actions={picker} />
-        <Panel><EmptyState title="None of the selected scenarios have simulation results." description="Run the simulation on each scenario first." /></Panel>
+        <PageHeader title="Bandingkan Skenario" actions={picker} />
+        <Panel><EmptyState title="Tidak ada skenario terpilih yang punya hasil simulasi." description="Jalankan simulasi pada tiap skenario lebih dulu." /></Panel>
       </PageContainer>
     );
   }
@@ -76,7 +76,7 @@ export function CompareView() {
     ...Object.fromEntries(scenarios.map((s) => [s.id, s.result?.points[i]?.scenario ?? 0])),
   }));
   const metricRows: { metric: string; baseline: number; values: number[] }[] = [
-    { metric: "Total demand", baseline: base.baselineUnits, values: scenarios.map((s) => s.result?.scenarioUnits ?? 0) },
+    { metric: "Total permintaan", baseline: base.baselineUnits, values: scenarios.map((s) => s.result?.scenarioUnits ?? 0) },
     ...base.byCategory.map((c) => ({ metric: c.category, baseline: c.baseline, values: scenarios.map((s) => s.result?.byCategory.find((x) => x.category === c.category)?.scenario ?? 0) })),
   ];
 
@@ -85,39 +85,39 @@ export function CompareView() {
     downloadExport(
       format,
       `scenario-comparison-${formatDate(new Date()).replace(/ /g, "-")}`,
-      ["Metric", "Baseline", ...scenarios.flatMap((s) => [s.name, `${s.name} delta`, `${s.name} delta %`])],
+      ["Ukuran", "Acuan", ...scenarios.flatMap((s) => [s.name, `${s.name} selisih`, `${s.name} selisih %`])],
       metricRows.map((r) => [r.metric, r.baseline, ...r.values.flatMap((v) => [v, v - r.baseline, r.baseline ? Number((((v - r.baseline) / r.baseline) * 100).toFixed(1)) : null])]),
-      "Scenario comparison",
+      "Bandingkan Skenario",
     );
   };
 
   return (
     <PageContainer>
       <PageHeader
-        title="Scenario comparison"
+        title="Bandingkan Skenario"
         description={`Baseline ${q.data.baseline?.id ?? first.baselineRunId} · ${q.data.baseline ? `${q.data.baseline.horizonDays}-day horizon from ${formatDate(base.points[0]?.date)}` : ""} · all categories, all regions`}
         actions={
           <>
             {picker}
-            {can("export") && <ExportMenu label="Export comparison" note="Totals by category for the selected scenarios." onExport={exportFile} />}
+            {can("export") && <ExportMenu label="Ekspor perbandingan" note="Total per kategori untuk skenario terpilih." onExport={exportFile} />}
           </>
         }
       />
       {!q.data.sameBaseline && (
-        <InlineAlert tone="warning" title="These scenarios use different baselines.">
+        <InlineAlert tone="warning" title="Skenario ini memakai acuan yang berbeda.">
           Deltas are shown against each scenario's own baseline. For a like-for-like comparison, rebuild them on the same published run.
         </InlineAlert>
       )}
       <ChartFrame
-        title="Daily demand: baseline vs scenarios"
-        question="How does each scenario change demand across the horizon?"
+        title="Permintaan harian: acuan vs skenario"
+        question="Bagaimana tiap skenario mengubah permintaan selama periode perkiraan?"
         unit="units per day"
         timeframe={`${formatDate(base.points[0]?.date)} – ${formatDate(base.points[base.points.length - 1]?.date)}`}
         source={`Baseline ${first.baselineRunId}`}
         asOf={base.simulatedAt}
         legend={
           <>
-            <LegendItem color="var(--chart-forecast)" label="Baseline" />
+            <LegendItem color="var(--chart-forecast)" label="Acuan" />
             {scenarios.map((s, i) => (
               <LegendItem key={s.id} color={SCENARIO_COLORS[i % SCENARIO_COLORS.length] as string} label={s.name} variant={i === 0 ? "line" : "dashed"} />
             ))}
@@ -126,25 +126,25 @@ export function CompareView() {
         chart={<ScenarioChart rows={chartRows} scenarios={scenarios.map((s) => ({ key: s.id, label: s.name }))} />}
         table={
           <ChartDataTable
-            caption="Daily demand by scenario"
-            columns={[{ key: "date", label: "Date" }, { key: "baseline", label: "Baseline", numeric: true }, ...scenarios.map((s) => ({ key: s.id, label: s.name, numeric: true }))]}
+            caption="Permintaan harian per skenario"
+            columns={[{ key: "date", label: "Tanggal" }, { key: "baseline", label: "Acuan", numeric: true }, ...scenarios.map((s) => ({ key: s.id, label: s.name, numeric: true }))]}
             rows={chartRows.map((r) => ({ ...Object.fromEntries(Object.entries(r).map(([k, v]) => [k, typeof v === "number" ? formatNumber(v) : v])), date: formatDate(r.date) }))}
           />
         }
       />
-      <PageSection title="Comparison" description="Totals over the horizon. Delta is versus the baseline.">
+      <PageSection title="Perbandingan" description="Total selama periode perkiraan. Selisih dihitung terhadap acuan.">
         <Panel flush>
           <div className="p-4">
             <ChartDataTable
-              caption="Scenario comparison"
+              caption="Perbandingan skenario"
               maxHeight="none"
               columns={[
-                { key: "metric", label: "Metric" },
-                { key: "baseline", label: "Baseline", numeric: true },
+                { key: "metric", label: "Ukuran" },
+                { key: "baseline", label: "Acuan", numeric: true },
                 ...scenarios.flatMap((s) => [
                   { key: `${s.id}:v`, label: s.name, numeric: true },
-                  { key: `${s.id}:d`, label: "Delta", numeric: true },
-                  { key: `${s.id}:p`, label: "Delta %", numeric: true },
+                  { key: `${s.id}:d`, label: "Selisih", numeric: true },
+                  { key: `${s.id}:p`, label: "Selisih %", numeric: true },
                 ]),
               ]}
               rows={metricRows.map((r) => ({
@@ -165,7 +165,7 @@ export function CompareView() {
           </div>
         </Panel>
       </PageSection>
-      <PageSection title="Assumptions and uncertainty">
+      <PageSection title="Asumsi dan rentang">
         <div className="grid auto-rows-fr gap-4 lg:grid-cols-2 2xl:grid-cols-4">
           {scenarios.map((s, i) => (
             <ScenarioCard key={s.id} scenario={s} color={SCENARIO_COLORS[i % SCENARIO_COLORS.length] as string} />
