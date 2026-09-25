@@ -122,9 +122,22 @@ export function useListState({ filterKeys, defaultSort, defaultDir = "desc", def
     [update],
   );
 
+  /** Set several non-list params in one navigation (separate calls would overwrite each other). */
+  const setParams = React.useCallback(
+    (values: Record<string, string | null>, opts: { resetPage?: boolean } = {}) =>
+      update((p) => {
+        for (const [key, value] of Object.entries(values)) {
+          if (RESERVED.has(key)) continue;
+          if (value) p.set(key, value);
+          else p.delete(key);
+        }
+      }, opts),
+    [update],
+  );
+
   const activeFilterCount = Object.values(query.filters ?? {}).reduce((n, v) => n + (v.length > 0 ? 1 : 0), 0) + (query.q ? 1 : 0);
 
-  return { query, setSearch, setFilter, clearFilters, setSort, setPage, setPageSize, getParam, setParam, activeFilterCount };
+  return { query, setSearch, setFilter, clearFilters, setSort, setPage, setPageSize, getParam, setParam, setParams, activeFilterCount };
 }
 
 export type ListState = ReturnType<typeof useListState>;
