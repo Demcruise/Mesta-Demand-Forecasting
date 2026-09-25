@@ -12,31 +12,31 @@ import { Tooltip } from "@/components/ui/overlay";
 import { EmptyState } from "@/components/feedback/states";
 
 export const ACTION_LABELS: Record<AuditAction, string> = {
-  sign_in: "Signed in",
-  sign_out: "Signed out",
-  workspace_switch: "Switched workspace",
-  create_forecast_run: "Forecast run",
-  cancel_forecast_run: "Cancelled forecast run",
-  retry_forecast_run: "Retried forecast run",
-  publish_forecast_run: "Published forecast run",
-  archive_forecast_run: "Archived forecast run",
-  approve: "Approved",
-  reject: "Rejected",
-  request_revision: "Requested revision",
-  override: "Applied override",
-  create_scenario: "Created scenario",
-  edit_scenario: "Edited scenario",
-  simulate_scenario: "Simulated scenario",
-  submit_scenario: "Submitted scenario",
-  publish_plan: "Published plan",
-  update_plan: "Updated plan",
-  resolve_exception: "Resolved exception",
-  update_exception: "Updated exception",
-  change_settings: "Changed setting",
-  change_permissions: "Changed access",
-  integration_update: "Integration updated",
-  run_backtest: "Ran backtest",
-  set_default_model: "Model change",
+  sign_in: "Masuk",
+  sign_out: "Keluar",
+  workspace_switch: "Ganti ruang kerja",
+  create_forecast_run: "Proses perkiraan",
+  cancel_forecast_run: "Membatalkan proses perkiraan",
+  retry_forecast_run: "Menjalankan ulang proses perkiraan",
+  publish_forecast_run: "Menerbitkan proses perkiraan",
+  archive_forecast_run: "Mengarsipkan proses perkiraan",
+  approve: "Menyetujui",
+  reject: "Menolak",
+  request_revision: "Meminta revisi",
+  override: "Menerapkan perubahan manual",
+  create_scenario: "Membuat skenario",
+  edit_scenario: "Mengubah skenario",
+  simulate_scenario: "Menyimulasikan skenario",
+  submit_scenario: "Mengirim skenario",
+  publish_plan: "Menerbitkan rencana",
+  update_plan: "Memperbarui rencana",
+  resolve_exception: "Menyelesaikan item",
+  update_exception: "Memperbarui item",
+  change_settings: "Mengubah pengaturan",
+  change_permissions: "Mengubah akses",
+  integration_update: "Integrasi diperbarui",
+  run_backtest: "Menjalankan uji model",
+  set_default_model: "Perubahan model",
 };
 
 /** Where an audited entity lives, so every event links back to its source (LINEAGE-001). */
@@ -123,8 +123,8 @@ export function AuditEventItem({ event, showEntity = true }: { event: AuditEvent
   );
 }
 
-export function AuditTimeline({ events, emptyText = "No audited activity yet.", className }: { events: AuditEvent[]; emptyText?: string; className?: string }) {
-  if (events.length === 0) return <EmptyState compact title={emptyText} description="Consequential actions such as runs, overrides and approvals are recorded here." />;
+export function AuditTimeline({ events, emptyText = "Belum ada aktivitas tercatat.", className }: { events: AuditEvent[]; emptyText?: string; className?: string }) {
+  if (events.length === 0) return <EmptyState compact title={emptyText} description="Tindakan penting seperti proses, perubahan manual, dan persetujuan dicatat di sini." />;
   return (
     <ol className={cn("relative", className)} aria-label="Activity">
       {events.map((e) => (

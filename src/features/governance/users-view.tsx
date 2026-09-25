@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Check, Minus, MoreHorizontal, UserPlus, Users } from "lucide-react";
 import * as React from "react";
-import type { Role } from "@/types/domain";
+import type { Role, StatusKey } from "@/types/domain";
 import { inviteMember, listMembers, updateMember, type MemberRow } from "@/lib/api/governance";
 import { useApiMutation, useApiQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DropdownMenu, DropdownMenuContent, DropdownMenuI
 import { PageContainer, PageHeader, Panel } from "@/components/page/page";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
 import { FilterBar } from "@/components/tables/filter-bar";
-import { StatusBadge, Tag } from "@/components/feedback/status";
+import { StatusBadge, Tag, STATUS } from "@/components/feedback/status";
 import { EmptyState, InlineAlert, PermissionNotice } from "@/components/feedback/states";
 import { UserIdentity } from "@/components/entities/identity";
 import { ConsequenceSummary } from "@/components/governance/audit";
@@ -42,30 +42,30 @@ export function UsersView() {
 
   const update = useApiMutation((c, v: { userId: string; role?: Role; status?: "active" | "suspended"; remove?: boolean; reason: string }) => updateMember(c, v.userId, v), {
     invalidate: [["members"]],
-    success: (_r, v) => (v.remove ? "Member removed" : v.role ? `Role changed to ${ROLE_LABELS[v.role]}` : v.status === "suspended" ? "Access suspended" : "Access restored"),
-    failure: "Access was not changed.",
+    success: (_r, v) => (v.remove ? "Anggota dihapus" : v.role ? `Peran diubah ke ${ROLE_LABELS[v.role]}` : v.status === "suspended" ? "Akses ditangguhkan" : "Akses dipulihkan"),
+    failure: "Akses tidak dapat diubah.",
     onSuccess: () => setAction(null),
   });
   const invite = useApiMutation((c, _v: void) => inviteMember(c, { email: inviteEmail, role: inviteRole }), {
     invalidate: [["members"]],
     success: `Invitation sent to ${inviteEmail}`,
-    successDescription: "They sign in with SSO; the role applies once they accept.",
-    failure: "The invitation was not sent.",
+    successDescription: "Mereka masuk lewat SSO; perannya berlaku setelah menerima undangan.",
+    failure: "Undangan tidak terkirim.",
     onSuccess: () => setInviteOpen(false),
   });
 
   const columns = React.useMemo<ColumnDef<MemberRow, unknown>[]>(
     () => [
-      { id: "user", header: "User", meta: { width: "minmax(260px, 2.2fr)", sortKey: "name", pinned: true, label: "User" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.userId} secondary={row.original.email} size="md" /> },
-      { id: "title", header: "Title", meta: { width: "minmax(160px, 1.2fr)", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.title}</span> },
-      { id: "role", header: "Role", meta: { width: "140px", sortKey: "role" } satisfies ColumnMeta, cell: ({ row }) => <Tag tone={row.original.role === "admin" ? "primary" : "neutral"}>{ROLE_LABELS[row.original.role]}</Tag> },
+      { id: "user", header: "Pengguna", meta: { width: "minmax(260px, 2.2fr)", sortKey: "name", pinned: true, label: "Pengguna" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.userId} secondary={row.original.email} size="md" /> },
+      { id: "title", header: "Jabatan", meta: { width: "minmax(160px, 1.2fr)", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.title}</span> },
+      { id: "role", header: "Peran", meta: { width: "140px", sortKey: "role" } satisfies ColumnMeta, cell: ({ row }) => <Tag tone={row.original.role === "admin" ? "primary" : "neutral"}>{ROLE_LABELS[row.original.role]}</Tag> },
       { id: "status", header: "Status", meta: { width: "120px", sortKey: "status" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
-      { id: "active", header: "Last active", meta: { width: "130px", sortKey: "lastActiveAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.lastActiveAt ? formatRelative(row.original.lastActiveAt) : "Never"}</span> },
-      { id: "ws", header: "Workspaces", meta: { width: "110px", numeric: true, hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => row.original.workspaces },
+      { id: "active", header: "Terakhir aktif", meta: { width: "130px", sortKey: "lastActiveAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.lastActiveAt ? formatRelative(row.original.lastActiveAt) : "Belum pernah"}</span> },
+      { id: "ws", header: "Ruang kerja", meta: { width: "110px", numeric: true, hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => row.original.workspaces },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
-        meta: { width: "52px", pinned: true, label: "Actions" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">Aksi</span>,
+        meta: { width: "52px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
         cell: ({ row }) => {
           const m = row.original;
           if (!manage || m.userId === session.userId) return null;
@@ -77,11 +77,11 @@ export function UsersView() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onSelect={() => { setRole(m.role); setReason(""); setAction({ kind: "role", member: m }); }}>Change role</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { setRole(m.role); setReason(""); setAction({ kind: "role", member: m }); }}>Ubah peran</DropdownMenuItem>
                 {m.status === "suspended" ? (
-                  <DropdownMenuItem onSelect={() => { setReason(""); setAction({ kind: "reactivate", member: m }); }}>Restore access</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => { setReason(""); setAction({ kind: "reactivate", member: m }); }}>Pulihkan akses</DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem onSelect={() => { setReason(""); setAction({ kind: "suspend", member: m }); }}>Suspend access</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => { setReason(""); setAction({ kind: "suspend", member: m }); }}>Tangguhkan akses</DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem destructive onSelect={() => { setReason(""); setAction({ kind: "remove", member: m }); }}>
@@ -101,7 +101,7 @@ export function UsersView() {
   return (
     <PageContainer>
       <PageHeader
-        title="Users & roles"
+        title="Pengguna & Akses"
         description={`Who can access ${workspace.name} · ${workspace.environment} and what they can do. Identities come from your identity provider; roles are managed here.`}
         actions={
           manage ? (
@@ -111,7 +111,7 @@ export function UsersView() {
           ) : undefined
         }
       />
-      {!manage && <PermissionNotice permission="users.manage" compact message="You can see who has access but cannot change it." />}
+      {!manage && <PermissionNotice permission="users.manage" compact message="Anda dapat melihat siapa yang punya akses, tetapi tidak mengubahnya." />}
       <Tabs defaultValue="members">
         <TabsList>
           <TabsTrigger value="members" count={q.data?.total}>
@@ -121,38 +121,38 @@ export function UsersView() {
         </TabsList>
         <TabsContent value="members" className="pt-4">
           <DataTable
-            label="Workspace members"
+            label="Anggota ruang kerja"
             columns={columns}
             data={q.data?.items}
             getRowId={(m) => m.userId}
             isLoading={q.isPending}
             error={q.error}
             onRetry={() => q.refetch()}
-            errorWhat="Members could not be loaded."
+            errorWhat="Anggota tidak dapat dimuat."
             sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
             pagination={{ page: q.data?.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.total ?? 0, onPageChange: state.setPage }}
             hideDensityToggle
             toolbarStart={
               <FilterBar
                 state={state}
-                searchPlaceholder="Search name, email or title"
+                searchPlaceholder="Cari nama, email, atau jabatan"
                 facets={[
-                  { key: "role", label: "Role", primary: true, options: ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] })) },
-                  { key: "status", label: "Status", primary: true, options: ["active", "invited", "suspended"].map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) })) },
+                  { key: "role", label: "Peran", primary: true, options: ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] })) },
+                  { key: "status", label: "Status", primary: true, options: (["active", "invited", "suspended"] as StatusKey[]).map((s) => ({ value: s, label: STATUS[s].label })) },
                 ]}
               />
             }
-            empty={<EmptyState icon={Users} title="No members match the current filters." />}
+            empty={<EmptyState icon={Users} title="Tidak ada anggota yang cocok dengan filter." />}
           />
         </TabsContent>
         <TabsContent value="roles" className="pt-4">
-          <InlineAlert tone="info" title="Proposed role model." className="mb-4">
+          <InlineAlert tone="info" title="Model peran yang diusulkan." className="mb-4">
             Role names and permissions need approval by the business (backlog §93 items 2 and 18). Administrators cannot approve business changes or apply overrides.
           </InlineAlert>
           <Panel flush>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[44rem] border-collapse text-[0.8125rem]">
-                <caption className="sr-only">Permissions by role</caption>
+                <caption className="sr-only">Izin per peran</caption>
                 <thead className="bg-subtle">
                   <tr>
                     <th scope="col" className="border-b border-border px-4 py-2.5 text-left text-xs font-semibold text-fg-secondary">
@@ -173,7 +173,7 @@ export function UsersView() {
                       </th>
                       {ROLES.map((r) => (
                         <td key={r} className="px-3 py-2 text-center">
-                          {roleCan(r, p) ? <Check className="mx-auto size-4 text-success" aria-label="Allowed" /> : <Minus className="mx-auto size-4 text-fg-disabled" aria-label="Not allowed" />}
+                          {roleCan(r, p) ? <Check className="mx-auto size-4 text-success" aria-label="Diizinkan" /> : <Minus className="mx-auto size-4 text-fg-disabled" aria-label="Tidak diizinkan" />}
                         </td>
                       ))}
                     </tr>
@@ -223,37 +223,37 @@ export function UsersView() {
                     })
                   }
                 >
-                  {action.kind === "role" ? "Change role" : action.kind === "suspend" ? "Suspend access" : action.kind === "reactivate" ? "Restore access" : "Remove member"}
+                  {action.kind === "role" ? "Ubah peran" : action.kind === "suspend" ? "Tangguhkan akses" : action.kind === "reactivate" ? "Pulihkan akses" : "Hapus anggota"}
                 </Button>
               </>
             }
           >
             <div className="flex flex-col gap-4">
               {action.kind === "role" && (
-                <Field label="New role" htmlFor="new-role" hint={ROLE_DESCRIPTIONS[role]}>
+                <Field label="Peran baru" htmlFor="new-role" hint={ROLE_DESCRIPTIONS[role]}>
                   <Select id="new-role" value={role} onValueChange={(v) => setRole(v as Role)} options={ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
                 </Field>
               )}
               <ConsequenceSummary
                 rows={[
-                  { label: "Who", value: `${action.member.name} (${action.member.email})` },
-                  { label: "Scope", value: `${workspace.name} · ${workspace.environment} only` },
+                  { label: "Siapa", value: `${action.member.name} (${action.member.email})` },
+                  { label: "Cakupan", value: `${workspace.name} · hanya ${workspace.environment}` },
                   {
-                    label: "Consequence",
+                    label: "Dampak",
                     emphasis: true,
                     value:
                       action.kind === "role"
                         ? `${ROLE_LABELS[action.member.role]} → ${ROLE_LABELS[role]}. Takes effect at their next request.`
                         : action.kind === "suspend"
-                          ? "They are signed out and cannot sign in to this workspace. Their history is kept."
+                          ? "Mereka dikeluarkan dan tidak dapat masuk ke ruang kerja ini. Riwayatnya tetap disimpan."
                           : action.kind === "reactivate"
                             ? `They can sign in again with the ${ROLE_LABELS[action.member.role]} role.`
-                            : "They lose access to this workspace. Audit history keeps their past actions.",
+                            : "Mereka kehilangan akses ke ruang kerja ini. Riwayat aktivitas tetap menyimpan tindakan mereka sebelumnya.",
                   },
-                  { label: "Required permission", value: "Manage users and roles (Administrator)" },
+                  { label: "Izin yang diperlukan", value: "Mengelola pengguna dan akses (Administrator)" },
                 ]}
               />
-              <Field label="Reason" htmlFor="access-reason" required hint="Recorded in the audit log. At least 5 characters.">
+              <Field label="Alasan" htmlFor="access-reason" required hint="Tercatat di riwayat aktivitas. Minimal 5 karakter.">
                 <Textarea id="access-reason" value={reason} onChange={(e) => setReason(e.target.value)} />
               </Field>
             </div>
@@ -264,8 +264,8 @@ export function UsersView() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent
           size="sm"
-          title="Invite a user"
-          description="Invited users sign in through your organisation's SSO. No password is created."
+          title="Undang pengguna"
+          description="Pengguna yang diundang masuk lewat SSO organisasi Anda. Tidak ada kata sandi yang dibuat."
           footer={
             <>
               <Button variant="ghost" onClick={() => setInviteOpen(false)}>
@@ -278,7 +278,7 @@ export function UsersView() {
           }
         >
           <div className="flex flex-col gap-4">
-            <Field label="Work email" htmlFor="invite-email" required hint="Must use an allowed domain for this workspace.">
+            <Field label="Email kantor" htmlFor="invite-email" required hint="Harus memakai domain yang diizinkan untuk ruang kerja ini.">
               <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="name@mesta.click" autoFocus />
             </Field>
             <Field label="Role" htmlFor="invite-role" hint={ROLE_DESCRIPTIONS[inviteRole]}>

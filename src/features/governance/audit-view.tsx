@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ScrollText } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
-import type { AuditAction, AuditEvent } from "@/types/domain";
+import type { AuditAction, AuditEntityType, AuditEvent } from "@/types/domain";
 import { exportAudit, listAudit } from "@/lib/api/governance";
 import { useApiMutation, useApiQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
@@ -24,6 +24,23 @@ import { Tag } from "@/components/feedback/status";
 import { EntityId, UserIdentity } from "@/components/entities/identity";
 import { ACTION_LABELS, entityHref } from "@/components/governance/audit";
 
+const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
+  session: "Sesi",
+  workspace: "Ruang kerja",
+  forecast_run: "Proses perkiraan",
+  forecast: "Perkiraan",
+  scenario: "Skenario",
+  plan: "Rencana",
+  exception: "Perlu Ditinjau",
+  approval: "Persetujuan",
+  override: "Perubahan manual",
+  model: "Model",
+  backtest: "Uji model",
+  data_source: "Sumber data",
+  user: "Pengguna",
+  settings: "Pengaturan",
+};
+
 /** PAGE-AUDIT: a trustworthy, immutable record of consequential activity. */
 export function AuditView() {
   const { can } = useSession();
@@ -34,8 +51,8 @@ export function AuditView() {
   const q = useApiQuery(["audit", state.query, from, to], (c) => listAudit(c, { ...state.query, from, to }), { keepPrevious: true, enabled: can("audit.view") });
   const selected = q.data?.items.find((e) => e.eventId === state.getParam("event"));
   const exp = useApiMutation(async (c, format: ExportFormat) => ({ format, rows: await exportAudit(c, { ...state.query, from, to }) }), {
-    failure: "The audit log was not exported.",
-    success: (r) => `Exported ${r.rows.length} events`,
+    failure: "Riwayat aktivitas tidak dapat diekspor.",
+    success: (r) => `Mengekspor ${r.rows.length} aktivitas`,
     onSuccess: ({ format, rows }) => {
       track("export_requested", { surface: "audit", rows: rows.length, format });
       downloadExport(
@@ -43,19 +60,19 @@ export function AuditView() {
         `audit-log-${from}-to-${to}`,
         ["eventId", "timestamp", "actor", "workspace", "action", "entityType", "entityId", "entityLabel", "previousState", "newState", "reason", "source", "requestId"],
         rows.map((e) => [e.eventId, e.timestamp, actorName(e.actorId), e.workspaceId, e.action, e.entityType, e.entityId, e.entityLabel, e.previousState, e.newState, e.reason, e.source, e.requestId]),
-        "Audit log",
+        "Riwayat Aktivitas",
       );
     },
   });
 
   const columns = React.useMemo<ColumnDef<AuditEvent, unknown>[]>(
     () => [
-      { id: "time", header: "When", meta: { width: "160px", sortKey: "timestamp" } satisfies ColumnMeta, cell: ({ row }) => <span className="whitespace-nowrap text-xs tabular">{formatDateTime(row.original.timestamp)}</span> },
-      { id: "actor", header: "Who", meta: { width: "minmax(160px, 1fr)", sortKey: "actor" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.actorId} /> },
-      { id: "action", header: "What happened", meta: { width: "minmax(170px, 1fr)", sortKey: "action" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate font-semibold">{ACTION_LABELS[row.original.action]}</span> },
+      { id: "time", header: "Kapan", meta: { width: "160px", sortKey: "timestamp" } satisfies ColumnMeta, cell: ({ row }) => <span className="whitespace-nowrap text-xs tabular">{formatDateTime(row.original.timestamp)}</span> },
+      { id: "actor", header: "Siapa", meta: { width: "minmax(160px, 1fr)", sortKey: "actor" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.actorId} /> },
+      { id: "action", header: "Apa yang terjadi", meta: { width: "minmax(170px, 1fr)", sortKey: "action" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate font-semibold">{ACTION_LABELS[row.original.action]}</span> },
       {
         id: "entity",
-        header: "Object",
+        header: "Objek",
         meta: { width: "minmax(220px, 2fr)" } satisfies ColumnMeta,
         cell: ({ row }) => {
           const href = entityHref(row.original);
@@ -75,7 +92,7 @@ export function AuditView() {
       },
       {
         id: "change",
-        header: "Change",
+        header: "Perubahan",
         meta: { width: "minmax(180px, 1.4fr)", hideBelow: "lg" } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="truncate text-xs tabular text-fg-secondary">
@@ -83,8 +100,8 @@ export function AuditView() {
           </span>
         ),
       },
-      { id: "reason", header: "Why", meta: { width: "minmax(180px, 1.6fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-xs text-fg-secondary" title={row.original.reason ?? undefined}>{row.original.reason ?? ""}</span> },
-      { id: "source", header: "Source", meta: { width: "90px", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{row.original.source === "system" ? "System" : row.original.source === "api" ? "API" : "Web"}</Tag> },
+      { id: "reason", header: "Alasan", meta: { width: "minmax(180px, 1.6fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-xs text-fg-secondary" title={row.original.reason ?? undefined}>{row.original.reason ?? ""}</span> },
+      { id: "source", header: "Sumber", meta: { width: "90px", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{row.original.source === "system" ? "Sistem" : row.original.source === "api" ? "API" : "Web"}</Tag> },
     ],
     [],
   );
@@ -92,7 +109,7 @@ export function AuditView() {
   if (!can("audit.view")) {
     return (
       <PageContainer>
-        <PageHeader title="Audit log" />
+        <PageHeader title="Riwayat Aktivitas" />
         <PermissionNotice permission="audit.view" />
       </PageContainer>
     );
@@ -100,9 +117,9 @@ export function AuditView() {
 
   return (
     <PageContainer>
-      <PageHeader title="Audit log" description="Every consequential action in this workspace: who did it, when, what changed and why. Events are append-only and cannot be edited." />
+      <PageHeader title="Riwayat Aktivitas" description="Lihat perubahan dan tindakan di ruang kerja: siapa, kapan, apa yang berubah, dan mengapa. Catatan bersifat tambah-saja dan tidak dapat diubah." />
       <DataTable
-        label="Audit events"
+        label="Aktivitas"
         columns={columns}
         data={q.data?.items}
         getRowId={(e) => e.eventId}
@@ -110,7 +127,7 @@ export function AuditView() {
         isFetching={q.isFetching && !q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
-        errorWhat="The audit log could not be loaded."
+        errorWhat="Riwayat aktivitas tidak dapat dimuat."
         storageKey="audit"
         density="compact"
         activeRowId={selected?.eventId}
@@ -118,34 +135,34 @@ export function AuditView() {
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page ?? 1, pageSize: state.query.pageSize ?? 50, total: q.data?.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
         onExport={(format) => exp.mutate(format)}
-        exportLabel={q.data ? `Export ${q.data.total} events` : "Export"}
+        exportLabel={q.data ? `Ekspor ${q.data.total} aktivitas` : "Ekspor"}
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder="Search object, person, reason or request ID"
+            searchPlaceholder="Cari objek, orang, alasan, atau ID permintaan"
             facets={[
-              { key: "action", label: "Action", primary: true, options: (Object.keys(ACTION_LABELS) as AuditAction[]).map((a) => ({ value: a, label: ACTION_LABELS[a] })) },
-              { key: "actor", label: "Person", primary: true, options: [{ value: SYSTEM_ACTOR.id, label: SYSTEM_ACTOR.name }, ...USERS.map((u) => ({ value: u.id, label: u.name }))] },
-              { key: "entityType", label: "Object type", options: ["session", "workspace", "forecast_run", "scenario", "plan", "exception", "approval", "override", "model", "backtest", "data_source", "user", "settings"].map((t) => ({ value: t, label: t.replace("_", " ") })) },
-              { key: "source", label: "Source", options: [{ value: "web", label: "Web" }, { value: "api", label: "API" }, { value: "system", label: "System" }] },
+              { key: "action", label: "Tindakan", primary: true, options: (Object.keys(ACTION_LABELS) as AuditAction[]).map((a) => ({ value: a, label: ACTION_LABELS[a] })) },
+              { key: "actor", label: "Orang", primary: true, options: [{ value: SYSTEM_ACTOR.id, label: SYSTEM_ACTOR.name }, ...USERS.map((u) => ({ value: u.id, label: u.name }))] },
+              { key: "entityType", label: "Jenis objek", options: (["session", "workspace", "forecast_run", "scenario", "plan", "exception", "approval", "override", "model", "backtest", "data_source", "user", "settings"] as AuditEntityType[]).map((t) => ({ value: t, label: ENTITY_TYPE_LABELS[t] })) },
+              { key: "source", label: "Sumber", options: [{ value: "web", label: "Web" }, { value: "api", label: "API" }, { value: "system", label: "Sistem" }] },
             ]}
           >
             <DateRangeFilter from={from} to={to} max={isoDate(today)} presets={[1, 7, 30]} onChange={(f, t) => state.setParams({ from: f, to: t }, { resetPage: true })} />
           </FilterBar>
         }
-        empty={<EmptyState icon={ScrollText} title="No audit events match these filters." description="Widen the date range or clear filters." action={<Button variant="secondary" onClick={state.clearFilters}>Clear filters</Button>} />}
+        empty={<EmptyState icon={ScrollText} title="Tidak ada aktivitas yang cocok dengan filter." description="Perlebar rentang tanggal atau hapus filter." action={<Button variant="secondary" onClick={state.clearFilters}>Hapus filter</Button>} />}
       />
       <Drawer open={!!selected} onOpenChange={(o) => !o && state.setParam("event", null)}>
         {selected && (
-          <DrawerContent size="md" eyebrow="Audit event" title={ACTION_LABELS[selected.action]} description={formatDateTime(selected.timestamp)}>
+          <DrawerContent size="md" eyebrow="Aktivitas" title={ACTION_LABELS[selected.action]} description={formatDateTime(selected.timestamp)}>
             <div className="flex flex-col gap-5">
               <DescriptionList
                 items={[
-                  { label: "What happened?", value: ACTION_LABELS[selected.action] },
-                  { label: "Who did it?", value: <UserIdentity userId={selected.actorId} /> },
-                  { label: "When?", value: formatDateTime(selected.timestamp) },
-                  { label: "What changed?", value: `${selected.previousState ?? "—"} → ${selected.newState ?? "—"}` },
-                  { label: "Why?", value: selected.reason ?? "No reason recorded" },
+                  { label: "Apa yang terjadi?", value: ACTION_LABELS[selected.action] },
+                  { label: "Siapa yang melakukannya?", value: <UserIdentity userId={selected.actorId} /> },
+                  { label: "Kapan?", value: formatDateTime(selected.timestamp) },
+                  { label: "Apa yang berubah?", value: `${selected.previousState ?? "—"} → ${selected.newState ?? "—"}` },
+                  { label: "Mengapa?", value: selected.reason ?? "Tidak ada alasan tercatat" },
                   {
                     label: "Related object",
                     value: entityHref(selected) ? (
@@ -157,10 +174,10 @@ export function AuditView() {
                     ),
                     hint: `${selected.entityType.replace("_", " ")} · ${selected.entityId}`,
                   },
-                  { label: "Source", value: selected.source === "system" ? "System (automated job)" : selected.source === "api" ? "API" : "Web application" },
+                  { label: "Sumber", value: selected.source === "system" ? "Sistem (proses otomatis)" : selected.source === "api" ? "API" : "Aplikasi web" },
                 ]}
               />
-              <Panel title="Technical reference">
+              <Panel title="Referensi teknis">
                 <DescriptionList
                   items={[
                     { label: "Event ID", value: <EntityId value={selected.eventId} /> },
