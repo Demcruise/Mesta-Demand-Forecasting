@@ -25,15 +25,15 @@ import { Segmented } from "@/components/ui/controls";
 import { EmptyState, ErrorState, TimelineSkeleton } from "@/components/feedback/states";
 
 const CATEGORY: Record<NotificationCategory, { icon: LucideIcon; tone: string; label: string }> = {
-  forecast_completed: { icon: TrendingUp, tone: "text-success", label: "Forecast completed" },
-  forecast_failed: { icon: AlertOctagon, tone: "text-critical", label: "Forecast failed" },
-  data_quality: { icon: Database, tone: "text-warning", label: "Data quality" },
-  data_freshness: { icon: Clock, tone: "text-warning", label: "Data freshness" },
-  approval_requested: { icon: ShieldCheck, tone: "text-info", label: "Approval requested" },
-  approval_completed: { icon: CheckCircle2, tone: "text-success", label: "Approval completed" },
-  exception_opened: { icon: ListChecks, tone: "text-warning", label: "Exception opened" },
-  scenario_completed: { icon: SlidersHorizontal, tone: "text-info", label: "Scenario simulated" },
-  model_issue: { icon: AlertOctagon, tone: "text-warning", label: "Model issue" },
+  forecast_completed: { icon: TrendingUp, tone: "text-success", label: "Perkiraan selesai" },
+  forecast_failed: { icon: AlertOctagon, tone: "text-critical", label: "Perkiraan gagal" },
+  data_quality: { icon: Database, tone: "text-warning", label: "Kualitas data" },
+  data_freshness: { icon: Clock, tone: "text-warning", label: "Data belum diperbarui" },
+  approval_requested: { icon: ShieldCheck, tone: "text-info", label: "Perlu persetujuan" },
+  approval_completed: { icon: CheckCircle2, tone: "text-success", label: "Persetujuan selesai" },
+  exception_opened: { icon: ListChecks, tone: "text-warning", label: "Perlu ditinjau" },
+  scenario_completed: { icon: SlidersHorizontal, tone: "text-info", label: "Skenario disimulasikan" },
+  model_issue: { icon: AlertOctagon, tone: "text-warning", label: "Masalah model" },
 };
 
 /** NotificationCenter (NOTIFY-001): every actionable notification deep-links to its source. */
@@ -43,7 +43,7 @@ export function NotificationCenter() {
   const q = useApiQuery(["notifications"], listNotifications, { refetchInterval: 20_000 });
   const mark = useApiMutation((ctx, ids: string[] | "all") => markNotificationsRead(ctx, ids), {
     invalidate: [["notifications"]],
-    failure: "Notifications were not marked as read.",
+    failure: "Pemberitahuan tidak dapat ditandai sudah dibaca.",
   });
   const unread = q.data?.filter((n) => !n.read).length ?? 0;
   const items = (q.data ?? []).filter((n) => filter === "all" || !n.read);
@@ -52,7 +52,7 @@ export function NotificationCenter() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className="relative inline-flex size-9 items-center justify-center rounded-md text-fg-secondary hover:bg-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
-        aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+        aria-label={unread ? `Pemberitahuan, ${unread} belum dibaca` : "Pemberitahuan"}
       >
         <Bell className="size-[1.125rem]" aria-hidden />
         {unread > 0 && (
@@ -63,16 +63,16 @@ export function NotificationCenter() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[min(26rem,calc(100vw-1rem))] p-0">
         <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
-          <h2 className="card-title">Notifications</h2>
+          <h2 className="card-title">Pemberitahuan</h2>
           <div className="flex items-center gap-2">
             <Segmented
               size="sm"
-              aria-label="Show"
+              aria-label="Tampilkan"
               value={filter}
               onValueChange={setFilter}
               options={[
-                { value: "unread", label: `Unread${unread ? ` (${unread})` : ""}` },
-                { value: "all", label: "All" },
+                { value: "unread", label: `Belum dibaca${unread ? ` (${unread})` : ""}` },
+                { value: "all", label: "Semua" },
               ]}
             />
           </div>
@@ -83,9 +83,9 @@ export function NotificationCenter() {
               <TimelineSkeleton items={4} />
             </div>
           ) : q.isError ? (
-            <ErrorState compact what="Notifications could not be loaded." error={q.error} onRetry={() => q.refetch()} retryLabel="Retry loading notifications" />
+            <ErrorState compact what="Pemberitahuan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} retryLabel="Coba muat ulang pemberitahuan" />
           ) : items.length === 0 ? (
-            <EmptyState compact icon={CheckCircle2} title={filter === "unread" ? "You're all caught up." : "No notifications yet."} description={filter === "unread" ? "New approvals, failed runs and data issues will appear here." : "Notifications about runs, approvals and data appear here."} />
+            <EmptyState compact icon={CheckCircle2} title={filter === "unread" ? "Tidak ada pemberitahuan baru." : "Belum ada pemberitahuan."} description={filter === "unread" ? "Persetujuan baru, proses yang gagal, dan masalah data akan muncul di sini." : "Pemberitahuan tentang proses, persetujuan, dan data muncul di sini."} />
           ) : (
             <ul>
               {items.map((n) => {
@@ -105,7 +105,7 @@ export function NotificationCenter() {
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <span className="flex items-start justify-between gap-2">
                           <span className={cn("text-[0.8125rem] leading-5 text-fg", n.read ? "font-medium" : "font-bold")}>{n.title}</span>
-                          {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
+                          {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" aria-label="Belum dibaca" />}
                         </span>
                         <span className="line-clamp-2 text-xs text-fg-secondary">{n.body}</span>
                         <span className="text-[0.6875rem] font-medium text-fg-tertiary">

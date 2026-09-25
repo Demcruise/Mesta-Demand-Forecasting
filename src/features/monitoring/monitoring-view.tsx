@@ -15,18 +15,18 @@ import { ChartDataTable, ChartFrame, LegendItem } from "@/components/charts/char
 import { RunIdentity, scopeLabel } from "@/components/entities/identity";
 
 const HEALTH = {
-  operational: { label: "Operational", icon: CheckCircle2, cls: "text-success" },
-  degraded: { label: "Degraded", icon: AlertTriangle, cls: "text-warning" },
-  down: { label: "Down", icon: AlertOctagon, cls: "text-critical" },
+  operational: { label: "Normal", icon: CheckCircle2, cls: "text-success" },
+  degraded: { label: "Perlu Perhatian", icon: AlertTriangle, cls: "text-warning" },
+  down: { label: "Gangguan", icon: AlertOctagon, cls: "text-critical" },
 } as const;
 
-const KIND_LABELS: Record<ServiceHealth["kind"], string> = { service: "Platform services", pipeline: "Forecast pipeline", source: "Data sources", model: "Production models" };
+const KIND_LABELS: Record<ServiceHealth["kind"], string> = { service: "Layanan platform", pipeline: "Alur perkiraan", source: "Sumber data", model: "Model produksi" };
 
 /** PAGE-MONITORING: operational health of pipelines and data dependencies. */
 export function MonitoringView() {
   const q = useApiQuery(["monitoring"], getMonitoring, { refetchInterval: 15_000 });
   if (q.isPending) return <PageContainer><PageSkeleton /></PageContainer>;
-  if (q.isError) return <PageContainer><PageHeader title="Monitoring" /><Panel><ErrorState what="Monitoring data could not be loaded." error={q.error} onRetry={() => q.refetch()} /></Panel></PageContainer>;
+  if (q.isError) return <PageContainer><PageHeader title="Pemantauan" /><Panel><ErrorState what="Data pemantauan tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} /></Panel></PageContainer>;
   const { services, alerts, jobs, history } = q.data;
   const down = services.filter((s) => s.status === "down").length;
   const degraded = services.filter((s) => s.status === "degraded").length;
@@ -36,19 +36,19 @@ export function MonitoringView() {
 
   return (
     <PageContainer>
-      <PageHeader title="Monitoring" description="Health of forecasting jobs, data sources and production models. Refreshes every 15 seconds." />
+      <PageHeader title="Pemantauan" description="Pantau proses perkiraan, sumber data, dan model produksi. Menyegarkan setiap 15 detik." />
       <div className={cn("flex items-center gap-3 rounded-lg border bg-surface p-4", overall === "down" ? "border-critical/30" : overall === "degraded" ? "border-warning/30" : "border-border")} role="status">
         <O.icon className={cn("size-6 shrink-0", O.cls)} aria-hidden />
         <div>
-          <p className="section-title">{overall === "operational" ? "All systems operational" : `${down ? `${down} down` : ""}${down && degraded ? " · " : ""}${degraded ? `${degraded} degraded` : ""}`}</p>
-          <p className="caption">Checked {formatRelative(services[0]?.checkedAt)} · {services.length} components monitored</p>
+          <p className="section-title">{overall === "operational" ? "Semua sistem normal" : `${down ? `${down} gangguan` : ""}${down && degraded ? " · " : ""}${degraded ? `${degraded} perlu perhatian` : ""}`}</p>
+          <p className="caption">Diperiksa {formatRelative(services[0]?.checkedAt)} · {services.length} komponen dipantau</p>
         </div>
       </div>
 
-      <PageSection title="Alerts" description="Active alerts, newest first.">
+      <PageSection title="Peringatan" description="Peringatan aktif, terbaru lebih dulu.">
         <Panel flush>
           {alerts.length === 0 ? (
-            <p className="px-4 py-6 caption">No active alerts.</p>
+            <p className="px-4 py-6 caption">Tidak ada peringatan aktif.</p>
           ) : (
             <ul>
               {alerts.map((a) => (
@@ -61,7 +61,7 @@ export function MonitoringView() {
                     </span>
                     <span className="text-right text-xs text-fg-tertiary">
                       {formatRelative(a.raisedAt)}
-                      <span className="block">{a.acknowledged ? "Acknowledged" : "Not acknowledged"}</span>
+                      <span className="block">{a.acknowledged ? "Sudah ditanggapi" : "Belum ditanggapi"}</span>
                     </span>
                   </Link>
                 </li>
@@ -71,7 +71,7 @@ export function MonitoringView() {
         </Panel>
       </PageSection>
 
-      <PageSection title="System health">
+      <PageSection title="Kesehatan sistem">
         <div className="grid auto-rows-fr gap-4 lg:grid-cols-2">
           {kinds.map((k) => (
             <Panel key={k} title={KIND_LABELS[k]} flush>
@@ -95,7 +95,7 @@ export function MonitoringView() {
                   })}
                 {services.filter((s) => s.kind === k).length === 0 && (
                   <li className="flex items-center gap-2 px-4 py-3 caption">
-                    <CircleSlash className="size-4" aria-hidden /> Nothing to monitor.
+                    <CircleSlash className="size-4" aria-hidden /> Tidak ada yang dipantau.
                   </li>
                 )}
               </ul>
@@ -106,16 +106,16 @@ export function MonitoringView() {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <ChartFrame
-          title="Forecast jobs · last 14 days"
-          question="Are scheduled and ad-hoc runs completing?"
-          unit="runs per day"
+          title="Proses perkiraan · 14 hari terakhir"
+          question="Apakah proses terjadwal dan ad-hoc selesai dengan baik?"
+          unit="proses per hari"
           timeframe={`${formatDate(history[0]?.day)} – ${formatDate(history[history.length - 1]?.day)}`}
-          source="Forecast job scheduler"
-          summary={`${history.reduce((s, d) => s + d.succeeded, 0)} runs succeeded and ${history.reduce((s, d) => s + d.failed, 0)} failed in the last 14 days.`}
+          source="Penjadwal proses perkiraan"
+          summary={`${history.reduce((s, d) => s + d.succeeded, 0)} proses berhasil dan ${history.reduce((s, d) => s + d.failed, 0)} gagal dalam 14 hari terakhir.`}
           legend={
             <>
-              <LegendItem color="var(--chart-series-1)" label="Succeeded" variant="bar" />
-              <LegendItem color="var(--critical)" label="Failed" variant="bar" />
+              <LegendItem color="var(--chart-series-1)" label="Berhasil" variant="bar" />
+              <LegendItem color="var(--critical)" label="Gagal" variant="bar" />
             </>
           }
           chart={
@@ -134,13 +134,13 @@ export function MonitoringView() {
           }
           table={
             <ChartDataTable
-              caption="Forecast jobs per day"
-              columns={[{ key: "d", label: "Day" }, { key: "s", label: "Succeeded", numeric: true }, { key: "f", label: "Failed", numeric: true }, { key: "m", label: "Avg duration", numeric: true }]}
+              caption="Proses perkiraan per hari"
+              columns={[{ key: "d", label: "Hari" }, { key: "s", label: "Berhasil", numeric: true }, { key: "f", label: "Gagal", numeric: true }, { key: "m", label: "Rata-rata durasi", numeric: true }]}
               rows={history.map((h) => ({ d: formatDate(h.day), s: h.succeeded, f: h.failed, m: `${h.durationMin} min` }))}
             />
           }
         />
-        <Panel title="Recent forecast jobs" flush actions={<Link href="/forecasting/runs" className="text-xs font-semibold text-primary hover:underline">All runs</Link>}>
+        <Panel title="Proses perkiraan terbaru" flush actions={<Link href="/forecasting/runs" className="text-xs font-semibold text-primary hover:underline">Semua proses</Link>}>
           <ul>
             {jobs.map((r) => (
               <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border-subtle px-4 py-2.5 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">

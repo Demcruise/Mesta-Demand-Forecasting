@@ -16,7 +16,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  // Capped rather than left to CPU count: running every spec in parallel starves the
+  // axe scans, which then exceed the per-test timeout on a loaded machine.
+  workers: process.env.CI ? 2 : 4,
   timeout: 45_000,
   expect: { timeout: 10_000, toHaveScreenshot: { maxDiffPixelRatio: 0.02 } },
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : [["list"]],
