@@ -104,7 +104,7 @@ function Callback() {
             {status.detail}
           </InlineAlert>
           <Link href="/sign-in" className={buttonVariants({ variant: "primary", size: "lg", className: "mt-5 w-full" })}>
-            Kembali ke halaman masuk
+            {pick("Kembali ke halaman masuk", "Back to sign in")}
           </Link>
         </AuthCard>
       )}

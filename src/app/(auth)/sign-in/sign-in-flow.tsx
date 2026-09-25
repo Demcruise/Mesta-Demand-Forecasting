@@ -95,7 +95,7 @@ export function SignInFlow() {
             onClick={() => continueWithSso(step.email)}
           >
             <KeyRound aria-hidden />
-            Lanjutkan dengan SSO
+            {pick("Lanjutkan dengan SSO", "Continue with SSO")}
           </Button>
           <p className="mt-3 flex items-start gap-1.5 caption">
             <ShieldCheck className="mt-px size-3.5 shrink-0" aria-hidden />
@@ -134,7 +134,7 @@ export function SignInFlow() {
               </InlineAlert>
             )}
             <Button type="submit" variant="primary" size="lg" className="w-full" loading={step.kind === "validating"} loadingText={pick("Mencari organisasi Anda", "Finding your organisation")}>
-              Lanjutkan ke organisasi
+              {pick("Lanjutkan ke organisasi", "Continue to organisation")}
             </Button>
           </form>
         </AuthCard>

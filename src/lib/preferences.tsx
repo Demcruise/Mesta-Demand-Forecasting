@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { getTranslations, I18nContext, setActiveLocale, type Locale } from "./i18n";
+import { getTranslations, setActiveLocale, type Locale } from "./i18n/core";
+import { I18nContext } from "./i18n";
 
 /**
  * Per-viewer conveniences (theme, table density, language). Stored in localStorage and
@@ -83,7 +84,15 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
 
   return (
     <PreferencesContext.Provider value={value}>
-      <I18nContext.Provider value={i18nValue}>{children}</I18nContext.Provider>
+      <I18nContext.Provider value={i18nValue}>
+        {/*
+         * pick()/localized() read a module global rather than the context, so components
+         * that only call them never subscribe and would keep the old language. Remounting
+         * the subtree on locale change re-evaluates every literal at once — cheap because
+         * switching language is rare.
+         */}
+        <React.Fragment key={prefs.locale}>{children}</React.Fragment>
+      </I18nContext.Provider>
     </PreferencesContext.Provider>
   );
 }

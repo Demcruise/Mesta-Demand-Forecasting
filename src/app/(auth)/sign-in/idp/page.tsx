@@ -39,7 +39,7 @@ function DemoIdp() {
       <div className="w-full max-w-md">
         <div className="mb-4 flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200" role="note">
           <TriangleAlert className="size-4 shrink-0" aria-hidden />
-          Penyedia identitas demo. IdP asli Anda akan menggantikan layar ini.
+          {pick("Penyedia identitas demo. IdP asli Anda akan menggantikan layar ini.", "Demo identity provider. Your real IdP replaces this screen.")}
         </div>
         <div className="rounded-lg border border-black/10 bg-white p-7 shadow-sm dark:border-white/10 dark:bg-[#1a2029]">
           <p className="text-xs font-bold uppercase tracking-wider text-[#5b6472] dark:text-[#9aa3b0]">{ORGANIZATION.idp}</p>
@@ -73,27 +73,27 @@ function DemoIdp() {
                 ))}
               </ul>
               <Button variant="primary" size="lg" className="mt-5 w-full" disabled={!selected} onClick={() => setPhase("mfa")}>
-                Masuk sebagai {findUser(selected)?.name.split(" ")[0] ?? pick("akun terpilih", "selected account")}
+                {pick(`Masuk sebagai ${findUser(selected)?.name.split(" ")[0] ?? "akun terpilih"}`, `Sign in as ${findUser(selected)?.name.split(" ")[0] ?? "selected account"}`)}
               </Button>
             </>
           )}
           {(phase === "mfa" || phase === "verifying") && (
             <>
-              <h1 className="mt-2 text-xl font-bold">{pick("Verifikasi identitas Anda", "Verify it&apos;s you")}</h1>
+              <h1 className="mt-2 text-xl font-bold">{pick("Verifikasi identitas Anda", "Verify it’s you")}</h1>
               <p className="mt-1 text-sm text-[#5b6472] dark:text-[#9aa3b0]">{pick("Setujui permintaan masuk di aplikasi autentikator Anda.", "Approve the sign-in request in your authenticator app.")}</p>
               <div className="mt-6 flex flex-col items-center gap-3 rounded-md border border-black/10 p-6 dark:border-white/10">
                 <Fingerprint className="size-10 text-[#34528f]" aria-hidden />
                 <p className="text-center text-sm">
-                  Permintaan dikirim ke perangkat terdaftar <strong>{findUser(selected)?.name}</strong>.
+                  {pick("Permintaan dikirim ke perangkat terdaftar ", "Approval request sent to the registered device of ")}<strong>{findUser(selected)?.name}</strong>.
                 </p>
                 <p className="text-xs text-[#5b6472] dark:text-[#9aa3b0]">{pick("Nomor yang harus cocok: 42", "Number to match: 42")}</p>
               </div>
               <Button variant="primary" size="lg" className="mt-5 w-full" onClick={approve} loading={phase === "verifying"} loadingText={pick("Memverifikasi", "Verifying")}>
                 <ShieldCheck aria-hidden />
-                Saya sudah menyetujuinya
+                {pick("Saya sudah menyetujuinya", "I have approved it")}
               </Button>
               <Button variant="ghost" className="mt-2 w-full" onClick={() => setPhase("choose")} disabled={phase === "verifying"}>
-                Pilih akun lain
+                {pick("Pilih akun lain", "Choose another account")}
               </Button>
             </>
           )}

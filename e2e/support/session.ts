@@ -44,7 +44,19 @@ export function sessionCookie(user: TestUser, workspaceId: string = WORKSPACE) {
   };
 }
 
-/** Authenticates the browser context without exercising the IdP. */
-export async function signIn(page: Page, user: TestUser = USERS.admin, workspaceId: string = WORKSPACE) {
+/**
+ * Authenticates the browser context without exercising the IdP. Most specs assert
+ * Indonesian copy, so the seeded preference defaults to Bahasa Indonesia; pass
+ * "en" for tests that exercise the English default.
+ */
+export async function signIn(page: Page, user: TestUser = USERS.admin, workspaceId: string = WORKSPACE, locale: "id" | "en" | null = "id") {
+  if (locale !== null) {
+    await page.addInitScript((l) => {
+      const raw = window.localStorage.getItem("mdf.preferences");
+      const prefs = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+      prefs.locale = l;
+      window.localStorage.setItem("mdf.preferences", JSON.stringify(prefs));
+    }, locale);
+  }
   await page.context().addCookies([sessionCookie(user, workspaceId)]);
 }
