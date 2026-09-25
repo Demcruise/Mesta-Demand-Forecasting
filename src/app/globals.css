@@ -1,0 +1,422 @@
+@import "tailwindcss";
+
+/*
+ * Mesta Demand Forecasting — design tokens (DS-001).
+ *
+ *   primitive tokens  (--p-*)        raw palette, never used by components
+ *        ↓
+ *   semantic tokens   (--bg-*, --fg-*, --border-*, --primary-*, status, chart)
+ *        ↓
+ *   component tokens  (--control-*, --row-*, --drawer-*, --sidebar-*)
+ *        ↓
+ *   page usage        (Tailwind utilities generated from @theme below)
+ *
+ * The palette and type families are carried over from the Mesta Design System
+ * (navy brand, Manrope + IBM Plex Mono). Radius is tightened for a dense planning
+ * surface: cards use 10px, not the 24px WMS card radius (backlog §86: oversized
+ * rounded cards).
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* ── Primitive palette ─────────────────────────────────────────── */
+  --p-navy-50: #eef2f9;
+  --p-navy-100: #dce4f2;
+  --p-navy-200: #b9c8e4;
+  --p-navy-300: #8ea5d0;
+  --p-navy-400: #5b78b3;
+  --p-navy-500: #34528f;
+  --p-navy-600: #243f78;
+  --p-navy-700: #1a2b5f;
+  --p-navy-800: #14224b;
+  --p-navy-900: #0f1b40;
+
+  --p-gray-0: #ffffff;
+  --p-gray-25: #fafbfc;
+  --p-gray-50: #f5f7f9;
+  --p-gray-100: #eef1f4;
+  --p-gray-150: #e6eaee;
+  --p-gray-200: #dde2e8;
+  --p-gray-300: #c9d0d8;
+  --p-gray-400: #9ca5b0;
+  --p-gray-500: #6b747f;
+  --p-gray-600: #5b6572;
+  --p-gray-700: #3d4652;
+  --p-gray-800: #232a33;
+  --p-gray-900: #101820;
+
+  --p-green-500: #3f8f2f;
+  --p-green-600: #2f7424;
+  --p-green-50: #edf6e9;
+  --p-amber-500: #c7780e;
+  --p-amber-600: #a35f06;
+  --p-amber-50: #fdf3e4;
+  --p-red-500: #cc272e;
+  --p-red-600: #a91e24;
+  --p-red-50: #fbeaea;
+  --p-blue-500: #1479b0;
+  --p-blue-600: #0f6190;
+  --p-blue-50: #e7f2f9;
+  --p-orange-500: #f7941d;
+  --p-lime-500: #8dc63f;
+
+  /* ── Semantic: surfaces & text ─────────────────────────────────── */
+  --bg-canvas: var(--p-gray-50);
+  --bg-surface: var(--p-gray-0);
+  --bg-subtle: var(--p-gray-25);
+  --bg-muted: var(--p-gray-100);
+  --bg-hover: var(--p-gray-100);
+  --bg-selected: var(--p-navy-50);
+  --bg-overlay: rgb(16 24 32 / 0.42);
+  --bg-inverse: var(--p-gray-900);
+
+  --fg-primary: var(--p-gray-900);
+  --fg-secondary: var(--p-gray-600);
+  --fg-tertiary: var(--p-gray-500);
+  --fg-disabled: var(--p-gray-400);
+  --fg-inverse: var(--p-gray-0);
+
+  --border-default: var(--p-gray-200);
+  --border-strong: var(--p-gray-300);
+  --border-subtle: var(--p-gray-150);
+  --focus-ring: var(--p-navy-500);
+
+  /* ── Semantic: action ──────────────────────────────────────────── */
+  --primary: var(--p-navy-700);
+  --primary-hover: var(--p-navy-800);
+  --primary-active: var(--p-navy-900);
+  --primary-fg: var(--p-gray-0);
+  --primary-subtle: var(--p-navy-50);
+  --primary-subtle-fg: var(--p-navy-700);
+
+  /* ── Semantic: status (icon + label + colour, never colour alone) ─ */
+  --success: var(--p-green-500);
+  --success-subtle: var(--p-green-50);
+  --success-fg: var(--p-green-600);
+  --warning: var(--p-amber-500);
+  --warning-subtle: var(--p-amber-50);
+  --warning-fg: var(--p-amber-600);
+  --critical: var(--p-red-500);
+  --critical-subtle: var(--p-red-50);
+  --critical-fg: var(--p-red-600);
+  --info: var(--p-blue-500);
+  --info-subtle: var(--p-blue-50);
+  --info-fg: var(--p-blue-600);
+  --neutral: var(--p-gray-500);
+  --neutral-subtle: var(--p-gray-100);
+  --neutral-fg: var(--p-gray-700);
+
+  /* ── Semantic: data visualisation ──────────────────────────────── */
+  --chart-actual: var(--p-gray-800);
+  --chart-forecast: var(--p-navy-500);
+  --chart-interval: rgb(52 82 143 / 0.14);
+  --chart-previous: var(--p-gray-400);
+  --chart-scenario: var(--p-orange-500);
+  --chart-grid: var(--p-gray-150);
+  --chart-axis: var(--p-gray-500);
+  --chart-today: var(--p-gray-400);
+  --chart-series-1: var(--p-navy-500);
+  --chart-series-2: #2f8f9d;
+  --chart-series-3: var(--p-orange-500);
+  --chart-series-4: #7a5cc2;
+  --chart-series-5: var(--p-gray-500);
+
+  /* ── Component tokens ──────────────────────────────────────────── */
+  --control-h-sm: 2rem; /* 32 */
+  --control-h-md: 2.25rem; /* 36 */
+  --control-h-lg: 2.5rem; /* 40 */
+  --row-h-compact: 2.625rem; /* 42 — backlog: 40–44 */
+  --row-h-comfortable: 3.375rem; /* 54 — backlog: 52–56 */
+  --sidebar-w: 15.5rem; /* 248 */
+  --sidebar-w-collapsed: 3.5rem; /* 56 */
+  --topbar-h: 3.5rem; /* 56 */
+  --drawer-sm: 25rem; /* 400 */
+  --drawer-md: 32.5rem; /* 520 */
+  --drawer-lg: 37.5rem; /* 600 */
+  --content-max: 90rem; /* 1440 */
+
+  --shadow-sm: 0 1px 2px rgb(16 24 32 / 0.06);
+  --shadow-md: 0 1px 3px rgb(16 24 32 / 0.08), 0 4px 12px rgb(16 24 32 / 0.06);
+  --shadow-lg: 0 8px 24px rgb(16 24 32 / 0.12), 0 2px 6px rgb(16 24 32 / 0.06);
+
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  color-scheme: light;
+}
+
+.dark {
+  --bg-canvas: #0d141d;
+  --bg-surface: #141d28;
+  --bg-subtle: #172231;
+  --bg-muted: #1d2938;
+  --bg-hover: #1f2c3c;
+  --bg-selected: #1c2c48;
+  --bg-overlay: rgb(0 0 0 / 0.56);
+  --bg-inverse: var(--p-gray-50);
+
+  --fg-primary: #eef2f6;
+  --fg-secondary: #b3bdc9;
+  --fg-tertiary: #8b96a3;
+  --fg-disabled: #5d6875;
+  --fg-inverse: var(--p-gray-900);
+
+  --border-default: #263345;
+  --border-strong: #34445a;
+  --border-subtle: #1f2b3a;
+  --focus-ring: #7b9cdc;
+
+  --primary: #7b9cdc;
+  --primary-hover: #95b0e4;
+  --primary-active: #aec3ea;
+  --primary-fg: #0d141d;
+  --primary-subtle: #1c2c48;
+  --primary-subtle-fg: #b9c8e4;
+
+  --success: #6fbf5a;
+  --success-subtle: rgb(111 191 90 / 0.14);
+  --success-fg: #8fd27c;
+  --warning: #e7a33e;
+  --warning-subtle: rgb(231 163 62 / 0.15);
+  --warning-fg: #f0bb68;
+  --critical: #ef6166;
+  --critical-subtle: rgb(239 97 102 / 0.15);
+  --critical-fg: #f58b8f;
+  --info: #4aa8dc;
+  --info-subtle: rgb(74 168 220 / 0.15);
+  --info-fg: #7cc0e6;
+  --neutral: #8b96a3;
+  --neutral-subtle: #1d2938;
+  --neutral-fg: #c4ccd6;
+
+  --chart-actual: #dfe5ec;
+  --chart-forecast: #7b9cdc;
+  --chart-interval: rgb(123 156 220 / 0.18);
+  --chart-previous: #5d6875;
+  --chart-grid: #1f2b3a;
+  --chart-axis: #8b96a3;
+  --chart-today: #5d6875;
+  --chart-series-1: #7b9cdc;
+  --chart-series-2: #4fb3bf;
+  --chart-series-3: #f2a54a;
+  --chart-series-4: #a48be0;
+  --chart-series-5: #8b96a3;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 1px 3px rgb(0 0 0 / 0.32), 0 4px 12px rgb(0 0 0 / 0.24);
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.4);
+
+  color-scheme: dark;
+}
+
+/* Tailwind utilities compile straight to the semantic variables above. */
+@theme inline {
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-muted: var(--bg-muted);
+  --color-hover: var(--bg-hover);
+  --color-selected: var(--bg-selected);
+  --color-overlay: var(--bg-overlay);
+  --color-inverse: var(--bg-inverse);
+
+  --color-fg: var(--fg-primary);
+  --color-fg-secondary: var(--fg-secondary);
+  --color-fg-tertiary: var(--fg-tertiary);
+  --color-fg-disabled: var(--fg-disabled);
+  --color-fg-inverse: var(--fg-inverse);
+
+  --color-border: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+  --color-focus: var(--focus-ring);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-subtle-fg: var(--primary-subtle-fg);
+
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-fg: var(--success-fg);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-fg: var(--warning-fg);
+  --color-critical: var(--critical);
+  --color-critical-subtle: var(--critical-subtle);
+  --color-critical-fg: var(--critical-fg);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-fg: var(--info-fg);
+  --color-neutral: var(--neutral);
+  --color-neutral-subtle: var(--neutral-subtle);
+  --color-neutral-fg: var(--neutral-fg);
+
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.75rem;
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  --z-index-sticky: 20;
+  --z-index-sidebar: 30;
+  --z-index-overlay: 40;
+  --z-index-drawer: 50;
+  --z-index-dialog: 60;
+  --z-index-popover: 70;
+  --z-index-toast: 80;
+  --z-index-tooltip: 90;
+}
+
+/* ── Typography roles (DS-002) ─────────────────────────────────────── */
+@utility page-title {
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--fg-primary);
+}
+@utility section-title {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  color: var(--fg-primary);
+}
+@utility card-title {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 650;
+  color: var(--fg-primary);
+}
+@utility body {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  font-weight: 500;
+}
+@utility body-sm {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+@utility label {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  font-weight: 600;
+  color: var(--fg-primary);
+}
+@utility caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: var(--fg-secondary);
+}
+@utility metadata {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-tertiary);
+}
+@utility numeric-lg {
+  font-size: 1.625rem;
+  line-height: 2rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+@utility numeric-md {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+@utility mono-id {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border-default);
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--bg-canvas);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--p-navy-200);
+    color: var(--p-gray-900);
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skeleton shimmer, respected by the reduced-motion rule above. */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+@utility skeleton {
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
