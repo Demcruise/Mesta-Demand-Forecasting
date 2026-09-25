@@ -13,15 +13,15 @@ import { Panel } from "@/components/page/page";
 import { ErrorState, TableSkeleton } from "@/components/feedback/states";
 
 const ROWS: { key: NotificationCategory; label: string; description: string; locked?: boolean }[] = [
-  { key: "approval_requested", label: "Approval requested", description: "A request needs your decision. Always shown in the app.", locked: true },
-  { key: "approval_completed", label: "Approval completed", description: "A request you made or follow was decided." },
-  { key: "forecast_completed", label: "Forecast completed", description: "A run finished processing." },
-  { key: "forecast_failed", label: "Forecast failed", description: "A run stopped with an error." },
-  { key: "exception_opened", label: "Exception opened", description: "New exceptions above your minimum severity." },
-  { key: "data_quality", label: "Data quality issue", description: "A blocking or warning data check failed." },
-  { key: "data_freshness", label: "Data freshness", description: "A source is delayed or failing." },
-  { key: "scenario_completed", label: "Scenario simulated", description: "A scenario simulation finished." },
-  { key: "model_issue", label: "Model issue", description: "Drift or degradation on a production model." },
+  { key: "approval_requested", label: "Perlu persetujuan", description: "Ada permintaan yang menunggu keputusan Anda. Selalu tampil di aplikasi.", locked: true },
+  { key: "approval_completed", label: "Persetujuan selesai", description: "Permintaan yang Anda ajukan atau ikuti sudah diputuskan." },
+  { key: "forecast_completed", label: "Perkiraan selesai", description: "Sebuah proses selesai diproses." },
+  { key: "forecast_failed", label: "Perkiraan gagal", description: "Sebuah proses berhenti karena kesalahan." },
+  { key: "exception_opened", label: "Perlu ditinjau", description: "Item baru di atas tingkat minimum Anda." },
+  { key: "data_quality", label: "Masalah kualitas data", description: "Ada pemeriksaan data yang gagal atau memberi peringatan." },
+  { key: "data_freshness", label: "Data belum diperbarui", description: "Ada sumber data yang terlambat atau gagal." },
+  { key: "scenario_completed", label: "Skenario disimulasikan", description: "Simulasi skenario selesai." },
+  { key: "model_issue", label: "Masalah model", description: "Ada penyimpangan atau penurunan performa pada model produksi." },
 ];
 
 const CHANNELS: { key: NotificationChannel; label: string }[] = [
@@ -39,12 +39,12 @@ export function NotificationRulesSection() {
   }, [q.data]);
   const save = useApiMutation((c, v: NotificationRules) => updateNotificationRules(c, v), {
     invalidate: [["notification-rules"], ["notifications"]],
-    success: "Notification rules saved",
-    failure: "Notification rules were not saved.",
+    success: "Aturan notifikasi tersimpan",
+    failure: "Aturan notifikasi tidak tersimpan.",
   });
 
   if (q.isPending || !draft) return <Panel><TableSkeleton rows={6} columns={3} /></Panel>;
-  if (q.isError) return <ErrorState what="Notification rules could not be loaded." error={q.error} onRetry={() => q.refetch()} />;
+  if (q.isError) return <ErrorState what="Aturan notifikasi tidak dapat dimuat." error={q.error} onRetry={() => q.refetch()} />;
   const dirty = JSON.stringify(draft) !== JSON.stringify(q.data);
   const toggle = (cat: NotificationCategory, ch: NotificationChannel, on: boolean) =>
     setDraft((d) => {
@@ -55,11 +55,11 @@ export function NotificationRulesSection() {
 
   return (
     <Panel
-      title="Notifications"
+      title="Notifikasi"
       description={`Where and when Mesta notifies you (${session.email}). These rules apply only to you.`}
       footer={
         <>
-          <span className="caption">{dirty ? "Unsaved changes" : "No unsaved changes"}</span>
+          <span className="caption">{dirty ? "Perubahan belum disimpan" : "Tidak ada perubahan belum disimpan"}</span>
           <div className="flex gap-2">
             <Button variant="ghost" disabled={!dirty} onClick={() => setDraft(structuredClone(q.data))}>
               Discard changes
@@ -73,7 +73,7 @@ export function NotificationRulesSection() {
     >
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full min-w-[32rem] border-collapse text-[0.8125rem]">
-          <caption className="sr-only">Delivery channels by event</caption>
+          <caption className="sr-only">Saluran pengiriman per kejadian</caption>
           <thead className="bg-subtle">
             <tr>
               <th scope="col" className="border-b border-border px-3 py-2 text-left text-xs font-semibold text-fg-secondary">
@@ -112,33 +112,33 @@ export function NotificationRulesSection() {
         </table>
       </div>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <Field label="Minimum exception severity" htmlFor="nr-sev" hint="Exceptions below this level do not notify you.">
+        <Field label="Tingkat minimum" htmlFor="nr-sev" hint="Item di bawah tingkat ini tidak akan memberi tahu Anda.">
           <Select
             id="nr-sev"
             value={draft.minExceptionSeverity}
             onValueChange={(v) => setDraft({ ...draft, minExceptionSeverity: v as Severity })}
             options={[
-              { value: "info", label: "Info and above" },
-              { value: "warning", label: "Warning and above" },
-              { value: "critical", label: "Critical only" },
+              { value: "info", label: "Info ke atas" },
+              { value: "warning", label: "Peringatan ke atas" },
+              { value: "critical", label: "Hanya kritis" },
             ]}
           />
         </Field>
-        <Field label="Email digest" htmlFor="nr-digest" hint="Groups non-urgent emails into one message.">
+        <Field label="Ringkasan email" htmlFor="nr-digest" hint="Menggabungkan email yang tidak mendesak menjadi satu pesan.">
           <Select
             id="nr-digest"
             value={draft.digest}
             onValueChange={(v) => setDraft({ ...draft, digest: v as NotificationRules["digest"] })}
             options={[
-              { value: "off", label: "Send immediately" },
-              { value: "daily", label: "Daily at 08:00" },
-              { value: "weekly", label: "Weekly on Monday" },
+              { value: "off", label: "Kirim segera" },
+              { value: "daily", label: "Harian pukul 08:00" },
+              { value: "weekly", label: "Mingguan pada Senin" },
             ]}
           />
         </Field>
       </div>
       <div className="mt-2 border-t border-border-subtle">
-        <SwitchField id="nr-quiet" label="Quiet hours" description="Hold email notifications during these hours. Failed runs and approval requests still arrive in the app." checked={draft.quietHours.enabled} onCheckedChange={(v) => setDraft({ ...draft, quietHours: { ...draft.quietHours, enabled: v } })} />
+        <SwitchField id="nr-quiet" label="Jam tenang" description="Tahan email notifikasi selama jam ini. Proses yang gagal dan permintaan persetujuan tetap masuk ke aplikasi." checked={draft.quietHours.enabled} onCheckedChange={(v) => setDraft({ ...draft, quietHours: { ...draft.quietHours, enabled: v } })} />
         {draft.quietHours.enabled && (
           <div className="grid max-w-sm grid-cols-2 gap-3 pb-2">
             <Field label="From" htmlFor="nr-from">
