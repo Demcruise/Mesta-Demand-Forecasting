@@ -11,7 +11,7 @@ test("a fresh user sees English by default and can switch to Bahasa Indonesia", 
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Overview");
 
-  await page.goto("/administration/settings/personal");
+  await page.goto("/administration/settings/appearance");
   await page.getByRole("radio", { name: /Bahasa Indonesia/ }).click();
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Pengaturan");
@@ -28,7 +28,7 @@ test("switching back to English restores English copy", async ({ page }) => {
   await page.goto("/overview");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Ringkasan");
 
-  await page.goto("/administration/settings/personal");
+  await page.goto("/administration/settings/appearance");
   await page.getByRole("radio", { name: /English/ }).click();
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Settings");

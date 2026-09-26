@@ -529,7 +529,7 @@ export const id: Translations = {
     themeLight: "Terang",
     themeDark: "Gelap",
     themeSystem: "Ikuti sistem",
-    languageLabel: "Bahasa / Language",
+    languageLabel: "Bahasa",
     languageHint: "Pilih bahasa antarmuka aplikasi.",
     densityComfortable: "Nyaman",
     densityCompact: "Padat",

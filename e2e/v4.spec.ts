@@ -65,7 +65,7 @@ test.describe("table density is a global preference (DENSITY-001…004)", () => 
 
   test("Settings › Table density changes every table", async ({ page }) => {
     await signIn(page, USERS.planner, undefined, "en");
-    await page.goto("/administration/settings/personal");
+    await page.goto("/administration/settings/appearance");
     await page.getByRole("radio", { name: /Comfortable/ }).click();
     await page.goto("/demand-data/quality");
     const row = page.locator('[role="rowgroup"] [role="row"][data-row]').first();

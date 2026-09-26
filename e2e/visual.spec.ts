@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn, USERS } from "./support/session";
+import { setPreferences, signIn, USERS } from "./support/session";
 
 /**
  * FND-014 · visual regression. Snapshots must be deterministic, so the clock is frozen
@@ -54,6 +54,23 @@ const INDONESIAN_PAGES = ["/overview", "/forecasting/insights", "/demand-data/qu
 /** The audit log grows with events written during the session, so only the viewport is compared. */
 const fullPageFor = (path: string) => path !== "/administration/audit";
 
+/** v5 §70: the shared dark surfaces, exposed by the pages that use most of them. */
+const DARK_PAGES = ["/overview", "/administration/settings/appearance", "/forecasting/explorer", "/demand-data/quality", "/planning"];
+const DARK_SIZES = [
+  { width: 1440, height: 900 },
+  { width: 1280, height: 800 },
+  { width: 390, height: 844 },
+];
+
+/** v5 §69: account menu open in both languages and both themes, plus mobile. */
+const MENU_STATES = [
+  { locale: "en", theme: "light", width: 1440, height: 900 },
+  { locale: "id", theme: "light", width: 1440, height: 900 },
+  { locale: "en", theme: "dark", width: 1440, height: 900 },
+  { locale: "id", theme: "dark", width: 1440, height: 900 },
+  { locale: "en", theme: "dark", width: 390, height: 844 },
+] as const;
+
 const slug = (path: string) =>
   path
     .replace(/[^a-z0-9]+/gi, "-")
@@ -107,6 +124,35 @@ test.describe("visual regression", () => {
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       await page.waitForLoadState("networkidle");
       await expect(page).toHaveScreenshot(`${slug(path)}-1440-id.png`, { fullPage: true, animations: "disabled" });
+    });
+  }
+
+  for (const size of DARK_SIZES) {
+    for (const path of DARK_PAGES) {
+      if (size.width === 390 && path !== "/overview" && path !== "/administration/settings/appearance") continue;
+      test(`${path} · ${size.width} · dark matches its baseline`, async ({ page }) => {
+        await page.setViewportSize(size);
+        await signIn(page, USERS.admin, undefined, "en");
+        await setPreferences(page, { theme: "dark" });
+        await page.goto(path);
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        await page.waitForLoadState("networkidle");
+        await expect(page).toHaveScreenshot(`${slug(path)}-${size.width}-dark.png`, { fullPage: true, animations: "disabled" });
+      });
+    }
+  }
+
+  for (const m of MENU_STATES) {
+    test(`account menu open · ${m.locale} · ${m.theme} · ${m.width} matches its baseline`, async ({ page }) => {
+      await page.setViewportSize({ width: m.width, height: m.height });
+      await signIn(page, USERS.admin, undefined, m.locale);
+      await setPreferences(page, { theme: m.theme });
+      await page.goto("/overview");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      await page.getByRole("button", { name: /Account menu|Menu akun/ }).click();
+      await expect(page.getByRole("menu")).toBeVisible();
+      await expect(page).toHaveScreenshot(`account-menu-${m.locale}-${m.theme}-${m.width}.png`, { animations: "disabled" });
     });
   }
 });

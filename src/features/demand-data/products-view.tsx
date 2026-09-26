@@ -42,57 +42,32 @@ export function ProductsView() {
   const q = useApiQuery(["products", state.query], (c) => listProducts(c, state.query), { keepPrevious: true });
   const facets = React.useMemo(() => catalogueFacets(ctx), [ctx]);
 
-  const columns = localized(React.useMemo<ColumnDef<Product, unknown>[]>(
+  const columns = React.useMemo<ColumnDef<Product, unknown>[]>(
     () => [
       { id: "product", header: pick("Produk", "Product"), meta: { width: "minmax(280px, 2.5fr)", sortKey: "name", pinned: true, label: pick("Produk", "Product") } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original} /> },
       { id: "subcategory", header: pick("Subkategori", "Subcategory"), meta: { width: "minmax(140px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.subcategory}</span> },
-      { id: "brand", header: "Brand", meta: { width: "130px", sortKey: "brand", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate">{row.original.brand}</span> },
-      { id: "unit", header: "Unit", meta: { width: "100px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.unit}</span> },
+      { id: "brand", header: pick("Merek", "Brand"), meta: { width: "130px", sortKey: "brand", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate">{row.original.brand}</span> },
+      { id: "unit", header: pick("Satuan", "Unit"), meta: { width: "100px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.unit}</span> },
       {
         id: "lifecycle",
         header: pick("Siklus produk", "Lifecycle"),
         meta: { width: "120px", sortKey: "lifecycle", description: pick("Dari master produk. Produk baru memiliki riwayat lebih pendek dan rentang lebih lebar.", "From the product master. New listings have less history and wider intervals.") } satisfies ColumnMeta,
         cell: ({ row }) => <Tag tone={LIFECYCLE[row.original.lifecycle].tone}>{LIFECYCLE[row.original.lifecycle].label}</Tag>,
       },
-      { id: "launched", header: "Diluncurkan", meta: { width: "120px", sortKey: "launchedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.launchedAt} /> },
+      { id: "launched", header: pick("Diluncurkan", "Launched"), meta: { width: "120px", sortKey: "launchedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.launchedAt} /> },
       {
         id: "actions",
-        header: () => <span className="sr-only">{"Aksi"}</span>,
-        meta: { width: "120px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">{pick("Aksi", "Actions")}</span>,
+        meta: { width: "120px", pinned: true, align: "left", label: pick("Aksi", "Actions") } satisfies ColumnMeta,
         cell: ({ row }) => (
           <Link href={`/forecasting/detail/${row.original.id}`} onClick={(e) => e.stopPropagation()} className="text-xs font-semibold text-primary hover:underline">
-            View forecast
+            {pick("Lihat perkiraan", "View forecast")}
           </Link>
         ),
       },
     ],
     [],
-  ), React.useMemo<ColumnDef<Product, unknown>[]>(
-    () => [
-      { id: "product", header: "Product", meta: { width: "minmax(280px, 2.5fr)", sortKey: "name", pinned: true, label: "Product" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original} /> },
-      { id: "subcategory", header: "Subcategory", meta: { width: "minmax(140px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{row.original.subcategory}</span> },
-      { id: "brand", header: "Brand", meta: { width: "130px", sortKey: "brand", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate">{row.original.brand}</span> },
-      { id: "unit", header: "Unit", meta: { width: "100px", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.unit}</span> },
-      {
-        id: "lifecycle",
-        header: "Lifecycle",
-        meta: { width: "120px", sortKey: "lifecycle", description: "From the product master. New listings have less history and wider intervals." } satisfies ColumnMeta,
-        cell: ({ row }) => <Tag tone={LIFECYCLE[row.original.lifecycle].tone}>{LIFECYCLE[row.original.lifecycle].label}</Tag>,
-      },
-      { id: "launched", header: "Launched", meta: { width: "120px", sortKey: "launchedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <DateCell value={row.original.launchedAt} /> },
-      {
-        id: "actions",
-        header: () => <span className="sr-only">{"Actions"}</span>,
-        meta: { width: "120px", pinned: true, label: "Actions" } satisfies ColumnMeta,
-        cell: ({ row }) => (
-          <Link href={`/forecasting/detail/${row.original.id}`} onClick={(e) => e.stopPropagation()} className="text-xs font-semibold text-primary hover:underline">
-            View forecast
-          </Link>
-        ),
-      },
-    ],
-    [],
-  ));
+  );
 
   return (
     <PageContainer>

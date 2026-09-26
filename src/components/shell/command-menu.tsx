@@ -122,7 +122,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
       <D.Root open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(""); }}>
         <D.Portal>
           <D.Overlay className="fixed inset-0 z-[var(--z-index-dialog)] bg-overlay" />
-          <D.Content className="fixed left-1/2 top-[12vh] z-[var(--z-index-dialog)] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-surface shadow-dialog outline-none">
+          <D.Content className="fixed left-1/2 top-[12vh] z-[var(--z-index-dialog)] w-[calc(100vw-2rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-xl border border-border-popover bg-popover shadow-dialog outline-none">
             <D.Title className="sr-only">{isId ? "Cari dan perintah" : "Search and commands"}</D.Title>
             <D.Description className="sr-only">
               {isId ? "Cari produk, perkiraan, skenario, model, item yang perlu ditinjau dan persetujuan di ruang kerja ini, atau jalankan perintah." : "Search products, runs, scenarios, models, exceptions and approvals in this workspace, or run commands."}

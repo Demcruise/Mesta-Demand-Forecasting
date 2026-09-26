@@ -54,15 +54,11 @@ export function NotificationRulesSection() {
   React.useEffect(() => {
     if (q.data) setDraft(structuredClone(q.data));
   }, [q.data]);
-  const save = localized(useApiMutation((c, v: NotificationRules) => updateNotificationRules(c, v), {
+  const save = useApiMutation((c, v: NotificationRules) => updateNotificationRules(c, v), {
     invalidate: [["notification-rules"], ["notifications"]],
-    success: "Aturan notifikasi tersimpan",
-    failure: "Aturan notifikasi tidak tersimpan.",
-  }), useApiMutation((c, v: NotificationRules) => updateNotificationRules(c, v), {
-    invalidate: [["notification-rules"], ["notifications"]],
-    success: "Notification rules saved",
-    failure: "Notification rules were not saved.",
-  }));
+    success: pick("Aturan notifikasi tersimpan", "Notification rules saved"),
+    failure: pick("Aturan notifikasi tidak tersimpan.", "Notification rules were not saved."),
+  });
 
   if (q.isPending || !draft) return <Panel><TableSkeleton rows={6} columns={3} /></Panel>;
   if (q.isError) return <ErrorState what={pick("Aturan notifikasi tidak dapat dimuat.", "Notification rules could not be loaded.")} error={q.error} onRetry={() => q.refetch()} />;

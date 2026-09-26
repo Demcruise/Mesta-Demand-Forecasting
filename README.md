@@ -36,7 +36,7 @@ Open <http://localhost:3000>. You will be redirected to sign-in.
 
 ### Demo controls
 
-The user menu has **Demo controls** to exercise states: *Slow network* (loading states), *Fail reads* (error states) and *Fail writes* (failed mutations).
+**Settings › Demo controls** (shown in non-production workspaces) exercises states: *Slow network* (loading states), *Fail reads* (error states) and *Fail writes* (failed mutations). The account menu only holds identity, preferences, language, theme and sign out.
 
 ## Scripts
 

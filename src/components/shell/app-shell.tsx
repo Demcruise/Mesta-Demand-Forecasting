@@ -76,7 +76,7 @@ function SearchButton() {
       <button
         type="button"
         onClick={open}
-        className="hidden h-9 w-64 items-center gap-2 rounded-md border border-border bg-subtle px-3 text-left text-[0.8125rem] text-fg-tertiary hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus lg:flex"
+        className="hidden h-9 w-64 items-center gap-2 rounded-md border border-border bg-input px-3 text-left text-[0.8125rem] text-fg-tertiary hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus lg:flex"
         aria-label={t.nav.searchPlaceholder}
         aria-keyshortcuts={mac ? "Meta+K" : "Control+K"}
       >
@@ -100,7 +100,7 @@ function LanguageToggle() {
       <button
         type="button"
         onClick={() => setPreference("locale", isId ? "en" : "id")}
-        className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-surface px-2 text-xs font-semibold text-fg hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
+        className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-input px-2 text-xs font-semibold text-fg hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
         aria-label={isId ? "Ganti ke English" : "Switch to Bahasa Indonesia"}
       >
         <Languages className="mr-1 size-3.5 text-fg-tertiary" aria-hidden />
@@ -142,7 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <D.Root open={mobileOpen} onOpenChange={setMobileOpen}>
               <D.Portal>
                 <D.Overlay className="fixed inset-0 z-[var(--z-index-drawer)] bg-overlay lg:hidden" />
-                <D.Content className="fixed inset-y-0 left-0 z-[var(--z-index-drawer)] w-[min(20rem,85vw)] border-r border-border bg-surface shadow-drawer outline-none lg:hidden">
+                <D.Content className="fixed inset-y-0 left-0 z-[var(--z-index-drawer)] w-[min(20rem,85vw)] border-r border-border bg-sidebar shadow-drawer outline-none lg:hidden">
                   <D.Title className="sr-only">{isId ? "Navigasi" : "Navigation"}</D.Title>
                   <D.Description className="sr-only">{isId ? "Navigasi utama" : "Main navigation"}</D.Description>
                   <D.Close className="absolute right-2 top-3 z-10 inline-flex size-8 items-center justify-center rounded-md text-fg-tertiary hover:bg-hover" aria-label={isId ? "Tutup navigasi" : "Close navigation"}>
@@ -153,7 +153,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </D.Portal>
             </D.Root>
             <div className="flex min-w-0 flex-1 flex-col">
-              <header className="sticky top-0 z-[var(--z-index-sticky)] border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+              <header className="sticky top-0 z-[var(--z-index-sticky)] border-b border-border bg-topbar/95 backdrop-blur supports-[backdrop-filter]:bg-topbar/85">
                 <div className="flex h-[var(--topbar-h)] items-center gap-3 px-4 sm:px-6">
                   <button type="button" onClick={() => setMobileOpen(true)} className="-ml-1 inline-flex size-9 items-center justify-center rounded-md text-fg-secondary hover:bg-hover lg:hidden" aria-label={isId ? "Buka navigasi" : "Open navigation"}>
                     <Menu className="size-5" aria-hidden />

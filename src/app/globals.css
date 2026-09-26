@@ -143,6 +143,18 @@
   --drawer-lg: 37.5rem; /* 600 */
   --content-max: 90rem; /* 1440 */
 
+  /* Component surfaces: light maps them onto the neutral ramp; dark overrides them. */
+  --bg-sidebar: var(--bg-surface);
+  --bg-topbar: var(--bg-surface);
+  --bg-popover: var(--bg-surface);
+  --border-popover: var(--border-default);
+  --bg-input: var(--bg-surface);
+  --bg-table-header: var(--bg-subtle);
+  --bg-row-hover: var(--bg-hover);
+  --bg-row-selected: var(--bg-selected);
+  --bg-nav-active: var(--bg-selected);
+  --fg-nav-active: var(--primary-subtle-fg);
+
   /*
    * V2-FE-005 — shadow system. Cards, tables and inputs carry no shadow (border
    * only); shadow is reserved for things that float above the page.
@@ -161,67 +173,88 @@
   color-scheme: light;
 }
 
+/*
+ * v5 DARK-001…013 — neutral charcoal foundation (Vestra-like tonal relationship, not
+ * its branding): near-black canvas, slightly lighter surfaces, thin neutral borders,
+ * bright neutral text. Mesta blue is only an accent (actions, focus, selection, links,
+ * the forecast line) — never a surface or a border colour.
+ *   L1 canvas #101010 · L2 surface #151515 · L3 subtle #191919 · L4 hover #202020/#242424
+ *   · L5 selected = primary-subtle
+ */
 .dark {
-  --bg-canvas: #0d141d;
-  --bg-surface: #141d28;
-  --bg-subtle: #172231;
-  --bg-muted: #1d2938;
-  --bg-hover: #1f2c3c;
-  --bg-selected: #1c2c48;
-  --bg-overlay: rgb(0 0 0 / 0.56);
+  --bg-canvas: #101010;
+  --bg-surface: #151515;
+  --bg-subtle: #191919;
+  --bg-muted: #202020;
+  --bg-hover: #242424;
+  --bg-selected: #202942;
+  --bg-overlay: rgb(0 0 0 / 0.62);
   --bg-inverse: var(--p-gray-50);
 
-  --fg-primary: #eef2f6;
-  --fg-secondary: #b3bdc9;
-  --fg-tertiary: #8b96a3;
-  --fg-disabled: #5d6875;
+  --fg-primary: #f3f4f6;
+  --fg-secondary: #a7adb7;
+  /* #737984 fails AA on the muted/hover surfaces; #858b96 clears 4.5:1 up to #242424. */
+  --fg-tertiary: #858b96;
+  --fg-disabled: #555b64;
   --fg-inverse: var(--p-gray-900);
 
-  --border-default: #263345;
-  --border-strong: #34445a;
-  --border-subtle: #1f2b3a;
+  --border-default: #292929;
+  --border-strong: #383838;
+  --border-subtle: #202020;
   --focus-ring: #7b9cdc;
 
   --primary: #7b9cdc;
   --primary-hover: #95b0e4;
   --primary-active: #aec3ea;
-  --primary-fg: #0d141d;
-  --primary-subtle: #1c2c48;
+  --primary-fg: #101010;
+  --primary-subtle: #202942;
   --primary-subtle-fg: #b9c8e4;
 
   --success: #6fbf5a;
-  --success-subtle: rgb(111 191 90 / 0.14);
+  --success-subtle: rgb(111 191 90 / 0.12);
   --success-fg: #8fd27c;
   --warning: #e7a33e;
-  --warning-subtle: rgb(231 163 62 / 0.15);
+  --warning-subtle: rgb(231 163 62 / 0.12);
   --warning-fg: #f0bb68;
   --critical: #ef6166;
-  --critical-subtle: rgb(239 97 102 / 0.15);
+  --critical-subtle: rgb(239 97 102 / 0.12);
   --critical-fg: #f58b8f;
   --info: #4aa8dc;
-  --info-subtle: rgb(74 168 220 / 0.15);
+  --info-subtle: rgb(74 168 220 / 0.12);
   --info-fg: #7cc0e6;
-  --neutral: #8b96a3;
-  --neutral-subtle: #1d2938;
-  --neutral-fg: #c4ccd6;
+  --neutral: #858b96;
+  --neutral-subtle: #202020;
+  --neutral-fg: #c9cdd3;
 
-  --chart-actual: #dfe5ec;
+  --chart-actual: #d9dce1;
   --chart-forecast: #7b9cdc;
-  --chart-interval: rgb(123 156 220 / 0.18);
-  --chart-previous: #5d6875;
-  --chart-grid: #1f2b3a;
-  --chart-axis: #8b96a3;
-  --chart-today: #5d6875;
+  --chart-interval: rgb(123 156 220 / 0.16);
+  --chart-previous: #737984;
+  --chart-grid: #242424;
+  --chart-axis: #858b96;
+  --chart-today: #555b64;
   --chart-series-1: #7b9cdc;
   --chart-series-2: #4fb3bf;
   --chart-series-3: #f2a54a;
   --chart-series-4: #a48be0;
-  --chart-series-5: #8b96a3;
+  --chart-series-5: #858b96;
 
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
-  --shadow-popover: 0 1px 2px rgb(0 0 0 / 0.32), 0 4px 12px rgb(0 0 0 / 0.24);
-  --shadow-drawer: 0 8px 24px rgb(0 0 0 / 0.4);
-  --shadow-dialog: 0 16px 48px rgb(0 0 0 / 0.5);
+  /* Component surfaces (DARK-006…011). */
+  --bg-sidebar: #151515;
+  --bg-topbar: #101010;
+  --bg-popover: #171717;
+  --border-popover: #2a2a2a;
+  --bg-input: #151515;
+  --bg-table-header: #151515;
+  --bg-row-hover: #181818;
+  --bg-row-selected: #1e293b;
+  --bg-nav-active: #202020;
+  --fg-nav-active: #f3f4f6;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-popover: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.36);
+  --shadow-drawer: 0 8px 24px rgb(0 0 0 / 0.5);
+  --shadow-dialog: 0 16px 48px rgb(0 0 0 / 0.6);
   --shadow-md: var(--shadow-popover);
   --shadow-lg: var(--shadow-drawer);
 
@@ -241,6 +274,16 @@
   --color-selected: var(--bg-selected);
   --color-overlay: var(--bg-overlay);
   --color-inverse: var(--bg-inverse);
+  --color-sidebar: var(--bg-sidebar);
+  --color-topbar: var(--bg-topbar);
+  --color-popover: var(--bg-popover);
+  --color-border-popover: var(--border-popover);
+  --color-input: var(--bg-input);
+  --color-table-header: var(--bg-table-header);
+  --color-row-hover: var(--bg-row-hover);
+  --color-row-selected: var(--bg-row-selected);
+  --color-nav-active: var(--bg-nav-active);
+  --color-fg-nav-active: var(--fg-nav-active);
 
   --color-fg: var(--fg-primary);
   --color-fg-secondary: var(--fg-secondary);

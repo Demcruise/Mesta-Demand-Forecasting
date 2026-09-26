@@ -1,5 +1,5 @@
 /** Settings section keys. Shared by the server route (validation) and the client view. */
-export const SETTINGS_SECTIONS = ["personal", "notifications", "workspace", "forecasting", "data", "approvals", "roles", "audit", "security", "api"] as const;
+export const SETTINGS_SECTIONS = ["personal", "notifications", "appearance", "workspace", "forecasting", "data", "approvals", "roles", "audit", "security", "api", "demo"] as const;
 
 export type SectionKey = (typeof SETTINGS_SECTIONS)[number];
 

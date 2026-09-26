@@ -158,7 +158,7 @@ Status of the [Frontend Backlog v4](Mesta_Demand_Forecasting_Frontend_Backlog_v4
 |---|---|---|
 | FE-V4-001 White-first canvas | Done | Already white since v3; verified on every affected page. |
 | FE-METRIC-001…005 Compact metric card | Done | `MetricCard variant="compact"` in `src/components/forecasting/metrics.tsx`: icon + label → one dominant value (`numeric-xl`) → one short comparison row (`MetricDelta`) → optional sparkline from real series only. Whole card is the link, equal heights (`min-h-44`), definitions move to the label tooltip. `formatMetric` gives scan-first values (4.77M / 816K) with the exact value in the tooltip and for assistive tech. |
-| DENSITY-001…004 Global table density | Done | Per-table Comfortable/Compact toggle, `hideDensityToggle` and local density state removed. Density is owned by Settings › Personal › Table density and defaults to Compact for new viewers. The user menu no longer duplicates it. |
+| DENSITY-001…004 Global table density | Done | Per-table Comfortable/Compact toggle, `hideDensityToggle` and local density state removed. Density is owned by Settings › Appearance › Table density (v5) and defaults to Compact for new viewers. The user menu no longer duplicates it. |
 | TABLE-ALIGN-001 / §122–127 Alignment contract | Done | `ColumnMeta.align` plus one resolver, `getColumnAlignment` (`src/components/tables/column-alignment.ts`), used by header and cells alike. Explicit alignment set on Forecast runs, Explorer, Data quality, Planning, Approvals, Audit and Users. |
 | TOOLBAR-001/002 Toolbar layout | Done | Search and filters on the left; Views / Columns / Export on the right, wrapping as one group. |
 | COLUMNS-CHECK-001 Checkbox menu items | Done | The box reads Radix state through `group-data-[state=…]`: checked = primary fill + light check, unchecked = white, disabled = muted. Row hover never erases the checked fill. Inherited by Exceptions, Approvals, Audit log and Users & roles. |
@@ -191,3 +191,42 @@ Status of the [Frontend Backlog v4](Mesta_Demand_Forecasting_Frontend_Backlog_v4
 - E2E: `e2e/v4.spec.ts` — no Indonesian UI copy in English and vice versa on all 15 affected pages, compact default density and Settings-driven density, column checkbox state across close/reopen and keyboard, Horizon and SKUs-affected axis alignment, scenario step order, forecast lineage stages, equal-height health cards.
 - Visual: `e2e/visual.spec.ts` — 15 affected pages at 1440 (en), 6 dense pages at 1280 / 1024 / 768 / 390, and 6 pages in Bahasa Indonesia.
 - Manual screen-reader review is still outstanding (unchanged from v3).
+
+---
+
+# Frontend backlog v5 — profile menu, neutral dark theme, complete localisation
+
+Status of the [Frontend Backlog v5](Mesta_Demand_Forecasting_Frontend_Backlog_v5_Profile_Dark_Localization.md).
+
+## Profile menu
+
+| Item | Status | Notes |
+|---|---|---|
+| PROFILE-001/002 Account-only IA | Done | Identity (name, email, role · workspace) → Personal preferences / Settings → Language → Theme → Sign out. 288px wide, fits one viewport and a 390px screen. |
+| PROFILE-003 Demo controls | Done | Moved to **Settings › Demo controls**, listed only for non-production workspaces. The mock backend now hydrates the controls on its first request, so they survive reloads without the menu. |
+| PROFILE-004 Session diagnostics | Done | "Signed in via" and session expiry moved to Settings › Personal preferences › Session. |
+| PROFILE-005…008 Sign out | Done | Existing `signOut("user")` flow; last item, neutral styling, no confirmation. |
+| PROFILE-011/012 · §51 Identity & radios | Done | No environment, IdP or expiry in the identity block. Radio items: selected = primary ring + dot, unselected = empty neutral circle. Language names are never translated. |
+| §53/§54 Settings IA | Done | Groups: Personal (Personal preferences, Notifications) · Appearance (language, theme, table density, sidebar) · Workspace · Demo. Intro shortened to one line. |
+
+## Neutral dark theme
+
+| Item | Status | Notes |
+|---|---|---|
+| DARK-001…005 Tokens | Done | Canvas `#101010`, surface `#151515`, subtle `#191919`, muted `#202020`, hover `#242424`, selected `#202942`; borders `#292929` / `#202020` / `#383838`; text `#F3F4F6` / `#A7ADB7` / `#858B96` (tertiary lifted from `#737984` to keep 4.5:1 on hover surfaces). Mesta blue only for actions, focus, selection, links and the forecast line. |
+| DARK-006…011 Component surfaces | Done | New component tokens consumed by shared components: `bg-sidebar`, `bg-topbar`, `bg-popover` + `border-popover` (dropdowns, popovers, select, toasts, command menu), `bg-input` (inputs, selects, checkboxes, radios), `bg-table-header`, `bg-row-hover`, `bg-row-selected`, `bg-nav-active` (neutral fill + primary indicator and icon). Light maps them onto the existing neutral ramp. |
+| DARK-012/013 Metric cards & charts | Done | Cards are neutral surfaces; chart grid `#242424`, axis `#858B96`, interval primary at 16% alpha. |
+| §62 Hard-coded navy | Done | No legacy dark navy remains outside the deliberately third-party-styled demo IdP page; `themeColor` updated. |
+
+## Localisation
+
+| Item | Status | Notes |
+|---|---|---|
+| §34–49 Leakage audit | Done | Scans for wrong-language text inside English and Indonesian sides of `pick()`, `localized()` and the dictionaries, plus identical id/en pairs. Fixed: audit entity labels (English tree contained Indonesian), product columns (duplicated id/en column sets), model evaluation scope, language label. `localized()` misused on plain values and hooks (always-truthy proxies) replaced with `pick()`. |
+| §73 Every route | Done | `e2e/v5.spec.ts` checks 29 routes in both languages, including aria-labels and placeholders in English. |
+
+## Verification
+
+- `e2e/v5.spec.ts`: menu contents, labels in both languages, keyboard, 390px fit, sign out; settings IA; demo controls toggle the mock backend and are hidden in production; dark token regression (body, sidebar, table, input, active nav, dropdown) and no legacy navy; single-locale check on 29 routes.
+- `e2e/accessibility.spec.ts`: axe WCAG A/AA also runs on six pages in the dark theme.
+- `e2e/visual.spec.ts`: dark baselines (5 pages at 1440/1280, 2 at 390) and the account menu open in en/id × light/dark plus 390.

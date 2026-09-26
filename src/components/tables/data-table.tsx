@@ -340,7 +340,7 @@ export function DataTable<T>({
           <div role="table" aria-label={label} aria-rowcount={pagination?.total ?? rows.length} aria-busy={isFetching || undefined} className="min-w-full" style={{ minWidth: "max-content" }}>
             <div role="rowgroup" className="sticky top-0 z-[1]">
               {table.getHeaderGroups().map((hg) => (
-                <div key={hg.id} role="row" className="grid h-10 items-stretch border-b border-border bg-subtle" style={{ gridTemplateColumns: template }}>
+                <div key={hg.id} role="row" className="grid h-10 items-stretch border-b border-border bg-table-header" style={{ gridTemplateColumns: template }}>
                   {hg.headers.map((header) => {
                     const meta = header.column.columnDef.meta as ColumnMeta | undefined;
                     const align = getColumnAlignment(meta);
@@ -420,8 +420,8 @@ export function DataTable<T>({
                       onKeyDown={(e) => onRowKeyDown(e, index, row)}
                       className={cn(
                         "grid items-center border-b border-border-subtle last:border-b-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
-                        onRowClick && "cursor-pointer hover:bg-hover",
-                        (row.getIsSelected() || active) && "bg-selected hover:bg-selected",
+                        onRowClick && "cursor-pointer hover:bg-row-hover",
+                        (row.getIsSelected() || active) && "bg-row-selected hover:bg-row-selected",
                         top !== null && "absolute left-0 top-0 w-full",
                       )}
                       style={{ gridTemplateColumns: template, height: rowHeight, ...(top !== null ? { transform: `translateY(${top}px)` } : {}) }}

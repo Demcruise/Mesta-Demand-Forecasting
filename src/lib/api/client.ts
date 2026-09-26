@@ -56,24 +56,35 @@ export function saveDemoControls(next: Partial<DemoControls>) {
   }
 }
 
+// The controls persist per browser; hydrate them on the first request so they survive a
+// reload no matter which screen opens first (they no longer live in the account menu).
+let hydrated = false;
+function ensureHydrated() {
+  if (hydrated || typeof window === "undefined") return;
+  hydrated = true;
+  loadDemoControls();
+}
+
 function latency() {
   const base = demoControls.latency === "fast" ? 60 : demoControls.latency === "slow" ? 2200 : 320;
   return base + Math.random() * base * 0.6;
 }
 
 export async function read<T>(fn: () => T): Promise<T> {
+  ensureHydrated();
   await delay(latency());
   if (demoControls.failReads) {
-    throw new ApiError(pick("Layanan tidak merespons.", "The service did not respond."), "unavailable", pick("Kontrol demo “Gagal membaca” aktif. Matikan di menu pengguna untuk memulihkan.", "Demo control “Fail reads” is on. Turn it off in the user menu to recover."));
+    throw new ApiError(pick("Layanan tidak merespons.", "The service did not respond."), "unavailable", pick("Kontrol demo “Gagal membaca” aktif. Matikan di Pengaturan › Kontrol demo untuk memulihkan.", "Demo control “Fail reads” is on. Turn it off in Settings › Demo controls to recover."));
   }
   return fn();
 }
 
 export async function write<T>(ctx: ApiContext, permission: Permission | null, fn: () => T): Promise<T> {
+  ensureHydrated();
   await delay(latency());
   if (permission && !can(ctx.role, permission)) throw new PermissionError(permission);
   if (demoControls.failWrites) {
-    throw new ApiError(pick("Perubahan tidak tersimpan.", "The change was not saved."), "unavailable", pick("Kontrol demo “Gagal menulis” aktif. Matikan di menu pengguna untuk memulihkan.", "Demo control “Fail writes” is on. Turn it off in the user menu to recover."));
+    throw new ApiError(pick("Perubahan tidak tersimpan.", "The change was not saved."), "unavailable", pick("Kontrol demo “Gagal menulis” aktif. Matikan di Pengaturan › Kontrol demo untuk memulihkan.", "Demo control “Fail writes” is on. Turn it off in Settings › Demo controls to recover."));
   }
   return fn();
 }

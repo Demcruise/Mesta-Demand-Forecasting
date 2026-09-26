@@ -60,7 +60,7 @@ export const PopoverContent = React.forwardRef<HTMLDivElement, React.ComponentPr
           ref={ref}
           align={align}
           sideOffset={sideOffset}
-          className={cn("z-[var(--z-index-popover)] rounded-lg border border-border bg-surface p-3 text-fg shadow-popover outline-none", className)}
+          className={cn("z-[var(--z-index-popover)] rounded-lg border border-border-popover bg-popover p-3 text-fg shadow-popover outline-none", className)}
           {...props}
         />
       </P.Portal>
@@ -82,7 +82,7 @@ export const DropdownMenuContent = React.forwardRef<HTMLDivElement, React.Compon
           ref={ref}
           align={align}
           sideOffset={sideOffset}
-          className={cn("z-[var(--z-index-popover)] min-w-48 rounded-md border border-border bg-surface p-1 text-fg shadow-popover", className)}
+          className={cn("z-[var(--z-index-popover)] min-w-48 rounded-md border border-border-popover bg-popover p-1 text-fg shadow-popover", className)}
           {...props}
         />
       </DM.Portal>
@@ -138,7 +138,7 @@ export const DropdownMenuCheckboxItem = React.forwardRef<HTMLDivElement, React.C
       >
         <span
           aria-hidden
-          className="absolute left-2 flex size-4 items-center justify-center rounded-xs border border-border-strong bg-surface transition-colors group-data-[state=checked]:border-primary group-data-[state=checked]:bg-primary group-data-[state=indeterminate]:border-primary group-data-[state=indeterminate]:bg-primary group-data-[disabled]:border-border group-data-[disabled]:bg-muted group-data-[disabled]:group-data-[state=checked]:bg-fg-disabled"
+          className="absolute left-2 flex size-4 items-center justify-center rounded-xs border border-border-strong bg-input transition-colors group-data-[state=checked]:border-primary group-data-[state=checked]:bg-primary group-data-[state=indeterminate]:border-primary group-data-[state=indeterminate]:bg-primary group-data-[disabled]:border-border group-data-[disabled]:bg-muted group-data-[disabled]:group-data-[state=checked]:bg-fg-disabled"
         >
           <DM.ItemIndicator>
             <svg viewBox="0 0 16 16" className="size-3 text-primary-fg" aria-hidden>
@@ -158,12 +158,13 @@ export const DropdownMenuRadioItem = React.forwardRef<HTMLDivElement, React.Comp
     return (
       <DM.RadioItem
         ref={ref}
-        className={cn("relative flex h-8 cursor-pointer select-none items-center gap-2 rounded-sm pl-8 pr-2 text-sm outline-none data-[highlighted]:bg-hover", className)}
+        className={cn("group relative flex h-8 cursor-pointer select-none items-center gap-2 rounded-sm pl-8 pr-2 text-sm outline-none data-[highlighted]:bg-hover", className)}
         {...props}
       >
-        <span className="absolute left-2.5 flex size-3 items-center justify-center rounded-full border border-border-strong">
+        {/* v5 §51: selected = primary ring + filled dot; unselected = empty neutral circle. */}
+        <span aria-hidden className="absolute left-2.5 flex size-3.5 items-center justify-center rounded-full border border-border-strong bg-input group-data-[state=checked]:border-primary">
           <DM.ItemIndicator>
-            <span className="block size-1.5 rounded-full bg-primary" />
+            <span className="block size-2 rounded-full bg-primary" />
           </DM.ItemIndicator>
         </span>
         {children}

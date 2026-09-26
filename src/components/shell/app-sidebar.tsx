@@ -38,7 +38,7 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
   const setup = onboarding.data && !onboarding.data.dismissed && !onboarding.data.complete ? onboarding.data : null;
 
   return (
-    <nav aria-label={pick("Utama", "Main")} className={cn("flex h-full flex-col bg-surface", !mobile && "border-r border-border")}>
+    <nav aria-label={pick("Utama", "Main")} className={cn("flex h-full flex-col bg-sidebar", !mobile && "border-r border-border")}>
       <div className={cn("flex h-[var(--topbar-h)] shrink-0 items-center border-b border-border", collapsed ? "justify-center px-2" : "gap-2.5 px-4")}>
         <Link href="/overview" className="flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-focus" onClick={onNavigate}>
           <MestaMark className="size-7 shrink-0" />
@@ -116,7 +116,7 @@ function NavLink({ item, active, collapsed, count, locked, onNavigate }: { item:
       className={cn(
         "relative flex h-8 items-center gap-2.5 rounded-md text-[0.8125rem] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus",
         collapsed ? "justify-center px-0" : "px-2",
-        active ? "bg-selected text-primary-subtle-fg" : "text-fg-secondary hover:bg-hover hover:text-fg",
+        active ? "bg-nav-active text-fg-nav-active [&_svg]:text-primary" : "text-fg-secondary hover:bg-hover hover:text-fg",
       )}
     >
       {active && <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}

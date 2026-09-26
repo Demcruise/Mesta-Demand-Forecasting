@@ -15,7 +15,7 @@ export const Checkbox = React.forwardRef<HTMLButtonElement, React.ComponentProps
     <CB.Root
       ref={ref}
       className={cn(
-        "peer inline-flex size-4 shrink-0 items-center justify-center rounded-xs border border-border-strong bg-surface transition-colors hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary",
+        "peer inline-flex size-4 shrink-0 items-center justify-center rounded-xs border border-border-strong bg-input transition-colors hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary",
         className,
       )}
       {...props}
@@ -89,7 +89,7 @@ export function RadioCards({
           disabled={o.disabled}
           className="group flex h-full w-full items-start gap-3 rounded-lg border border-border bg-surface p-3 text-left transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-55 data-[state=checked]:border-primary data-[state=checked]:bg-primary-subtle"
         >
-          <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface group-data-[state=checked]:border-primary">
+          <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border border-border-strong bg-input group-data-[state=checked]:border-primary">
             <RG.Indicator className="block size-2 rounded-full bg-primary" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">

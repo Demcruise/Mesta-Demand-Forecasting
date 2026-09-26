@@ -10,7 +10,7 @@ import { pick } from "@/lib/i18n/core";
 export function seedModels(today: number, skuCount: number): ForecastModel[] {
   const evalStart = isoDate(addDays(today, -91));
   const evalEnd = isoDate(addDays(today, -1));
-  const population = `${skuCount.toLocaleString("en-US")} SKUs, all locations, daily grain`;
+  const population = pick(`${skuCount.toLocaleString("id-ID")} SKU, semua lokasi, granularitas harian`, `${skuCount.toLocaleString("en-US")} SKUs, all locations, daily grain`);
   const metrics = (wape: number, bias: number, coverage80: number, mae: number) => ({
     wape,
     bias,

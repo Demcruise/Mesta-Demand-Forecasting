@@ -82,32 +82,24 @@ export function OverrideDialog({
   const valid = value.trim() !== "" && Number.isFinite(parsed);
   const newUnits = valid ? Math.max(0, Math.round(mode === "units" ? parsed : originalUnits * (1 + parsed / 100))) : originalUnits;
   const preview = valid ? previewOverride(ctx, { runId, productIds, newUnits }) : null;
-  const commentError = localized(touched && comment.trim().length < 10 ? "Jelaskan perubahan manual minimal 10 karakter." : null, touched && comment.trim().length < 10 ? "Explain the override in at least 10 characters." : null);
-  const valueError = localized(touched && !valid ? "Masukkan perkiraan baru." : touched && valid && newUnits === originalUnits ? "Nilai baru sama dengan perkiraan saat ini." : null, touched && !valid ? "Enter the new forecast." : touched && valid && newUnits === originalUnits ? "The new value is the same as the current forecast." : null);
+  // Plain strings per locale — localized() is for module-scope trees, not values.
+  const commentError = touched && comment.trim().length < 10 ? pick("Jelaskan perubahan manual minimal 10 karakter.", "Explain the override in at least 10 characters.") : null;
+  const valueError = touched && !valid ? pick("Masukkan perkiraan baru.", "Enter the new forecast.") : touched && valid && newUnits === originalUnits ? pick("Nilai baru sama dengan perkiraan saat ini.", "The new value is the same as the current forecast.") : null;
 
-  const mutation = localized(useApiMutation((c, _v: void) => applyOverride(c, { runId, productIds, newUnits, reason, evidence, comment }), {
+  const mutation = useApiMutation((c, _v: void) => applyOverride(c, { runId, productIds, newUnits, reason, evidence, comment }), {
     invalidate: [["forecast-rows"], ["forecast-detail"], ["run-result"], ["overview"], ["approvals"], ["nav-counts"], ["notifications"]],
     success: (o) => (o.status === "applied" ? pick("Perubahan diterapkan", "Override applied") : pick("Perubahan dikirim untuk persetujuan", "Override submitted for approval")),
     successDescription: (o) =>
-      o.status === "applied" ? `${label}: ${formatNumber(o.originalUnits)} → ${formatNumber(o.newUnits)} unit.` : pick("Acuan perencanaan berubah setelah Manajer menyetujuinya.", "The planning baseline changes once a Manager approves it."),
-    failure: "Perubahan manual tidak tersimpan.",
+      o.status === "applied"
+        ? pick(`${label}: ${formatNumber(o.originalUnits)} → ${formatNumber(o.newUnits)} unit.`, `${label}: ${formatNumber(o.originalUnits)} → ${formatNumber(o.newUnits)} units.`)
+        : pick("Acuan perencanaan berubah setelah Manajer menyetujuinya.", "The planning baseline changes once a Manager approves it."),
+    failure: pick("Perubahan manual tidak tersimpan.", "The override was not saved."),
     onSuccess: (o) => {
       track("override_applied", { pendingApproval: o.status !== "applied" });
       onOpenChange(false);
       onDone?.();
     },
-  }), useApiMutation((c, _v: void) => applyOverride(c, { runId, productIds, newUnits, reason, evidence, comment }), {
-    invalidate: [["forecast-rows"], ["forecast-detail"], ["run-result"], ["overview"], ["approvals"], ["nav-counts"], ["notifications"]],
-    success: (o) => (o.status === "applied" ? "Override applied" : "Override submitted for approval"),
-    successDescription: (o) =>
-      o.status === "applied" ? `${label}: ${formatNumber(o.originalUnits)} → ${formatNumber(o.newUnits)} units.` : "The planning baseline changes once a Manager approves it.",
-    failure: "The override was not saved.",
-    onSuccess: (o) => {
-      track("override_applied", { pendingApproval: o.status !== "applied" });
-      onOpenChange(false);
-      onDone?.();
-    },
-  }));
+  });
 
   const toConfirm = () => {
     setTouched(true);

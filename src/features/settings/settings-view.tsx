@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Building2, Database, KeyRound, Lock, ScrollText, ShieldCheck, UserRound, Users, Workflow } from "lucide-react";
+import { Bell, Building2, Database, FlaskConical, KeyRound, Lock, Palette, ScrollText, ShieldCheck, UserRound, Users, Workflow } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import type { WorkspaceSettings } from "@/lib/mock/db";
@@ -9,7 +9,9 @@ import { useApiMutation, useApiQuery } from "@/hooks/use-api";
 import { useSession } from "@/lib/session-context";
 import { usePreferences } from "@/lib/preferences";
 import { ROLE_LABELS } from "@/lib/permissions";
-import { formatDate, formatDeltaPercent, formatNumber, formatPercent } from "@/lib/format";
+import { formatDate, formatDateTime, formatDeltaPercent, formatNumber, formatPercent } from "@/lib/format";
+import { demoControls, loadDemoControls, saveDemoControls, type DemoControls } from "@/lib/api/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -27,13 +29,14 @@ import type { SectionKey } from "./sections";
 import { localizedRecord, pick } from "@/lib/i18n";
 
 
-type SectionGroup = "personal" | "workspace";
+type SectionGroup = "personal" | "appearance" | "workspace" | "demo";
 
 /** Built per render so labels follow the active locale (module-scope pick() would freeze them). */
 function getSections(): { key: SectionKey; label: string; icon: React.ComponentType<{ className?: string }>; group: SectionGroup }[] {
   return [
-    { key: "personal", label: pick("Pribadi", "Personal"), icon: UserRound, group: "personal" },
+    { key: "personal", label: pick("Preferensi pribadi", "Personal preferences"), icon: UserRound, group: "personal" },
     { key: "notifications", label: pick("Notifikasi", "Notifications"), icon: Bell, group: "personal" },
+    { key: "appearance", label: pick("Bahasa, tema & tabel", "Language, theme & tables"), icon: Palette, group: "appearance" },
     { key: "workspace", label: pick("Ruang Kerja", "Workspace"), icon: Building2, group: "workspace" },
     { key: "forecasting", label: pick("Perkiraan", "Forecasting"), icon: Workflow, group: "workspace" },
     { key: "data", label: pick("Data & Integrasi", "Data & integrations"), icon: Database, group: "workspace" },
@@ -42,6 +45,7 @@ function getSections(): { key: SectionKey; label: string; icon: React.ComponentT
     { key: "audit", label: pick("Audit & Retensi", "Audit & retention"), icon: ScrollText, group: "workspace" },
     { key: "security", label: pick("Keamanan", "Security"), icon: Lock, group: "workspace" },
     { key: "api", label: "API", icon: KeyRound, group: "workspace" },
+    { key: "demo", label: pick("Kontrol demo", "Demo controls"), icon: FlaskConical, group: "demo" },
   ];
 }
 
@@ -50,16 +54,21 @@ function getSections(): { key: SectionKey; label: string; icon: React.ComponentT
  * administrative sections are permission-gated and every change is audited.
  */
 export function SettingsView({ section }: { section: SectionKey }) {
-  const SECTIONS = getSections();
+  const { workspace } = useSession();
+  // PROFILE-003 / §52: demo controls exist only outside production workspaces.
+  const showDemo = workspace.environment !== "Production";
+  const SECTIONS = getSections().filter((s) => s.group !== "demo" || showDemo);
   const current = SECTIONS.find((s) => s.key === section) ?? SECTIONS[0]!;
   useBreadcrumbLeaf(current.label);
   const groups: { key: SectionGroup; label: string }[] = [
     { key: "personal", label: pick("Pribadi", "Personal") },
-    { key: "workspace", label: pick("Administrasi ruang kerja", "Workspace administration") },
+    { key: "appearance", label: pick("Tampilan", "Appearance") },
+    { key: "workspace", label: pick("Ruang kerja", "Workspace") },
+    { key: "demo", label: "Demo" },
   ];
   return (
     <PageContainer>
-      <PageHeader title={pick("Pengaturan", "Settings")} description={pick("Preferensi pribadi hanya berlaku untuk Anda. Pengaturan ruang kerja berlaku untuk semua orang dan tercatat di riwayat aktivitas.", "Personal preferences apply only to you. Workspace settings apply to everyone and are recorded in the audit log.")} />
+      <PageHeader title={pick("Pengaturan", "Settings")} description={pick("Atur preferensi pribadi dan ruang kerja.", "Manage your preferences and workspace settings.")} />
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
         <nav aria-label={pick("Bagian pengaturan", "Settings sections")} className="min-w-0 lg:sticky lg:top-[calc(var(--topbar-h)+1.5rem)] lg:self-start">
           {groups.map((g) => (
@@ -89,6 +98,10 @@ export function SettingsView({ section }: { section: SectionKey }) {
         <div className="min-w-0">
           {current.key === "personal" ? (
             <PersonalSection />
+          ) : current.key === "appearance" ? (
+            <AppearanceSection />
+          ) : current.key === "demo" ? (
+            <DemoSection />
           ) : current.key === "notifications" ? (
             <NotificationRulesSection />
           ) : current.key === "api" ? (
@@ -105,7 +118,7 @@ export function SettingsView({ section }: { section: SectionKey }) {
 }
 
 function PersonalSection() {
-  const { theme, density, sidebarCollapsed, locale, setPreference } = usePreferences();
+  const { locale } = usePreferences();
   const { session } = useSession();
   const isId = locale === "id";
   return (
@@ -117,10 +130,40 @@ function PersonalSection() {
             { label: isId ? "Nama" : "Name", value: session.name },
             { label: isId ? "Email" : "Email", value: session.email },
             { label: isId ? "Peran di ruang kerja ini" : "Role in this workspace", value: ROLE_LABELS[session.role] },
-            { label: isId ? "Masuk melalui" : "Signed in via", value: session.idp },
           ]}
         />
       </Panel>
+      {/* PROFILE-004: session details live here, not in the account menu. */}
+      <Panel title={isId ? "Sesi" : "Session"}>
+        <DescriptionList
+          columns={2}
+          items={[
+            { label: isId ? "Masuk melalui" : "Signed in via", value: session.idp },
+            { label: isId ? "Sesi berakhir" : "Session expires", value: formatDateTime(session.expiresAt) },
+          ]}
+        />
+      </Panel>
+      <Panel title={isId ? "Format" : "Formats"}>
+        <DescriptionList
+          columns={3}
+          items={[
+            { label: isId ? "Tanggal" : "Dates", value: formatDate("2026-09-25T00:00:00") },
+            { label: isId ? "Angka" : "Numbers", value: formatNumber(12440) },
+            { label: isId ? "Perubahan" : "Changes", value: `${formatDeltaPercent(0.045)} / ${formatDeltaPercent(-0.032)}` },
+          ]}
+        />
+        <p className="mt-3 caption">{isId ? "Format angka dan tanggal otomatis mengikuti bahasa yang dipilih." : "Number and date formats follow your selected language."}</p>
+      </Panel>
+    </div>
+  );
+}
+
+/** Language, theme, table density and sidebar: the personal appearance preferences (§53). */
+function AppearanceSection() {
+  const { theme, density, sidebarCollapsed, locale, setPreference } = usePreferences();
+  const isId = locale === "id";
+  return (
+    <div className="flex flex-col gap-4">
       <Panel title={isId ? "Tampilan" : "Appearance"} description={isId ? "Hanya tersimpan di peramban ini." : "Saved in this browser only."}>
         <div className="flex flex-col gap-5">
           <Field label={isId ? "Bahasa" : "Language"} htmlFor="locale" hint={isId ? "Pilih bahasa tampilan antarmuka Mesta." : "Choose the interface display language for Mesta."}>
@@ -163,18 +206,33 @@ function PersonalSection() {
           <SwitchField id="sidebar" label={isId ? "Ciutkan bilah samping" : "Collapse sidebar"} description={isId ? "Tampilkan ikon saja agar tabel lebih lega." : "Show icons only to give tables more room."} checked={sidebarCollapsed} onCheckedChange={(v) => setPreference("sidebarCollapsed", v)} />
         </div>
       </Panel>
-      <Panel title={isId ? "Format" : "Formats"}>
-        <DescriptionList
-          columns={3}
-          items={[
-            { label: isId ? "Tanggal" : "Dates", value: formatDate("2026-09-25T00:00:00") },
-            { label: isId ? "Angka" : "Numbers", value: formatNumber(12440) },
-            { label: isId ? "Perubahan" : "Changes", value: `${formatDeltaPercent(0.045)} / ${formatDeltaPercent(-0.032)}` },
-          ]}
-        />
-        <p className="mt-3 caption">{isId ? "Format angka dan tanggal otomatis mengikuti bahasa yang dipilih." : "Number and date formats follow your selected language."}</p>
-      </Panel>
     </div>
+  );
+}
+
+/** Demo-only failure injection (PROFILE-003), moved out of the account menu. */
+function DemoSection() {
+  const queryClient = useQueryClient();
+  const [demo, setDemo] = React.useState<DemoControls>(demoControls);
+  React.useEffect(() => {
+    setDemo({ ...loadDemoControls() });
+  }, []);
+  const update = (next: Partial<DemoControls>) => {
+    saveDemoControls(next);
+    setDemo({ ...demoControls });
+    queryClient.invalidateQueries();
+  };
+  return (
+    <Panel
+      title={pick("Kontrol demo", "Demo controls")}
+      description={pick("Simulasikan jaringan lambat dan kegagalan layanan untuk menguji status pemuatan dan galat. Hanya untuk ruang kerja demo; tersimpan di peramban ini.", "Simulate a slow network and service failures to test loading and error states. Demo workspaces only; saved in this browser.")}
+    >
+      <div className="flex flex-col divide-y divide-border-subtle">
+        <SwitchField id="demo-slow" label={pick("Jaringan lambat", "Slow network")} description={pick("Setiap permintaan menunggu lebih lama.", "Every request takes longer.")} checked={demo.latency === "slow"} onCheckedChange={(v) => update({ latency: v ? "slow" : "normal" })} />
+        <SwitchField id="demo-fail-reads" label={pick("Gagal membaca", "Fail reads")} description={pick("Halaman menampilkan status galat.", "Pages show their error state.")} checked={demo.failReads} onCheckedChange={(v) => update({ failReads: v })} />
+        <SwitchField id="demo-fail-writes" label={pick("Gagal menulis", "Fail writes")} description={pick("Perubahan gagal disimpan.", "Changes fail to save.")} checked={demo.failWrites} onCheckedChange={(v) => update({ failWrites: v })} />
+      </div>
+    </Panel>
   );
 }
 

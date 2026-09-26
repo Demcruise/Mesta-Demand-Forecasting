@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { signIn, USERS } from "./support/session";
+import { setPreferences, signIn, USERS } from "./support/session";
 
 /**
  * FND-013 · automated accessibility audit. axe-core runs against the rendered pages for
@@ -25,7 +25,11 @@ const PAGES = [
   // The settings index is a server redirect; audit the concrete section so the run is
   // not racing a client-side navigation.
   "/administration/settings/personal",
+  "/administration/settings/appearance",
 ];
+
+/** v5 DARK: the neutral dark theme must keep AA contrast on the densest surfaces. */
+const DARK_PAGES = ["/overview", "/forecasting/runs", "/forecasting/explorer", "/demand-data/quality", "/planning", "/administration/settings/appearance"];
 
 function formatViolations(violations: Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"]) {
   return violations
@@ -53,6 +57,17 @@ test.describe("accessibility", () => {
     test(`${path} has no detectable WCAG A/AA violations`, async ({ page }) => {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      const results = await analyze(page);
+      expect(formatViolations(results.violations)).toBe("");
+    });
+  }
+
+  for (const path of DARK_PAGES) {
+    test(`${path} (dark theme) has no detectable WCAG A/AA violations`, async ({ page }) => {
+      await setPreferences(page, { theme: "dark" });
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(page.locator("html")).toHaveClass(/dark/);
       const results = await analyze(page);
       expect(formatViolations(results.violations)).toBe("");
     });

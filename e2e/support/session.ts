@@ -60,3 +60,12 @@ export async function signIn(page: Page, user: TestUser = USERS.admin, workspace
   }
   await page.context().addCookies([sessionCookie(user, workspaceId)]);
 }
+
+/** Seeds additional viewer preferences (theme, density…) before the app boots. */
+export async function setPreferences(page: Page, prefs: Record<string, unknown>) {
+  await page.addInitScript((p) => {
+    const raw = window.localStorage.getItem("mdf.preferences");
+    const current = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    window.localStorage.setItem("mdf.preferences", JSON.stringify({ ...current, ...p }));
+  }, prefs);
+}
