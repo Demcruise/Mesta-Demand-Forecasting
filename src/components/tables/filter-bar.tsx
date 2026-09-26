@@ -26,24 +26,31 @@ export type Facet = {
 };
 
 export type SortOption = { value: string; label: string; dir: "asc" | "desc" };
+/**
+ * Search width contract (§77/§78): a dense enterprise toolbar must not let search take
+ * all the free space, or the remaining controls wrap one at a time. Measured against the
+ * 1280px toolbar (966px of usable width) so the left group keeps its headroom.
+ */
+export const SEARCH_WIDTH = { sm: "sm:w-50", md: "sm:w-60", lg: "sm:w-80" } as const;
 
 export function FilterBar({
   state,
   facets,
   searchPlaceholder,
-  sortOptions,
+  searchWidth = "md",
   children,
   className,
 }: {
   state: ListState;
   facets: Facet[];
   searchPlaceholder?: string;
-  sortOptions?: SortOption[];
+  /** §78: 200px / 240px / 320px from `sm` up; full width below it. */
+  searchWidth?: keyof typeof SEARCH_WIDTH;
   /** Extra controls (e.g. date range) placed after search. */
   children?: React.ReactNode;
   className?: string;
 }) {
-  const { query, setSearch, setFilter, clearFilters, setSort } = state;
+  const { query, setSearch, setFilter, clearFilters } = state;
   const [text, setText] = React.useState(query.q ?? "");
   React.useEffect(() => setText(query.q ?? ""), [query.q]);
   React.useEffect(() => {
@@ -59,12 +66,11 @@ export function FilterBar({
   const chips = facets.flatMap((f) =>
     (query.filters?.[f.key] ?? []).map((v) => ({ facet: f, value: v, label: f.options.find((o) => o.value === v)?.label ?? v })),
   );
-  const sortValue = sortOptions?.find((o) => o.value === `${query.sort}:${query.dir}`)?.value ?? sortOptions?.find((o) => o.value.startsWith(`${query.sort}:`))?.value;
 
   return (
     <div className={cn("flex min-w-0 flex-1 flex-col gap-2", className)}>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <label className="relative w-full min-w-0 sm:w-64">
+        <label className={cn("relative w-full min-w-0", SEARCH_WIDTH[searchWidth])}>
           <span className="sr-only">{searchPlaceholder ?? pick("Cari", "Search")}</span>
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-tertiary" aria-hidden />
           <input
@@ -107,20 +113,6 @@ export function FilterBar({
               </div>
             </PopoverContent>
           </Popover>
-        )}
-        {sortOptions && (
-          <Select
-            size="sm"
-            className="w-auto min-w-44"
-            aria-label={pick("Urutkan", "Sort")}
-            prefix={pick("Urutan:", "Sort:")}
-            value={sortValue}
-            onValueChange={(v) => {
-              const o = sortOptions.find((x) => x.value === v);
-              if (o) setSort(o.value.split(":")[0] as string, o.dir);
-            }}
-            options={sortOptions.map((o) => ({ value: o.value, label: o.label }))}
-          />
         )}
       </div>
       {(chips.length > 0 || query.q) && (

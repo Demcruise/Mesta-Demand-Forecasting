@@ -154,7 +154,8 @@ export function AuditView() {
         toolbarStart={
           <FilterBar
             state={state}
-            searchPlaceholder={pick("Cari objek, orang, alasan, atau ID permintaan", "Search object, person, reason or request ID")}
+            searchPlaceholder={pick("Cari objek, orang, atau ID", "Search object, person or ID")}
+            searchWidth="sm"
             facets={[
               { key: "action", label: pick("Tindakan", "Action"), primary: true, options: (Object.keys(ACTION_LABELS) as AuditAction[]).map((a) => ({ value: a, label: ACTION_LABELS[a] })) },
               { key: "actor", label: pick("Orang", "Person"), primary: true, options: [{ value: SYSTEM_ACTOR.id, label: SYSTEM_ACTOR.name }, ...USERS.map((u) => ({ value: u.id, label: u.name }))] },

@@ -230,3 +230,46 @@ Status of the [Frontend Backlog v5](Mesta_Demand_Forecasting_Frontend_Backlog_v5
 - `e2e/v5.spec.ts`: menu contents, labels in both languages, keyboard, 390px fit, sign out; settings IA; demo controls toggle the mock backend and are hidden in production; dark token regression (body, sidebar, table, input, active nav, dropdown) and no legacy navy; single-locale check on 29 routes.
 - `e2e/accessibility.spec.ts`: axe WCAG A/AA also runs on six pages in the dark theme.
 - `e2e/visual.spec.ts`: dark baselines (5 pages at 1440/1280, 2 at 390) and the account menu open in en/id × light/dark plus 390.
+
+# Frontend backlog v6 — metric alignment, chart removal, table simplification, toolbars
+
+Status of the [Frontend Backlog v6](Mesta_Demand_Forecasting_Frontend_Backlog_v6_Metric_Alignment_Toolbars.md).
+
+## Metric cards (METRIC-ALIGN-001…008, §85–§95)
+
+| Item | Status | Notes |
+|---|---|---|
+| Centred value zone | Done | `CompactMetricCard` gained `valueAlign` (default `center`); the value sits in a fixed 72px zone with the value + unit kept as one centred group (§METRIC-ALIGN-005). The header row and the supporting line keep the card's left axis (§60/§89), so only the number is centred. |
+| Equal card geometry | Done | Header reserves 40px (§44) and the support zone 24px (§88), so a two-line label or a link in one card never moves another card's value. `MetricStrip` already uses `auto-rows-fr`; measured equal heights on every strip. |
+| No accidental truncation | Done | The `truncate` on the value was removed; labels clamp to two lines with the full text in the tooltip, so "Lines needing a decision" reads in full instead of "Lines need…" (§51). |
+| Value typography | Done | `numeric-xl` raised to 2rem / 700 / tabular (§METRIC-ALIGN-007). It is used only by the compact card, so no other surface moved. |
+| Detailed cards | Done | `valueAlign` also applies to the detailed variant (default `center`) so the forecast-detail and run-detail strips match §99/§111. |
+| Long values | Done | `valueSize="compact"` drops one step (1.625rem) for values that would otherwise clip; the Insights range card keeps its full "4.45M–5.09M". |
+| Overview first card | Done | The micro trend was removed from the first Overview card only (§91); `Sparkline` stays available for other surfaces. The now-unused weekly-trend calculation was deleted from the view. |
+| Run detail | Done | The four detailed cards centre their values (§61–§67) with the link kept in the support zone. |
+
+## Tables (EXPLORER-TREND-001…005)
+
+| Item | Status | Notes |
+|---|---|---|
+| Trend column | Done | Removed from the Forecast Explorer column definition only; `ExplorerRow.trend` stays in the domain data (§92). |
+| Column rebalance | Done | `Forecast` absorbs the freed width (`minmax(120px, 1fr)`); the alignment contract (numeric right, contextual left) is unchanged (§22). |
+| Mobile | Done | No placeholder, spacer or empty grid track remains — the column is gone from the template (§23). |
+
+## Toolbars (TOOLBAR-GLOBAL-001, HIST-TOOLBAR, AUDIT-TOOLBAR, §75–§84)
+
+| Item | Status | Notes |
+|---|---|---|
+| Search width contract | Done | `FilterBar` gained `searchWidth` — `sm` 200px, `md` 240px (default), `lg` 320px from `sm` up, full width below. Chosen from measurement: the backlog's suggested 240/280/320 did not fit the Audit toolbar at 1280. |
+| Group wrapping | Done | The left group no longer takes `flex-1`. It now sizes to its content, so a crowded toolbar wraps **between** the groups — search + filters on row 1, actions on row 2 as one unit — instead of shrinking and wrapping a single control. |
+| Audit log | Done | One row at 1280 and 1440; placeholder shortened to "Search object, person or ID" (§73). |
+| Historical demand | Done | One row at 1280 and 1440 (was already one row, now with headroom). |
+| Sort placement | Done | The sort control moved from `FilterBar` into the table's action group (§80) — it is a view control, and leaving it inline made it wrap alone. `FilterBar` lost the now-unused `sortOptions` prop. |
+| Explorer | Done | One row at 1440; at 1280 the action group wraps as a unit (the accepted "intentional wrap" of §97). |
+
+## Verification
+
+- `e2e/v6.spec.ts` (39 tests): centred value group, equal heights, no clipping, one value size and the left-axis label/support on seven KPI surfaces at 1440/1280/390; no sparkline in the Overview group; unchanged geometry in dark theme and Bahasa Indonesia; one-row toolbars with the documented search width and search first in tab order on seven tables; Explorer wraps between groups and has no Trend column.
+- `e2e/visual.spec.ts`: 32 baselines regenerated for the new card rhythm and toolbar widths (light, dark, en, id, 1440/1280/1024/768/390).
+- `e2e/accessibility.spec.ts`: axe WCAG A/AA unchanged and green on 15 surfaces.
+- `npm run test`: 51 unit tests green; `tsc --noEmit` clean; production build clean.

@@ -23,7 +23,7 @@ import { EmptyState, InlineAlert } from "@/components/feedback/states";
 import { FreshnessIndicator } from "@/components/feedback/freshness";
 import { ProductIdentity, scopeLabel } from "@/components/entities/identity";
 import { ForecastDelta } from "@/components/forecasting/metrics";
-import { Sparkline } from "@/components/charts/small-charts";
+
 import { Tooltip } from "@/components/ui/overlay";
 import { OverrideDialog } from "@/features/forecast-detail/override-dialog";
 import { ForecastDrawer } from "./forecast-drawer";
@@ -67,6 +67,16 @@ export function ExplorerView() {
   const selectedRows = (q.data?.page.items ?? []).filter((r) => selection[r.id]);
   const selectedUnits = selectedRows.reduce((s, r) => s + r.forecast, 0);
 
+  /** Built per render so the labels follow the active locale (module scope would freeze). */
+  const sortOptions = [
+    { value: "forecast:desc", label: pick("Perkiraan terbesar", "Largest forecast"), dir: "desc" as const },
+    { value: "deltaPercent:desc", label: pick("Kenaikan terbesar", "Largest increase"), dir: "desc" as const },
+    { value: "deltaPercent:asc", label: pick("Penurunan terbesar", "Largest decrease"), dir: "asc" as const },
+    { value: "width:desc", label: pick("Rentang terlebar", "Widest interval"), dir: "desc" as const },
+    { value: "exceptions:desc", label: pick("Paling banyak ditinjau", "Most exceptions"), dir: "desc" as const },
+    { value: "product:asc", label: pick("Produk A–Z", "Product A–Z"), dir: "asc" as const },
+  ];
+
   const columns = React.useMemo<ColumnDef<ExplorerRow, unknown>[]>(
     () => [
       {
@@ -78,7 +88,8 @@ export function ExplorerView() {
       {
         id: "forecast",
         header: pick("Perkiraan", "Forecast"),
-        meta: { width: "120px", numeric: true, sortKey: "forecast", description: pick("Total perkiraan selama periode perkiraan. Nilai yang diubah manual menampilkan hasil ubahannya.", "Total forecast over the run horizon. Overridden values show the override.") } satisfies ColumnMeta,
+        // EXPLORER-TREND-003: absorbs the width freed by the removed Trend column.
+        meta: { width: "minmax(120px, 1fr)", numeric: true, sortKey: "forecast", description: pick("Total perkiraan selama periode perkiraan. Nilai yang diubah manual menampilkan hasil ubahannya.", "Total forecast over the run horizon. Overridden values show the override.") } satisfies ColumnMeta,
         cell: ({ row }) => {
           const r = row.original;
           return r.overrideUnits != null ? (
@@ -111,12 +122,6 @@ export function ExplorerView() {
         header: pick("Perubahan", "Change"),
         meta: { width: "100px", numeric: true, sortKey: "deltaPercent", description: pick("Perubahan dibanding perkiraan sebelumnya. Ditandai bila melewati batas tinjauan 15%.", "Change versus the previous run. Highlighted above the 15% review threshold.") } satisfies ColumnMeta,
         cell: ({ row }) => <ForecastDelta percent={row.original.deltaPercent} size="sm" />,
-      },
-      {
-        id: "trend",
-        header: pick("Tren", "Trend"),
-        meta: { width: "112px", hideBelow: "lg", description: pick("Permintaan mingguan: 8 minggu aktual, lalu minggu perkiraan.", "Weekly demand: 8 weeks of actuals, then forecast weeks.") } satisfies ColumnMeta,
-        cell: ({ row }) => <Sparkline values={row.original.trend} forecastFrom={8} />,
       },
       {
         id: "interval",
@@ -232,19 +237,30 @@ export function ExplorerView() {
         pagination={{ page: q.data?.page.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.page.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
         onExport={can("export") ? (format) => exportMutation.mutate(format) : undefined}
         exportLabel={exportMutation.isPending ? pick("Mengekspor…", "Exporting…") : pick(`Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`, `Export ${q.data ? formatNumber(q.data.page.total) : ""} rows`)}
-        toolbarEnd={<SavedViewsMenu surface="explorer" />}
+        toolbarEnd={
+          <>
+            {/* §80: sorting is a view control, so it sits with the other view controls
+                instead of wrapping on its own inside the filter group. */}
+            <Select
+              size="sm"
+              className="w-auto min-w-36"
+              aria-label={pick("Urutkan", "Sort")}
+              prefix={pick("Urutan:", "Sort:")}
+              value={sortOptions.find((o) => o.value === `${state.query.sort}:${state.query.dir}`)?.value ?? sortOptions.find((o) => o.value.startsWith(`${state.query.sort}:`))?.value}
+              onValueChange={(v) => {
+                const o = sortOptions.find((x) => x.value === v);
+                if (o) state.setSort(o.value.slice(0, o.value.indexOf(":")), o.dir);
+              }}
+              options={sortOptions.map((o) => ({ value: o.value, label: o.label }))}
+            />
+            <SavedViewsMenu surface="explorer" />
+          </>
+        }
         toolbarStart={
           <FilterBar
             state={state}
             searchPlaceholder={pick("Cari produk, SKU, atau merek", "Search product, SKU or brand")}
-            sortOptions={[
-              { value: "forecast:desc", label: pick("Perkiraan terbesar", "Largest forecast"), dir: "desc" },
-              { value: "deltaPercent:desc", label: pick("Kenaikan terbesar", "Largest increase"), dir: "desc" },
-              { value: "deltaPercent:asc", label: pick("Penurunan terbesar", "Largest decrease"), dir: "asc" },
-              { value: "width:desc", label: pick("Rentang terlebar", "Widest interval"), dir: "desc" },
-              { value: "exceptions:desc", label: pick("Paling banyak ditinjau", "Most exceptions"), dir: "desc" },
-              { value: "product:asc", label: pick("Produk A–Z", "Product A–Z"), dir: "asc" },
-            ]}
+            searchWidth="sm"
             facets={[
               { key: "category", label: pick("Kategori", "Category"), primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
               {

@@ -396,9 +396,9 @@
   color: var(--fg-tertiary);
 }
 @utility numeric-xl {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 650;
+  font-size: 2rem;
+  line-height: 2.5rem;
+  font-weight: 700;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
 }

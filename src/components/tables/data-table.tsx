@@ -296,10 +296,12 @@ export function DataTable<T>({
   return (
     <div className={cn("flex min-w-0 flex-col rounded-lg border border-border bg-surface", className)}>
       {(toolbarStart || toolbarEnd || onExport || hideable.length > 0) && (
-        /* TOOLBAR-001: search + filters on the left, view controls on the right. When the
-           row is too narrow the right group wraps as one unit, never control by control. */
+        /* TOOLBAR-001: search + filters on the left, view controls on the right. The left
+           group sizes to its content (not flex-1) so a crowded toolbar wraps *between* the
+           groups — search + primary filters stay on row 1, actions move to row 2 as one
+           unit — instead of squeezing and wrapping a single control at a time. */
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border px-3 py-2.5">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbarStart}</div>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">{toolbarStart}</div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {toolbarEnd}
             {hideable.length > 0 && (

@@ -80,18 +80,6 @@ export function OverviewView() {
   }
 
   const periodStart = new Date(base.completedAt ?? base.createdAt).setHours(0, 0, 0, 0);
-  // Micro trend from real series only: recent actuals, then the forecast (FE-METRIC-005).
-  const firstForecast = d.points.findIndex((p) => p.actual == null && p.forecast != null);
-  // Weekly totals keep the micro trend legible at 64px; forecast weeks start at the split.
-  const weekly: number[] = [];
-  d.points.forEach((p, i) => {
-    const w = Math.floor(i / 7);
-    weekly[w] = (weekly[w] ?? 0) + (p.actual ?? p.forecast ?? 0);
-  });
-  const trend = {
-    values: weekly.slice(0, Math.floor(d.points.length / 7)),
-    forecastFrom: firstForecast >= 0 ? Math.floor(firstForecast / 7) : undefined,
-  };
   const accuracyDays = d.accuracyWindow
     ? Math.round((new Date(d.accuracyWindow.end).getTime() - new Date(d.accuracyWindow.start).getTime()) / 86_400_000) + 1
     : 0;
@@ -179,8 +167,6 @@ export function OverviewView() {
             unit={pick("unit", "units")}
             delta={<MetricDelta value={s.deltaPercent} />}
             comparison={pick("vs perkiraan sebelumnya", "vs previous run")}
-            trend={trend.values}
-            trendForecastFrom={trend.forecastFrom}
             href="/forecasting/explorer"
             destination={pick("buka Perkiraan Permintaan", "opens Forecast Explorer")}
             tooltip={pick(

@@ -104,6 +104,8 @@ type MetricCardProps = {
       context?: React.ReactNode;
       footnote?: React.ReactNode;
       hrefLabel?: string;
+      /** §99/§111: the value zone is centred here too, so every KPI strip matches. */
+      valueAlign?: "left" | "center";
     }
   | {
       /**
@@ -124,6 +126,13 @@ type MetricCardProps = {
       /** Where the card leads, announced to assistive tech (FE §156). */
       destination?: string;
       tone?: "neutral" | "critical" | "warning";
+      /**
+       * METRIC-ALIGN-001/§85: the large value is centred in its own zone by default;
+       * the header and supporting line keep the card's normal left axis.
+       */
+      valueAlign?: "left" | "center";
+      /** §28: long values (e.g. a range) may drop one step rather than clip. */
+      valueSize?: "default" | "compact";
     }
 );
 
@@ -152,14 +161,18 @@ function CompactMetricCard({
   trendForecastFrom,
   destination,
   tone = "neutral",
+  valueAlign = "center",
+  valueSize = "default",
 }: Extract<MetricCardProps, { variant: "compact" }>) {
   const descId = React.useId();
+  const centered = valueAlign === "center";
   const labelEl = (
-    <span className={cn("min-w-0 truncate text-[0.8125rem] font-semibold text-fg-secondary", tooltip && "underline decoration-border-strong decoration-dotted underline-offset-4")}>{label}</span>
+    <span className={cn("line-clamp-2 min-w-0 text-[0.8125rem] font-semibold text-fg-secondary", tooltip && "underline decoration-border-strong decoration-dotted underline-offset-4")}>{label}</span>
   );
   const body = (
     <>
-      <div className="flex min-w-0 items-center gap-2">
+      {/* Header keeps a fixed height (§44) so a two-line label never moves the value. */}
+      <div className="flex min-h-10 min-w-0 items-center gap-2">
         {Icon && (
           <Icon
             className={cn("size-4 shrink-0", tone === "critical" ? "text-critical" : tone === "warning" ? "text-warning" : "text-fg-tertiary")}
@@ -168,28 +181,31 @@ function CompactMetricCard({
         )}
         {tooltip ? (
           <Tooltip content={tooltip}>
-            {href ? labelEl : <span tabIndex={0} className="min-w-0 truncate rounded-xs focus-visible:outline-2 focus-visible:outline-focus">{labelEl}</span>}
+            {href ? labelEl : <span tabIndex={0} className="min-w-0 rounded-xs focus-visible:outline-2 focus-visible:outline-focus">{labelEl}</span>}
           </Tooltip>
         ) : (
           labelEl
         )}
+        {/* §90: the affordance sits in the header corner, never beside the number. */}
         {href && <ArrowUpRight className="ml-auto size-4 shrink-0 text-fg-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />}
       </div>
-      <div className="mt-4 flex min-w-0 items-end justify-between gap-3">
-        <div className="flex min-w-0 items-baseline gap-1.5">
-          <span className="numeric-xl truncate text-fg" title={exactValue}>
+      {/* Value zone (METRIC-ALIGN-004): fixed height, value centred, no truncation. */}
+      <div className={cn("mt-5 flex min-h-[72px] min-w-0 flex-col justify-center", centered && "items-center text-center")}>
+        <span className={cn("flex min-w-0 flex-wrap items-baseline gap-x-1.5", centered && "justify-center")}>
+          <span className={cn(valueSize === "compact" ? "numeric-lg" : "numeric-xl", "text-fg")} title={exactValue}>
             {value}
           </span>
-          {unit && <span className="shrink-0 body-sm text-fg-tertiary">{unit}</span>}
-          {exactValue && <span className="sr-only">({exactValue})</span>}
-        </div>
+          {unit && <span className="body-sm shrink-0 text-fg-tertiary">{unit}</span>}
+        </span>
+        {exactValue && <span className="sr-only">({exactValue})</span>}
         {trend && trend.length > 1 && (
-          <span className="mb-1 hidden shrink-0 sm:block">
+          <span className="mt-1 hidden sm:block">
             <Sparkline values={trend} forecastFrom={trendForecastFrom} width={64} height={24} />
           </span>
         )}
       </div>
-      <div className="mt-auto flex min-w-0 items-center gap-1.5 pt-3">
+      {/* Support zone (§88): fixed height, left axis, bottom-aligned across the strip. */}
+      <div className="mt-auto flex min-h-6 min-w-0 items-center gap-1.5 pt-3">
         {delta}
         {comparison && <span className="truncate caption text-fg-tertiary">{comparison}</span>}
         {!delta && !comparison && meta && <span className="truncate caption">{meta}</span>}
@@ -229,10 +245,12 @@ function DetailedMetricCard({
   hrefLabel,
   tooltip,
   className,
+  valueAlign = "center",
 }: Extract<MetricCardProps, { variant?: "detailed" }>) {
+  const centered = valueAlign === "center";
   const body = (
     <>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex min-h-6 items-center justify-between gap-2">
         {tooltip ? (
           <Tooltip content={tooltip}>
             <span tabIndex={0} className="caption font-semibold underline decoration-border-strong decoration-dotted underline-offset-4">
@@ -244,11 +262,14 @@ function DetailedMetricCard({
         )}
         {delta}
       </div>
-      <div className="mt-1.5 flex items-baseline gap-1.5">
-        <span className="numeric-lg text-fg">{value}</span>
-        {unit && <span className="body-sm text-fg-tertiary">{unit}</span>}
+      {/* Value zone: same fixed height and centring as the compact variant (§99). */}
+      <div className={cn("mt-1 flex min-h-[64px] min-w-0 flex-col justify-center", centered && "items-center text-center")}>
+        <span className={cn("flex min-w-0 flex-wrap items-baseline gap-x-1.5", centered && "justify-center")}>
+          <span className="numeric-lg text-fg">{value}</span>
+          {unit && <span className="body-sm shrink-0 text-fg-tertiary">{unit}</span>}
+        </span>
       </div>
-      {context && <div className="mt-1 caption">{context}</div>}
+      {context && <div className="mt-auto min-h-6 pt-2 caption">{context}</div>}
       {footnote && <div className="mt-auto pt-3 caption">{footnote}</div>}
       {href && hrefLabel && <span className="mt-auto pt-3 text-xs font-semibold text-primary group-hover:underline">{hrefLabel} →</span>}
     </>
