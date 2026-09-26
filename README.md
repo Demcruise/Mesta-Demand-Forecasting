@@ -2,9 +2,9 @@
 
 Enterprise demand-forecasting frontend: forecast runs, uncertainty, scenarios, planning, exceptions, approvals and audit.
 
-This is an implementation of the [Enterprise Backlog v1](docs/Mesta_Demand_Forecasting_Enterprise_Backlog_v1.md), now being polished against the [Frontend-Only Backlog v3](docs/Mesta_Demand_Forecasting_Frontend_Only_Backlog_v3.md) (white-first UI, Indonesian UX writing, React Bits). Status per backlog item is tracked in [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md).
+This is an implementation of the [Enterprise Backlog v1](docs/Mesta_Demand_Forecasting_Enterprise_Backlog_v1.md), polished against the [Frontend-Only Backlog v3](docs/Mesta_Demand_Forecasting_Frontend_Only_Backlog_v3.md) (white-first UI, Indonesian UX writing) and the [Frontend Backlog v4](docs/Mesta_Demand_Forecasting_Frontend_Backlog_v4_Super_Detail.md) (compact metric cards, global table density, column alignment, forecast lineage, single-locale UI). Status per backlog item is tracked in [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md).
 
-> **Localisation in progress.** The design tokens, number/date formatting, app shell, navigation, status system and shared state copy are Indonesian and white-first (v3 foundation). Feature-page copy is still English — see the v3 section of the status doc for what remains.
+> **English and Bahasa Indonesia.** The whole UI follows one locale at a time (top-bar EN/ID switch or Settings › Personal). English is the default; table density (Compact by default) is also a personal preference in Settings.
 
 > **Demo build.** No backend exists yet. Every screen runs against a deterministic mock backend in the browser (`src/lib/mock`, `src/lib/api`). Business rules, KPI definitions, model types, roles and data contracts are **proposals** that need validation (backlog §93). Changes you make are kept in the browser tab and reset when the page reloads.
 

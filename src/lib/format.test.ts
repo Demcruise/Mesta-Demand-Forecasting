@@ -4,6 +4,9 @@ import {
   formatDateTime,
   formatDeltaNumber,
   formatDeltaPercent,
+  formatDeltaPoints,
+  formatDeltaCompact,
+  formatMetric,
   formatDuration,
   formatNumber,
   formatPercent,
@@ -112,5 +115,25 @@ describe("format (English conventions)", () => {
     expect(pluralize(1, "SKU")).toBe("1 SKU");
     expect(pluralize(2480, "SKU")).toBe("2,480 SKUs");
     expect(pluralize(12, "product")).toBe("12 products");
+  });
+});
+
+describe("scan-first metric formatting (FE-METRIC-003)", () => {
+  afterEach(() => setFormatLocale("en"));
+
+  it("abbreviates large values to three significant digits and keeps small ones exact", () => {
+    setFormatLocale("en");
+    expect(formatMetric(4_770_960)).toBe("4.77M");
+    expect(formatMetric(815_660)).toBe("816K");
+    expect(formatMetric(87)).toBe("87");
+    expect(formatMetric(9_999)).toBe("9,999");
+  });
+
+  it("formats signed percentage-point and compact deltas per locale", () => {
+    setFormatLocale("en");
+    expect(formatDeltaPoints(-0.014)).toBe("−1.4 pts");
+    expect(formatDeltaCompact(176_000)).toBe("+176K");
+    setFormatLocale("id");
+    expect(formatDeltaPoints(0.014)).toBe("+1,4 poin");
   });
 });

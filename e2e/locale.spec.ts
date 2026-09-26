@@ -31,5 +31,5 @@ test("switching back to English restores English copy", async ({ page }) => {
   await page.goto("/administration/settings/personal");
   await page.getByRole("radio", { name: /English/ }).click();
 
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Configuration");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Settings");
 });

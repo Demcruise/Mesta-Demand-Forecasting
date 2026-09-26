@@ -141,7 +141,53 @@ Status of the [Frontend-Only Backlog v3](Mesta_Demand_Forecasting_Frontend_Only_
 |---|---|
 | Page-level copy — **done** | **All P0 pages.** Auth flow (sign-in, IdP, callback, workspace picker, unauthorized, signed-out), Ringkasan (FE-P0-013), Proses Perkiraan (FE-P0-014), Buat Perkiraan wizard + validation results (FE-P0-015), Processing / run detail + run actions (FE-P0-016), Perkiraan Permintaan / explorer (FE-P0-017), Detail Perkiraan + Ubah Perkiraan dialog (FE-P0-018), Produk + Permintaan Historis + Kualitas Data + Sumber Data (FE-P0-019/020). Shared copy: forecast step labels, scope/entity labels, role and permission labels, lifecycle labels. |
 | Page-level copy — **P1 in progress** | Done: Model (FE-P1-001…004), Scenarios (FE-P1-005…007) and Planning/Operations (FE-P1-008…013) — Rencana, Perlu Ditinjau, Persetujuan, Pemantauan and the notification centre — plus shared metric definitions, scenario driver labels and exception type labels/actions. Governance complete (FE-P1-014…019): Riwayat Aktivitas, Sumber Keputusan, Pengguna & Akses, Integrasi (shares the localised Sumber Data view), Pengaturan and Settings › API & access (API keys and webhooks). Wawasan Perkiraan, Persiapan Ruang Kerja (onboarding) and Jadwal Perkiraan are localised too, so every page in the v3 backlog is now in Indonesian. Route `metadata.title` values are localised too, so browser tab titles match the page headings. Seeded demo content is being localised too: scenario names/descriptions/rationales and the model datasets, features and limitations are done. `mock/directory.ts` (job titles, system actor) and `mock/platform.ts` (schedules, API keys, webhooks, saved views) are done. The seeded content in `mock/db.ts` — source descriptions, data quality issues, override evidence and comments, approval impacts and change sets, notification titles and bodies, and audit reasons — is done, completing the demo dataset. Route `metadata.title` values are also still English, as are the seeded exception reasons, scenario names/rationales and model limitation strings in the mock data. This is why the UI remains partly mixed-language. |
-| §58 Visual regression viewports | Only 1440 × 900 is covered; 1280 / 1024 / 768 / 390 baselines are outstanding. |
+| §58 Visual regression viewports | Superseded by v4 §170: 1440 for every affected page plus 1280 / 1024 / 768 / 390 for the densest pages (see below). |
 | §44 Manual accessibility | The axe pass is automated only; a manual keyboard and screen-reader review is still required. |
 | FE-P1-027…031 React Bits | Registry configured; blocks cannot be installed without a licence key. |
 | §50 Performance profiling | Virtualisation is in place; no profiling at 1.000 / 10.000 / 50.000 rows yet. |
+
+---
+
+# Frontend backlog v4 — polish, alignment, density, localisation, forecast lineage
+
+Status of the [Frontend Backlog v4](Mesta_Demand_Forecasting_Frontend_Backlog_v4_Super_Detail.md). Delivered as reusable systems first (v4 §206), then page by page.
+
+## Shared systems
+
+| Item | Status | Notes |
+|---|---|---|
+| FE-V4-001 White-first canvas | Done | Already white since v3; verified on every affected page. |
+| FE-METRIC-001…005 Compact metric card | Done | `MetricCard variant="compact"` in `src/components/forecasting/metrics.tsx`: icon + label → one dominant value (`numeric-xl`) → one short comparison row (`MetricDelta`) → optional sparkline from real series only. Whole card is the link, equal heights (`min-h-44`), definitions move to the label tooltip. `formatMetric` gives scan-first values (4.77M / 816K) with the exact value in the tooltip and for assistive tech. |
+| DENSITY-001…004 Global table density | Done | Per-table Comfortable/Compact toggle, `hideDensityToggle` and local density state removed. Density is owned by Settings › Personal › Table density and defaults to Compact for new viewers. The user menu no longer duplicates it. |
+| TABLE-ALIGN-001 / §122–127 Alignment contract | Done | `ColumnMeta.align` plus one resolver, `getColumnAlignment` (`src/components/tables/column-alignment.ts`), used by header and cells alike. Explicit alignment set on Forecast runs, Explorer, Data quality, Planning, Approvals, Audit and Users. |
+| TOOLBAR-001/002 Toolbar layout | Done | Search and filters on the left; Views / Columns / Export on the right, wrapping as one group. |
+| COLUMNS-CHECK-001 Checkbox menu items | Done | The box reads Radix state through `group-data-[state=…]`: checked = primary fill + light check, unchecked = white, disabled = muted. Row hover never erases the checked fill. Inherited by Exceptions, Approvals, Audit log and Users & roles. |
+| §76–77 Badge alignment | Done | Status, severity and tag badges use `leading-none` with non-shrinking icons; rows holding badges centre on the content block (Monitoring, Sources, Exceptions drawer, Forecast detail, Explorer drawer). |
+| I18N-001 / §97–107 Single locale | Done | 640 unlocalised strings found by an AST scan were routed through `pick()`; module-scope `pick()` calls (which froze at import) were rewritten as `localized()` / `localizedRecord()` trees; API messages, notifications and seeded data follow the active locale. Entity data (product, run, model and person names) is deliberately left as is. |
+| §168 Dictionary completeness | Done | `src/lib/i18n/i18n.test.ts` asserts identical key trees for `en` and `id`. |
+
+## Pages
+
+| Page | Status | Notes |
+|---|---|---|
+| Overview | Done | Four compact health cards (demand with weekly trend, accuracy, bias, open exceptions); detail moved to tooltips; attention items localised. |
+| Forecast runs | Done | Horizon is a left-aligned categorical column (“28 days”). |
+| Create forecast | Done | Data summary is a 4 → 2×2 → 1 grid; freshness uses a stacked cell (label, then relative time). |
+| Forecast explorer | Done | Actual (prior) and Exceptions on the left axis. |
+| Forecast insights | Done | Four compact cards under “Run summary” with one section-level link to the Explorer. |
+| Data quality | Done | Compact cards, source cards as name → status → last success, compact two-line issue rows, SKUs affected on the left axis. |
+| Planning | Done | Compact cards; column definitions rewritten once (the duplicated id/en column sets are gone). |
+| Scenarios | Done | Steps 1 → 2 → 3 in one column (max 70rem); assumptions on one row at desktop; Step 3 carries the action footer. |
+| Exceptions / Approvals | Done | Compact cards; approvals columns defined explicitly. |
+| Monitoring | Done | Alert and service rows centre their badges. |
+| Audit log | Done | “See who changed what, when, and why.”; audit states shown in the active locale. |
+| Users & roles | Done | Shared checkbox fix; copy localised. |
+| Forecast lineage (was Decision lineage) | Done | `getForecastLineage` + new view: context header (product, category, location, run, horizon, generated), ten forecast-specific stages with icon + label status, a highlighted forecast-baseline node, links per stage and expandable details. Opening it from a product scopes every node to that product. |
+| Settings | Done | Table density copy per §119; sections and labels follow the locale; mobile overflow fixed. |
+
+## Verification
+
+- Unit: `npm test` — formatting (incl. `formatMetric`, points and compact deltas), alignment resolver, dictionary parity, locale-live helpers, RBAC, session, API.
+- E2E: `e2e/v4.spec.ts` — no Indonesian UI copy in English and vice versa on all 15 affected pages, compact default density and Settings-driven density, column checkbox state across close/reopen and keyboard, Horizon and SKUs-affected axis alignment, scenario step order, forecast lineage stages, equal-height health cards.
+- Visual: `e2e/visual.spec.ts` — 15 affected pages at 1440 (en), 6 dense pages at 1280 / 1024 / 768 / 390, and 6 pages in Bahasa Indonesia.
+- Manual screen-reader review is still outstanding (unchanged from v3).
