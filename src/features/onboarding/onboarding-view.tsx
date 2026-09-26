@@ -44,7 +44,7 @@ export function OnboardingView() {
         actions={
           !d.dismissed ? (
             <Button variant="ghost" loading={dismiss.isPending} onClick={() => dismiss.mutate(true)}>
-              Hide setup guide
+              {pick("Sembunyikan panduan", "Hide setup guide")}
             </Button>
           ) : undefined
         }
@@ -54,7 +54,7 @@ export function OnboardingView() {
           <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${percent}%` }} />
         </div>
         <p className="shrink-0 caption tabular">
-          {requiredDone} of {required.length} required steps done
+          {pick(`${requiredDone} dari ${required.length} langkah wajib selesai`, `${requiredDone} of ${required.length} required steps done`)}
         </p>
       </div>
 
@@ -64,11 +64,11 @@ export function OnboardingView() {
           title={pick("Ruang kerja sudah siap.", "The workspace is ready.")}
           action={
             <Link href="/overview" className={buttonVariants({ variant: "primary", size: "sm" })}>
-              <PartyPopper aria-hidden /> Go to overview
+              <PartyPopper aria-hidden /> {pick("Ke Ringkasan", "Go to overview")}
             </Link>
           }
         >
-          Exceptions, scenarios and plans now use the published baseline.
+          {pick("Item tinjauan, skenario, dan rencana kini memakai acuan yang diterbitkan.", "Exceptions, scenarios and plans now use the published baseline.")}
         </InlineAlert>
       )}
 
@@ -105,12 +105,12 @@ function StepCard({ step, index, current, nextRunId }: { step: OnboardingStep; i
           {step.detail && <p className="mt-1 caption font-semibold">{step.detail}</p>}
           {!step.done && (
             <div className="mt-3">
-              {allowed ? <StepAction step={step} nextRunId={nextRunId} /> : <p className="caption">Needs {who}. Ask them to complete this step; it updates here automatically.</p>}
+              {allowed ? <StepAction step={step} nextRunId={nextRunId} /> : <p className="caption">{pick(`Perlu ${who}. Minta mereka menyelesaikan langkah ini; status di sini diperbarui otomatis.`, `Needs ${who}. Ask them to complete this step; it updates here automatically.`)}</p>}
             </div>
           )}
           {step.done && step.key === "forecast" && nextRunId && (
             <Link href={`/forecasting/runs/${nextRunId}`} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-              Open {nextRunId} <ArrowRight className="size-3.5" aria-hidden />
+              {pick("Buka", "Open")} {nextRunId} <ArrowRight className="size-3.5" aria-hidden />
             </Link>
           )}
         </div>
@@ -124,13 +124,13 @@ function StepAction({ step, nextRunId }: { step: OnboardingStep; nextRunId: stri
   const checks = useApiMutation((c, _v: void) => runReadinessChecks(c), {
     invalidate: INVALIDATE,
     success: (r) => (r.blocking ? pick(`${r.blocking} temuan menghambat`, `${r.blocking} blocking issues found`) : pick("Tidak ada temuan yang menghambat", "No blocking issues found")),
-    successDescription: (r) => (r.warnings ? pick(`${r.warnings} peringatan untuk ditinjau di Kualitas Data. Tidak menghambat perkiraan.`, pick(`${r.warnings} peringatan untuk ditinjau di Kualitas Data. Tidak menghambat perkiraan.`, `${r.warnings} warning to review in Data quality. It does not block forecasting.`)) : undefined),
+    successDescription: (r) => (r.warnings ? pick(`${r.warnings} peringatan untuk ditinjau di Kualitas Data. Tidak menghambat perkiraan.`, `${r.warnings} warning to review in Data quality. It does not block forecasting.`) : undefined),
     failure: pick("Pemeriksaan data tidak berjalan.", "Data checks did not run."),
   });
   const sources = useApiQuery(["sources"], listSources, { enabled: step.key === "source" });
   const connect = useApiMutation((c, id: string) => setSourceConnection(c, id, true), {
     invalidate: INVALIDATE,
-    success: (s) => `${s.name} connected`,
+    success: (s) => pick(`${s.name} tersambung`, `${s.name} connected`),
     successDescription: pick("Permintaan historis sedang diisi ulang.", "Historical demand is being backfilled."),
     failure: pick("Sumber tidak dapat disambungkan.", "The source was not connected."),
   });
@@ -140,10 +140,10 @@ function StepAction({ step, nextRunId }: { step: OnboardingStep; nextRunId: stri
       return (
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" size="sm" loading={confirm.isPending} onClick={() => confirm.mutate()}>
-            Confirm workspace details
+            {pick("Konfirmasi detail ruang kerja", "Confirm workspace details")}
           </Button>
           <Link href="/administration/settings/workspace" className={buttonVariants({ size: "sm", variant: "ghost" })}>
-            Review settings
+            {pick("Tinjau pengaturan", "Review settings")}
           </Link>
         </div>
       );
@@ -160,7 +160,7 @@ function StepAction({ step, nextRunId }: { step: OnboardingStep; nextRunId: stri
                 </span>
                 {s.status === "disconnected" ? (
                   <Button size="sm" variant="secondary" loading={connect.isPending && connect.variables === s.id} onClick={() => connect.mutate(s.id)}>
-                    <PlugZap aria-hidden /> Connect
+                    <PlugZap aria-hidden /> {pick("Sambungkan", "Connect")}
                   </Button>
                 ) : (
                   <StatusBadge status={s.status} size="sm" />
@@ -173,35 +173,35 @@ function StepAction({ step, nextRunId }: { step: OnboardingStep; nextRunId: stri
       return (
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" size="sm" loading={checks.isPending} loadingText={pick("Menjalankan pemeriksaan", "Running checks")} onClick={() => checks.mutate()}>
-            Run data checks
+            {pick("Jalankan pemeriksaan data", "Run data checks")}
           </Button>
           <Link href="/demand-data/quality" className={buttonVariants({ size: "sm", variant: "ghost" })}>
-            Open data quality
+            {pick("Buka kualitas data", "Open data quality")}
           </Link>
         </div>
       );
     case "forecast":
       return nextRunId ? (
         <Link href={`/forecasting/runs/${nextRunId}`} className={buttonVariants({ size: "sm", variant: "secondary" })}>
-          Follow {nextRunId}
+          {pick("Pantau", "Follow")} {nextRunId}
         </Link>
       ) : (
         <Link href="/forecasting/runs/new?name=First%20forecast%20%C2%B7%20All%20categories" className={buttonVariants({ size: "sm", variant: "primary" })}>
-          Create forecast run
+          {pick("Buat proses perkiraan", "Create forecast run")}
         </Link>
       );
     case "publish":
       return nextRunId ? (
         <Link href={`/forecasting/runs/${nextRunId}`} className={buttonVariants({ size: "sm", variant: "primary" })}>
-          Review and publish {nextRunId}
+          {pick("Tinjau dan terbitkan", "Review and publish")} {nextRunId}
         </Link>
       ) : (
-        <p className="caption">Available after the first run completes.</p>
+        <p className="caption">{pick("Tersedia setelah proses pertama selesai.", "Available after the first run completes.")}</p>
       );
     case "team":
       return (
         <Link href="/administration/users" className={buttonVariants({ size: "sm", variant: "secondary" })}>
-          Invite teammates
+          {pick("Undang rekan", "Invite teammates")}
         </Link>
       );
   }

@@ -372,7 +372,7 @@ function seedSources(db: WorkspaceDb, now: number) {
       lastSyncAt: iso(db.today + 2 * HOUR_MS + 11 * MINUTE_MS),
       lastSuccessAt: iso(db.today + 2 * HOUR_MS + 11 * MINUTE_MS),
       lastFailureAt: null,
-      lastError: "38 order lines reference SKUs that are not in the product master.",
+      lastError: pick("38 baris pesanan merujuk SKU yang tidak ada di data induk produk.", "38 order lines reference SKUs that are not in the product master."),
       records: Math.round(skus * 410),
       owner: "u_lina",
       mapping: [
@@ -399,7 +399,7 @@ function seedSources(db: WorkspaceDb, now: number) {
         { source: "dim_product", target: "product master" },
         { source: "dim_store", target: "location master" },
       ],
-      description: pick("Master data produk dan toko, hierarki, dan atributnya.", pick("Data master produk dan toko, hierarki, dan atribut.", "Product and store master data, hierarchy and attributes.")),
+      description: pick("Master data produk dan toko, hierarki, dan atributnya.", "Product and store master data, hierarchy and attributes."),
     },
     {
       id: "src_promo",
@@ -410,7 +410,7 @@ function seedSources(db: WorkspaceDb, now: number) {
       lastSyncAt: iso(now - 2 * DAY_MS - 3 * HOUR_MS),
       lastSuccessAt: iso(now - 4 * DAY_MS - 5 * HOUR_MS),
       lastFailureAt: iso(db.today + 5 * HOUR_MS + 2 * MINUTE_MS),
-      lastError: "Authentication to the promotions API failed (HTTP 401). The service credential may have expired.",
+      lastError: pick("Autentikasi ke API promosi gagal (HTTP 401). Kredensial layanan mungkin kedaluwarsa.", "Authentication to the promotions API failed (HTTP 401). The service credential may have expired."),
       records: 1_184,
       owner: "u_lina",
       mapping: [
@@ -419,7 +419,7 @@ function seedSources(db: WorkspaceDb, now: number) {
         { source: "end_date", target: "end" },
         { source: "mechanic", target: "mechanic" },
       ],
-      description: pick("Promosi dan mekanisme yang direncanakan, dipakai sebagai fitur model.", pick("Promosi dan mekanik terencana, dipakai sebagai fitur model.", "Planned promotions and mechanics, used as a model feature.")),
+      description: pick("Promosi dan mekanisme yang direncanakan, dipakai sebagai fitur model.", "Planned promotions and mechanics, used as a model feature."),
     },
     {
       id: "src_upload",
@@ -497,7 +497,7 @@ function seedRuns(db: WorkspaceDb, now: number) {
     startedAt: iso(t + 5 * HOUR_MS + 31 * MINUTE_MS),
     completedAt: iso(t + 5 * HOUR_MS + 54 * MINUTE_MS),
     publishedAt: iso(t + 6 * HOUR_MS + 20 * MINUTE_MS),
-    warnings: ["12 SKUs have incomplete historical demand.", "Promotions calendar is 4 days old."],
+    warnings: [pick("12 SKU memiliki riwayat permintaan yang belum lengkap.", "12 SKUs have incomplete historical demand."), pick("Kalender promosi sudah 4 hari tidak diperbarui.", "Promotions calendar is 4 days old.")],
   });
   baseline.steps = completedSteps(baseline);
   runs.push(baseline);
@@ -537,7 +537,7 @@ function seedRuns(db: WorkspaceDb, now: number) {
     createdAt: iso(t + 7 * HOUR_MS + 5 * MINUTE_MS),
     startedAt: iso(t + 7 * HOUR_MS + 6 * MINUTE_MS),
     completedAt: iso(t + 7 * HOUR_MS + 31 * MINUTE_MS),
-    warnings: ["12 SKUs have incomplete historical demand."],
+    warnings: [pick("12 SKU memiliki riwayat permintaan yang belum lengkap.", "12 SKUs have incomplete historical demand.")],
   });
   candidate.steps = completedSteps(candidate);
   runs.push(candidate);
@@ -554,9 +554,9 @@ function seedRuns(db: WorkspaceDb, now: number) {
     createdAt: iso(y + 14 * HOUR_MS + 2 * MINUTE_MS),
     startedAt: iso(y + 14 * HOUR_MS + 3 * MINUTE_MS),
     completedAt: iso(y + 14 * HOUR_MS + 6 * MINUTE_MS),
-    failureReason: "12 SKUs are missing historical demand records for the selected window.",
+    failureReason: pick("12 SKU tidak memiliki data permintaan historis untuk rentang yang dipilih.", "12 SKUs are missing historical demand records for the selected window."),
   });
-  failed.steps = failedSteps(failed, "validating", "Blocking: 12 SKUs are missing historical demand records.");
+  failed.steps = failedSteps(failed, "validating", pick("Menghambat: 12 SKU tidak memiliki data permintaan historis.", "Blocking: 12 SKUs are missing historical demand records."));
   failed.historicalEnd = isoDate(addDays(y, -1));
   runs.push(failed);
 
@@ -622,7 +622,7 @@ function seedDataQuality(db: WorkspaceDb, now: number) {
       detectedAt: iso(now - 26 * HOUR_MS),
       status: "investigating",
       ownerId: "u_lina",
-      forecastImpact: "Runs that include these SKUs over this window fail validation. The published baseline excludes them.",
+      forecastImpact: pick("Proses yang mencakup SKU ini pada rentang tersebut gagal diperiksa. Acuan terbit tidak menyertakannya.", "Runs that include these SKUs over this window fail validation. The published baseline excludes them."),
       recommendedAction: "Confirm whether the stores were closed. If not, request a POS backfill for the missing dates.",
       sampleProductIds: sample(12),
     },
@@ -909,7 +909,7 @@ function seedPlan(db: WorkspaceDb, now: number) {
       forecast: r.forecast,
       proposed,
       decision,
-      note: decision === "adjusted" ? "Aligned to confirmed store allocation." : decision === "flagged" ? "Waiting on exception review." : null,
+      note: decision === "adjusted" ? pick("Disesuaikan dengan alokasi toko yang sudah dikonfirmasi.", "Aligned to confirmed store allocation.") : decision === "flagged" ? pick("Menunggu tinjauan item.", "Waiting on exception review.") : null,
       exceptionCount: openEx.get(r.productId) ?? 0,
     };
   });
@@ -1120,7 +1120,7 @@ function seedNotifications(db: WorkspaceDb, now: number) {
           {
             id: "ntf_5",
             category: "forecast_failed" as const,
-            title: `Forecast run failed: ${failed.name}`,
+            title: pick(`Proses perkiraan gagal: ${failed.name}`, `Forecast run failed: ${failed.name}`),
             body: failed.failureReason ?? "The run failed.",
             href: `/forecasting/runs/${failed.id}`,
             createdAt: failed.completedAt ?? iso(now),
@@ -1149,7 +1149,7 @@ function seedNotifications(db: WorkspaceDb, now: number) {
     {
       id: "ntf_8",
       category: "model_issue",
-      title: pick("Bias model 2.4 cenderung naik", pick("Bias model 2.4 naik", "Model 2.4 bias drifting upward")),
+      title: pick("Bias model 2.4 cenderung naik", "Model 2.4 bias drifting upward"),
       body: pick("Bias pada kategori Beku naik ke +6,1% dalam 14 hari terakhir.", "Bias on Frozen rose to +6.1% over the last 14 days."),
       href: "/models/performance",
       createdAt: iso(now - 2 * DAY_MS),

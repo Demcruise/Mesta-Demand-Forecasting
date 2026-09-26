@@ -13,14 +13,14 @@ export const REGION_SCOPE_PREFIX = "Region · ";
 export const PRICE_ELASTICITY = -1.2;
 
 export const DRIVER_LABELS: Record<ScenarioDriver, string> = localized({
-  demand_change: pick("Perubahan permintaan", "Demand change"),
+  demand_change: "Perubahan permintaan",
   price: "Harga / komersial",
   promotion: "Kenaikan promosi",
   seasonality: "Musiman",
   external: "Faktor eksternal",
   availability: "Ketersediaan",
-  regional: pick("Penyesuaian wilayah", "Regional adjustment"),
-  lifecycle: pick("Siklus produk", "Lifecycle"),
+  regional: "Penyesuaian wilayah",
+  lifecycle: "Siklus produk",
 }, {
   demand_change: "Demand change",
   price: "Price / commercial",
@@ -33,14 +33,14 @@ export const DRIVER_LABELS: Record<ScenarioDriver, string> = localized({
 });
 
 export const DRIVER_HELP: Record<ScenarioDriver, string> = localized({
-  demand_change: pick("Perubahan langsung pada perkiraan permintaan, dalam persen.", "Direct change to expected demand, in percent."),
-  price: pick(`Perubahan harga jual, dalam persen. Dikonversi ke permintaan dengan elastisitas ${PRICE_ELASTICITY}.`, `Change in shelf price, in percent. Converted to demand with an elasticity of ${PRICE_ELASTICITY}.`),
-  promotion: pick("Tambahan kenaikan dari promosi yang belum ada di kalender promosi, dalam persen.", "Additional uplift from promotions not in the promotions calendar, in percent."),
-  seasonality: pick("Perubahan pada puncak musiman, dalam persen.", "Change to the seasonal peak, in percent."),
-  external: pick("Efek cuaca, acara, atau kondisi makro, dalam persen.", "Weather, events or macro effects, in percent."),
-  availability: pick("Perubahan ketersediaan di rak, dalam poin persentase. Ketersediaan rendah membatasi permintaan.", "Change in on-shelf availability, in percentage points. Lower availability caps demand."),
-  regional: pick("Perubahan permintaan di suatu wilayah, dalam persen. Diskalakan menurut porsi volume wilayah.", "Change to demand in a region, in percent. Scaled by the region's share of volume."),
-  lifecycle: pick("Efek kenaikan awal atau penghentian produk, dalam persen.", "Ramp-up or phase-out effect, in percent."),
+  demand_change: "Perubahan langsung pada perkiraan permintaan, dalam persen.",
+  price: `Perubahan harga jual, dalam persen. Dikonversi ke permintaan dengan elastisitas ${PRICE_ELASTICITY}.`,
+  promotion: "Tambahan kenaikan dari promosi yang belum ada di kalender promosi, dalam persen.",
+  seasonality: "Perubahan pada puncak musiman, dalam persen.",
+  external: "Efek cuaca, acara, atau kondisi makro, dalam persen.",
+  availability: "Perubahan ketersediaan di rak, dalam poin persentase. Ketersediaan rendah membatasi permintaan.",
+  regional: "Perubahan permintaan di suatu wilayah, dalam persen. Diskalakan menurut porsi volume wilayah.",
+  lifecycle: "Efek kenaikan awal atau penghentian produk, dalam persen.",
 }, {
   demand_change: "Direct change to expected demand, in percent.",
   price: `Change in shelf price, in percent. Converted to demand with an elasticity of ${PRICE_ELASTICITY}.`,

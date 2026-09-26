@@ -66,12 +66,12 @@ export function RunDetailView({ runId }: { runId: string }) {
         <PageHeader title={pick("Proses Perkiraan", "Forecast run")} />
         <Panel>
           <ErrorState
-            what={`Forecast run ${runId} could not be loaded.`}
+            what={pick(`Proses perkiraan ${runId} tidak dapat dimuat.`, `Forecast run ${runId} could not be loaded.`)}
             error={q.error}
             onRetry={() => q.refetch()}
             recovery={
               <Link href="/forecasting/runs" className={buttonVariants({ variant: "secondary" })}>
-                Back to forecast runs
+                {pick("Kembali ke Proses Perkiraan", "Back to forecast runs")}
               </Link>
             }
           />
@@ -91,36 +91,36 @@ export function RunDetailView({ runId }: { runId: string }) {
           <>
             <StatusBadge status={run.status} />
             <MetaItem>{scopeLabel(run)}</MetaItem>
-            <MetaItem>{pluralize(run.scope.skuCount, "SKU")} · {run.scope.locationCount} locations</MetaItem>
-            <MetaItem>{run.horizonDays}-day horizon · model {run.modelVersion}</MetaItem>
-            <MetaItem>Created by {actorName(run.createdBy)} · {formatDateTime(run.createdAt)}</MetaItem>
+            <MetaItem>{pick(`${formatNumber(run.scope.skuCount)} SKU · ${run.scope.locationCount} lokasi`, `${pluralize(run.scope.skuCount, "SKU")} · ${run.scope.locationCount} locations`)}</MetaItem>
+            <MetaItem>{pick(`Periode ${run.horizonDays} hari · model ${run.modelVersion}`, `${run.horizonDays}-day horizon · model ${run.modelVersion}`)}</MetaItem>
+            <MetaItem>{pick(`Dibuat oleh ${actorName(run.createdBy)} · ${formatDateTime(run.createdAt)}`, `Created by ${actorName(run.createdBy)} · ${formatDateTime(run.createdAt)}`)}</MetaItem>
           </>
         }
         actions={
           <>
             {can("forecast.run.create") && run.status !== "draft" && (
               <Link href={`/forecasting/runs/new?from=${run.id}`} className={buttonVariants({ variant: "secondary" })}>
-                <Copy aria-hidden /> Duplicate configuration
+                <Copy aria-hidden /> {pick("Duplikat pengaturan", "Duplicate configuration")}
               </Link>
             )}
             {active && can("forecast.run.cancel") && (
               <Button variant="danger-outline" onClick={() => actions.open("cancel", run)}>
-                <Ban aria-hidden /> Cancel run
+                <Ban aria-hidden /> {pick("Batalkan proses", "Cancel run")}
               </Button>
             )}
             {(run.status === "failed" || run.status === "cancelled") && can("forecast.run.create") && (
               <Button variant="primary" loading={actions.retry.isPending} onClick={() => actions.retry.mutate(run.id)}>
-                <RotateCcw aria-hidden /> Retry run
+                <RotateCcw aria-hidden /> {pick("Jalankan ulang", "Retry run")}
               </Button>
             )}
             {hasResults && (
               <Link href={`/forecasting/explorer?run=${run.id}`} className={buttonVariants({ variant: run.status === "completed" && can("forecast.run.publish") ? "secondary" : "primary" })}>
-                <Table2 aria-hidden /> Explore results
+                <Table2 aria-hidden /> {pick("Lihat hasil", "Explore results")}
               </Link>
             )}
             {run.status === "completed" && can("forecast.run.publish") && (
               <Button variant="primary" onClick={() => actions.open("publish", run)}>
-                <Send aria-hidden /> Publish as baseline
+                <Send aria-hidden /> {pick("Terbitkan sebagai acuan", "Publish as baseline")}
               </Button>
             )}
           </>
@@ -134,17 +134,17 @@ export function RunDetailView({ runId }: { runId: string }) {
           action={
             can("forecast.run.create") ? (
               <Link href={`/forecasting/runs/new?from=${run.id}`} className={buttonVariants({ variant: "primary", size: "sm" })}>
-                Lanjutkan pengaturan
+                {pick("Lanjutkan pengaturan", "Continue configuration")}
               </Link>
             ) : undefined
           }
         >
-          Draft menyimpan pengaturan yang sudah diisi. Periksa lalu jalankan untuk membuat perkiraan.
+          {pick("Draft menyimpan pengaturan yang sudah diisi. Periksa lalu jalankan untuk membuat perkiraan.", "The draft keeps the configuration entered so far. Review it, then run it to produce a forecast.")}
         </InlineAlert>
       )}
       {run.status === "completed" && (
         <InlineAlert tone="info" title={pick("Hasil sudah siap tetapi belum diterbitkan.", "Results are ready but not published.")}>
-          Acuan perencanaan masih memakai proses terbit terakhir. Tinjau hasilnya, lalu terbitkan bila sudah layak dipakai.
+          {pick("Acuan perencanaan masih memakai proses terbit terakhir. Tinjau hasilnya, lalu terbitkan bila sudah layak dipakai.", "The planning baseline still uses the last published run. Review the results, then publish when they are ready to use.")}
           {!can("forecast.run.publish") && pick(" Penerbitan memerlukan Manajer atau Administrator.", " Publishing needs a Manager or Administrator.")}
         </InlineAlert>
       )}
@@ -154,16 +154,17 @@ export function RunDetailView({ runId }: { runId: string }) {
           title={pick(`Proses perkiraan gagal saat ${run.steps.find((s) => s.status === "failed")?.label.toLowerCase() ?? "pemrosesan"}.`, `Forecast run failed during ${run.steps.find((s) => s.status === "failed")?.label.toLowerCase() ?? "processing"}.`)}
           action={
             <Link href="/demand-data/quality?severity=blocking" className={buttonVariants({ variant: "secondary", size: "sm" })}>
-              Lihat masalah data
+              {pick("Lihat masalah data", "View data issues")}
             </Link>
           }
         >
-          {run.failureReason} Proses tidak diterbitkan dan tidak ada hasil yang disimpan. Selesaikan masalah datanya atau ubah periode historis, lalu jalankan ulang.
+          {run.failureReason}{" "}
+          {pick("Proses tidak diterbitkan dan tidak ada hasil yang disimpan. Selesaikan masalah datanya atau ubah periode historis, lalu jalankan ulang.", "The run was not published and no results were saved. Resolve the data issue or change the history window, then retry.")}
         </InlineAlert>
       )}
       {run.status === "cancelled" && (
         <InlineAlert tone="warning" title={pick("Proses ini dibatalkan.", "This run was cancelled.")}>
-          Tidak ada hasil yang disimpan. Jalankan ulang untuk memproses lagi dengan pengaturan yang sama.
+          {pick("Tidak ada hasil yang disimpan. Jalankan ulang untuk memproses lagi dengan pengaturan yang sama.", "No results were saved. Retry to run again with the same configuration.")}
         </InlineAlert>
       )}
 
@@ -174,7 +175,7 @@ export function RunDetailView({ runId }: { runId: string }) {
           {result.isPending ? (
             <Panel>
               <p className="flex items-center gap-2 body-sm text-fg-secondary" role="status">
-                <Loader2 className="size-4 animate-spin" aria-hidden /> Memuat hasil…
+                <Loader2 className="size-4 animate-spin" aria-hidden /> {pick("Memuat hasil…", "Loading results…")}
               </p>
             </Panel>
           ) : result.isError ? (
@@ -189,14 +190,14 @@ export function RunDetailView({ runId }: { runId: string }) {
                   value={formatNumber(result.data.summary.forecastValue)}
                   unit={pick("unit", "units")}
                   delta={<ForecastDelta percent={result.data.summary.deltaPercent} size="sm" />}
-                  context={pick(`Rentang 80% ${formatNumber(result.data.summary.lowerBound)} – ${formatNumber(result.data.summary.upperBound)}`, pick(`rentang 80% ${formatNumber(result.data.summary.lowerBound)} – ${formatNumber(result.data.summary.upperBound)}`, pick(`rentang 80% ${formatNumber(result.data.summary.lowerBound)} – ${formatNumber(result.data.summary.upperBound)}`, `80% interval ${formatNumber(result.data.summary.lowerBound)} – ${formatNumber(result.data.summary.upperBound)}`)))}
+                  context={pick(`Rentang 80% ${formatNumber(result.data.summary.lowerBound)} – ${formatNumber(result.data.summary.upperBound)}`, `80% interval ${formatNumber(result.data.summary.lowerBound)} – ${formatNumber(result.data.summary.upperBound)}`)}
                 />
-                <MetricCard label={pick("Perkiraan sebelumnya", "Previous run")} value={formatNumber(result.data.summary.previousForecast)} unit={pick("unit", "units")} context={pick(`perubahan ${formatDeltaPercent(result.data.summary.deltaPercent)}`, pick(`perubahan ${formatDeltaPercent(result.data.summary.deltaPercent)}`, pick(`perubahan ${formatDeltaPercent(result.data.summary.deltaPercent)}`, `${formatDeltaPercent(result.data.summary.deltaPercent)} change`)))} />
+                <MetricCard label={pick("Perkiraan sebelumnya", "Previous run")} value={formatNumber(result.data.summary.previousForecast)} unit={pick("unit", "units")} context={pick(`perubahan ${formatDeltaPercent(result.data.summary.deltaPercent)}`, `${formatDeltaPercent(result.data.summary.deltaPercent)} change`)} />
                 <MetricCard label={pick(`Aktual · ${run.horizonDays} hari terakhir`, `Actual · last ${run.horizonDays} days`)} value={formatNumber(result.data.summary.actualLastPeriod)} unit={pick("unit", "units")} context={pick("Sama panjang dengan rentang perkiraan", "Same length as the horizon")} />
                 <MetricCard
                   label={pick("SKU perlu ditinjau", "SKUs needing review")}
                   value={formatNumber(result.data.counts.needsReview)}
-                  context={pick(`${result.data.counts.increases} naik >5% · ${result.data.counts.decreases} turun >5%`, pick(`${result.data.counts.increases} naik >5% · ${result.data.counts.decreases} turun >5%`, pick(`${result.data.counts.increases} naik >5% · ${result.data.counts.decreases} turun >5%`, `${result.data.counts.increases} up >5% · ${result.data.counts.decreases} down >5%`)))}
+                  context={pick(`${result.data.counts.increases} naik >5% · ${result.data.counts.decreases} turun >5%`, `${result.data.counts.increases} up >5% · ${result.data.counts.decreases} down >5%`)}
                   href={`/forecasting/explorer?run=${run.id}&status=needs_review`}
                   hrefLabel={pick("Tinjau di Perkiraan Permintaan", "Review in explorer")}
                 />
@@ -240,7 +241,7 @@ export function RunDetailView({ runId }: { runId: string }) {
                   flush
                   actions={
                     <Link href={`/forecasting/explorer?run=${run.id}&sort=delta&dir=desc`} className="text-xs font-semibold text-primary hover:underline">
-                      Buka di Perkiraan Permintaan
+                      {pick("Buka di Perkiraan Permintaan", "Open in Forecast Explorer")}
                     </Link>
                   }
                 >

@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { pick } from "@/lib/i18n/core";
 
 type ToastTone = "success" | "info" | "warning" | "critical";
 
@@ -68,7 +69,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 </T.Action>
               )}
             </div>
-            <T.Close className="inline-flex size-6 items-center justify-center rounded-sm text-fg-tertiary hover:bg-hover hover:text-fg" aria-label="Dismiss notification">
+            <T.Close className="inline-flex size-6 items-center justify-center rounded-sm text-fg-tertiary hover:bg-hover hover:text-fg" aria-label={pick("Tutup notifikasi", "Dismiss notification")}>
               <X className="size-3.5" aria-hidden />
             </T.Close>
           </T.Root>

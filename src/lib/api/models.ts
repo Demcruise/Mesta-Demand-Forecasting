@@ -52,7 +52,7 @@ export function requestDefaultModel(ctx: ApiContext, id: string, rationale: stri
     const model = db.models.find((m) => m.id === id);
     if (!model) throw new ApiError(pick("Model tidak ditemukan.", "Model not found."), "not_found");
     if (model.isDefault) throw new ApiError(pick("Model ini sudah menjadi bawaan.", "This model is already the default."), "conflict");
-    if (model.status === "archived") throw new ApiError("Archived models cannot become the default.", "conflict");
+    if (model.status === "archived") throw new ApiError(pick("Model yang diarsipkan tidak dapat menjadi bawaan.", "Archived models cannot become the default."), "conflict");
     const existing = db.approvals.find((a) => a.type === "model_default" && a.objectId === id && a.status === "pending");
     if (existing) throw new ApiError(pick("Permintaan menjadikan model ini bawaan sudah menunggu.", "A request to make this model the default is already pending."), "conflict");
     const current = db.models.find((m) => m.isDefault);
@@ -74,7 +74,7 @@ export function requestDefaultModel(ctx: ApiContext, id: string, rationale: stri
         summary: current ? pick(`WAPE ${(current.metrics.wape * 100).toFixed(1)}% → ${(model.metrics.wape * 100).toFixed(1)}% pada evaluasi terakhir.`, `WAPE ${(current.metrics.wape * 100).toFixed(1)}% → ${(model.metrics.wape * 100).toFixed(1)}% in the latest evaluation.`) : "",
       },
       changeSet: [{ field: pick("Model bawaan", "Default model"), from: current ? `${current.name} ${current.version}` : pick("Tidak ada", "None"), to: pick(`${model.name} ${model.version}`, `${model.name} ${model.version}`) }],
-      evidence: db.backtests.filter((b) => b.modelId === id).map((b) => `Backtest ${b.id} (${b.windowStart} – ${b.windowEnd}).`),
+      evidence: db.backtests.filter((b) => b.modelId === id).map((b) => pick(`Uji model ${b.id} (${b.windowStart} – ${b.windowEnd}).`, `Backtest ${b.id} (${b.windowStart} – ${b.windowEnd}).`)),
       assumptions: [rationale],
       policy: { name: pick("Promosi model", "Model promotion"), rule: pick("Mengubah model bawaan memerlukan persetujuan Manajer.", "Changing the default model needs Manager approval."), requiredRole: "manager" },
       afterApproval: pick(`Proses perkiraan baru memakai ${model.name} ${model.version} sebagai bawaan. Proses yang ada tidak berubah.`, `New forecast runs use ${model.name} ${model.version} by default. Existing runs are unchanged.`),
@@ -121,8 +121,8 @@ export function runBacktest(ctx: ApiContext, input: { modelId: string; windowDay
     const db = getDb(ctx.workspaceId);
     const model = db.models.find((m) => m.id === input.modelId);
     if (!model) throw new ApiError(pick("Pilih model.", "Select a model."), "validation");
-    if (input.windowDays < 28) throw new ApiError("The evaluation window must be at least 28 days.", "validation");
-    if (input.windowDays > 180) throw new ApiError("The evaluation window cannot exceed the 182 days of loaded history.", "validation");
+    if (input.windowDays < 28) throw new ApiError(pick("Periode evaluasi minimal 28 hari.", "The evaluation window must be at least 28 days."), "validation");
+    if (input.windowDays > 180) throw new ApiError(pick("Periode evaluasi tidak boleh melebihi 182 hari riwayat yang dimuat.", "The evaluation window cannot exceed the 182 days of loaded history."), "validation");
     const count = db.backtests.length;
     const bt: Backtest = {
       id: `BT-${String(413 + count).padStart(4, "0")}`,
@@ -140,7 +140,7 @@ export function runBacktest(ctx: ApiContext, input: { modelId: string; windowDay
       errorBuckets: [],
     };
     db.backtests.unshift(bt);
-    audit(db, { actorId: ctx.userId, action: "run_backtest", entityType: "backtest", entityId: bt.id, entityLabel: pick(`${model.name} ${model.version}`, `${model.name} ${model.version}`), previousState: null, newState: "queued", reason: `${input.windowDays}-day window, ${input.frequency}`, source: "web" });
+    audit(db, { actorId: ctx.userId, action: "run_backtest", entityType: "backtest", entityId: bt.id, entityLabel: pick(`${model.name} ${model.version}`, `${model.name} ${model.version}`), previousState: null, newState: "queued", reason: pick(`periode ${input.windowDays} hari, ${input.frequency === "weekly" ? "mingguan" : "harian"}`, `${input.windowDays}-day window, ${input.frequency}`), source: "web" });
     return bt;
   });
 }

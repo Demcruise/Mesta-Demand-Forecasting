@@ -11,6 +11,14 @@ import { Avatar } from "@/components/entities/identity";
 import { Tooltip } from "@/components/ui/overlay";
 import { EmptyState } from "@/components/feedback/states";
 import { localizedRecord, pick } from "@/lib/i18n";
+import { STATUS } from "@/components/feedback/status";
+import type { StatusKey } from "@/types/domain";
+
+/** Audit states are stored as keys ("completed", "active"); show them in the active locale. */
+export function auditStateLabel(state: string | null | undefined) {
+  if (!state) return "—";
+  return state in STATUS ? STATUS[state as StatusKey].label : state.replace(/_/g, " ");
+}
 
 export const ACTION_LABELS: Record<AuditAction, string> = localizedRecord(
   {
@@ -97,7 +105,7 @@ export function entityHref(e: Pick<AuditEvent, "entityType" | "entityId">): stri
   }
 }
 
-function describe(e: AuditEvent) {
+export function describeAuditEvent(e: AuditEvent) {
   if (e.action === "create_forecast_run") {
     if (e.newState === "completed") return pick("Proses perkiraan selesai", "Forecast run completed");
     return pick("Membuat proses perkiraan", "Created forecast run");
@@ -121,7 +129,7 @@ export function AuditEventItem({ event, showEntity = true }: { event: AuditEvent
       )}
       <div className="min-w-0 flex-1 pb-4">
         <p className="body-sm text-fg">
-          <span className="font-semibold">{actorName(event.actorId)}</span> <span className="text-fg-secondary">{describe(event).toLowerCase()}</span>{" "}
+          <span className="font-semibold">{actorName(event.actorId)}</span> <span className="text-fg-secondary">{describeAuditEvent(event).toLowerCase()}</span>{" "}
           {showEntity &&
             (href ? (
               <Link href={href} className="font-semibold text-fg hover:text-primary hover:underline underline-offset-2">
@@ -133,9 +141,9 @@ export function AuditEventItem({ event, showEntity = true }: { event: AuditEvent
         </p>
         {(event.previousState || event.newState) && (
           <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-fg-secondary">
-            {event.previousState && <span className="rounded-xs bg-muted px-1 tabular">{event.previousState}</span>}
-            {event.previousState && event.newState && <ArrowRight className="size-3 text-fg-tertiary" aria-label="to" />}
-            {event.newState && <span className="rounded-xs bg-muted px-1 tabular">{event.newState}</span>}
+            {event.previousState && <span className="rounded-xs bg-muted px-1 tabular">{auditStateLabel(event.previousState)}</span>}
+            {event.previousState && event.newState && <ArrowRight className="size-3 text-fg-tertiary" aria-label={pick("menjadi", "to")} />}
+            {event.newState && <span className="rounded-xs bg-muted px-1 tabular">{auditStateLabel(event.newState)}</span>}
           </p>
         )}
         {event.reason && <p className="mt-1 text-xs text-fg-secondary">“{event.reason}”</p>}
@@ -146,7 +154,7 @@ export function AuditEventItem({ event, showEntity = true }: { event: AuditEvent
             </time>
           </Tooltip>
           {" · "}
-          {event.source === "system" ? "System" : event.source === "api" ? "API" : "Web"}
+          {event.source === "system" ? pick("Sistem", "System") : event.source === "api" ? "API" : "Web"}
         </p>
       </div>
     </li>

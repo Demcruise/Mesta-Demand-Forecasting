@@ -21,7 +21,8 @@ type Preferences = {
 };
 
 const KEY = PREFERENCES_KEY;
-const DEFAULTS: Preferences = { theme: "system", density: "comfortable", sidebarCollapsed: false, locale: "en" };
+// DENSITY-004: compact by default — forecasting tables are dense. A stored preference wins.
+const DEFAULTS: Preferences = { theme: "system", density: "compact", sidebarCollapsed: false, locale: "en" };
 
 function load(): Preferences {
   try {

@@ -115,7 +115,7 @@ export function StatusBadge({ status, className, label, size = "md" }: { status:
     <Tooltip content={def.tooltip}>
       <span
         className={cn(
-          "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-sm border font-semibold",
+          "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-sm border font-semibold leading-none",
           size === "sm" ? "h-5 px-1.5 text-[0.6875rem]" : "h-6 px-2 text-xs",
           TONE_CLASSES[def.tone],
           className,
@@ -151,12 +151,12 @@ export function SeverityBadge({ severity, size = "md" }: { severity: Severity | 
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-sm border font-semibold",
+        "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-sm border font-semibold leading-none",
         size === "sm" ? "h-5 px-1.5 text-[0.6875rem]" : "h-6 px-2 text-xs",
         TONE_CLASSES[def.tone],
       )}
     >
-      <Icon className="size-3.5" aria-hidden />
+      <Icon className="size-3.5 shrink-0" aria-hidden />
       {label}
     </span>
   );
@@ -165,7 +165,7 @@ export function SeverityBadge({ severity, size = "md" }: { severity: Severity | 
 /** Neutral metadata tag (e.g. category, environment). Not a status. */
 export function Tag({ children, tone = "neutral", className, icon }: { children: React.ReactNode; tone?: Tone; className?: string; icon?: React.ReactNode }) {
   return (
-    <span className={cn("inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-xs border px-1.5 text-[0.6875rem] font-semibold [&_svg]:size-3", TONE_CLASSES[tone], className)}>
+    <span className={cn("inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-xs border px-1.5 text-[0.6875rem] font-semibold leading-none [&_svg]:size-3 [&_svg]:shrink-0", TONE_CLASSES[tone], className)}>
       {icon}
       {children}
     </span>

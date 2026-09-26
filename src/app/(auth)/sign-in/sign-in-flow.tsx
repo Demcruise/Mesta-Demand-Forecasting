@@ -68,7 +68,7 @@ export function SignInFlow() {
     <AuthShell>
       {reason === "expired" && (
         <InlineAlert tone="warning" title={pick("Sesi Anda telah berakhir.", "Your session has ended.")} className="mb-4">
-          Masuk kembali untuk melanjutkan.
+          {pick("Masuk kembali untuk melanjutkan.", "Sign in again to continue.")}
         </InlineAlert>
       )}
       {reason === "signed_out" && (
@@ -83,7 +83,9 @@ export function SignInFlow() {
             <div className="min-w-0">
               <p className="body-sm font-semibold text-fg">{ORGANIZATION.name}</p>
               <p className="truncate caption">{step.email}</p>
-              <p className="mt-1 caption">Penyedia identitas: {ORGANIZATION.idp}</p>
+              <p className="mt-1 caption">
+                {pick("Penyedia identitas", "Identity provider")}: {ORGANIZATION.idp}
+              </p>
             </div>
           </div>
           <Button
@@ -99,11 +101,11 @@ export function SignInFlow() {
           </Button>
           <p className="mt-3 flex items-start gap-1.5 caption">
             <ShieldCheck className="mt-px size-3.5 shrink-0" aria-hidden />
-            Autentikasi dua faktor ditangani oleh penyedia identitas Anda.
+            {pick("Autentikasi dua faktor ditangani oleh penyedia identitas Anda.", "Two-factor authentication is handled by your identity provider.")}
           </p>
           <Button variant="link" className="mt-4" onClick={() => setStep({ kind: "idle" })} disabled={step.kind === "redirecting"}>
             <ArrowLeft aria-hidden />
-            Gunakan email lain
+            {pick("Gunakan email lain", "Use a different email")}
           </Button>
         </AuthCard>
       ) : (
@@ -130,7 +132,7 @@ export function SignInFlow() {
             </Field>
             {step.kind === "not_found" && (
               <InlineAlert tone="warning" title={pick(`Tidak ada organisasi yang memakai ${step.domain} di Mesta.`, `No organisation uses ${step.domain} with Mesta.`)}>
-                Periksa kembali alamatnya. Jika organisasi Anda baru menggunakan Mesta, minta administrator mendaftarkan domainnya.
+                {pick("Periksa kembali alamatnya. Jika organisasi Anda baru menggunakan Mesta, minta administrator mendaftarkan domainnya.", "Check the address. If your organisation is new to Mesta, ask an administrator to register its domain.")}
               </InlineAlert>
             )}
             <Button type="submit" variant="primary" size="lg" className="w-full" loading={step.kind === "validating"} loadingText={pick("Mencari organisasi Anda", "Finding your organisation")}>

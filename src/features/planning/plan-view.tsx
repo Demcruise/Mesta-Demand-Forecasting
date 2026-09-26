@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { Check, ClipboardCheck, Flag, MoreHorizontal, Pencil, Send, X } from "lucide-react";
+import { Check, CheckCheck, ClipboardCheck, Flag, ListTodo, MoreHorizontal, Package, Pencil, Send, X } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import type { PlanDecision } from "@/types/domain";
@@ -11,7 +11,7 @@ import { useListState } from "@/hooks/use-list-state";
 import { useSession } from "@/lib/session-context";
 import { CATEGORIES } from "@/lib/mock/catalog";
 import { actorName } from "@/lib/mock/directory";
-import { formatDateRange, formatDateTime, formatDeltaNumber, formatDeltaPercent, formatNumber, pluralize } from "@/lib/format";
+import { formatDateRange, formatDateTime, formatDeltaPercent, formatMetric, formatNumber, pluralize } from "@/lib/format";
 import { SignedPercent } from "@/components/forecasting/metrics";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import { FilterBar } from "@/components/tables/filter-bar";
 import { StatusBadge, Tag, type Tone } from "@/components/feedback/status";
 import { EmptyState, ErrorState, InlineAlert, PageSkeleton, PermissionNotice } from "@/components/feedback/states";
 import { ProductIdentity } from "@/components/entities/identity";
-import { MetricCard, MetricStrip } from "@/components/forecasting/metrics";
+import { MetricCard, MetricDelta, MetricStrip } from "@/components/forecasting/metrics";
 import { ConsequenceSummary } from "@/components/governance/audit";
 import { pick, localized } from "@/lib/i18n";
 
@@ -59,36 +59,22 @@ export function PlanView() {
   const [submitNote, setSubmitNote] = React.useState("");
   const selectedIds = Object.keys(selection).filter((k) => selection[k]);
 
-  const update = localized(useApiMutation((c, v: { ids: string[]; decision: PlanDecision; proposed?: number; note?: string }) => updatePlanLines(c, v.ids, v), {
+  const update = useApiMutation((c, v: { ids: string[]; decision: PlanDecision; proposed?: number; note?: string }) => updatePlanLines(c, v.ids, v), {
     invalidate: [["plan"]],
-    success: (n, v) => `${pluralize(n, "baris")} ${DECISION[v.decision].label.toLowerCase()}`,
+    success: (n, v) => `${pluralize(n, pick("baris", "line"), pick("baris", "lines"))} ${DECISION[v.decision].label.toLowerCase()}`,
     failure: pick("Rencana tidak dapat diperbarui.", "The plan was not updated."),
     onSuccess: () => {
       setEdit(null);
       setSelection({});
     },
-  }), useApiMutation((c, v: { ids: string[]; decision: PlanDecision; proposed?: number; note?: string }) => updatePlanLines(c, v.ids, v), {
-    invalidate: [["plan"]],
-    success: (n, v) => `${pluralize(n, "line")} ${DECISION[v.decision].label.toLowerCase()}`,
-    failure: "The plan was not updated.",
-    onSuccess: () => {
-      setEdit(null);
-      setSelection({});
-    },
-  }));
-  const submit = localized(useApiMutation((c, v: string) => submitPlan(c, v), {
+  });
+  const submit = useApiMutation((c, v: string) => submitPlan(c, v), {
     invalidate: [["plan"], ["approvals"], ["nav-counts"]],
     success: pick("Rencana dikirim untuk persetujuan", "Plan submitted for approval"),
-    successDescription: "A Manager will review before it is published to replenishment.",
+    successDescription: pick("Manajer akan meninjaunya sebelum diterbitkan ke pengisian ulang.", "A Manager will review before it is published to replenishment."),
     failure: pick("Rencana tidak dapat dikirim.", "The plan was not submitted."),
     onSuccess: () => setSubmitOpen(false),
-  }), useApiMutation((c, v: string) => submitPlan(c, v), {
-    invalidate: [["plan"], ["approvals"], ["nav-counts"]],
-    success: "Plan submitted for approval",
-    successDescription: "A Manager will review before it is published to replenishment.",
-    failure: "The plan was not submitted.",
-    onSuccess: () => setSubmitOpen(false),
-  }));
+  });
 
   const readOnly = !q.data || q.data.plan.status !== "draft" || !can("plan.edit");
 
@@ -102,7 +88,7 @@ export function PlanView() {
     setEdit({ ids, decision, forecast, label });
   };
 
-  const columns = localized(React.useMemo<ColumnDef<PlanRow, unknown>[]>(
+  const columns = React.useMemo<ColumnDef<PlanRow, unknown>[]>(
     () => [
       { id: "product", header: pick("Produk", "Product"), meta: { width: "minmax(260px, 2.4fr)", sortKey: "product", pinned: true, label: pick("Produk", "Product") } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original.product} href={`/forecasting/detail/${row.original.productId}`} /> },
       { id: "forecast", header: pick("Perkiraan", "Forecast"), meta: { width: "110px", numeric: true, sortKey: "forecast", description: pick("Perkiraan acuan untuk periode rencana.", "Baseline forecast for the plan period.") } satisfies ColumnMeta, cell: ({ row }) => formatNumber(row.original.forecast) },
@@ -123,43 +109,44 @@ export function PlanView() {
       },
       {
         id: "exceptions",
-        header: "Perlu Ditinjau",
-        meta: { width: "100px", numeric: true, sortKey: "exceptions", hideBelow: "lg" } satisfies ColumnMeta,
+        header: pick("Perlu Ditinjau", "Exceptions"),
+        // Context for the decision, not a quantity to compare: left axis (§49).
+        meta: { width: "120px", numeric: true, align: "left", sortKey: "exceptions", hideBelow: "lg", label: pick("Perlu Ditinjau", "Exceptions") } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.exceptionCount > 0 ? (
             <Link href={`/planning/exceptions?q=${encodeURIComponent(row.original.product.sku)}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-warning-fg hover:underline">
-              {row.original.exceptionCount} open
+              {pick(`${row.original.exceptionCount} terbuka`, `${row.original.exceptionCount} open`)}
             </Link>
           ) : (
-            <span className="text-fg-tertiary">None</span>
+            <span className="text-fg-tertiary">{pick("Tidak ada", "None")}</span>
           ),
       },
-      { id: "decision", header: pick("Keputusan", "Decision"), meta: { width: "110px", sortKey: "decision" } satisfies ColumnMeta, cell: ({ row }) => <Tag tone={DECISION[row.original.decision].tone}>{DECISION[row.original.decision].label}</Tag> },
-      { id: "note", header: "Catatan", meta: { width: "minmax(160px, 1.4fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-xs text-fg-secondary" title={row.original.note ?? undefined}>{row.original.note ?? ""}</span> },
+      { id: "decision", header: pick("Keputusan", "Decision"), meta: { width: "120px", align: "left", sortKey: "decision" } satisfies ColumnMeta, cell: ({ row }) => <Tag tone={DECISION[row.original.decision].tone}>{DECISION[row.original.decision].label}</Tag> },
+      { id: "note", header: pick("Catatan", "Note"), meta: { width: "minmax(160px, 1.4fr)", align: "left", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-xs text-fg-secondary" title={row.original.note ?? undefined}>{row.original.note ?? ""}</span> },
       {
         id: "actions",
-        header: () => <span className="sr-only">{"Aksi"}</span>,
-        meta: { width: "52px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">{pick("Aksi", "Actions")}</span>,
+        meta: { width: "52px", pinned: true, align: "center", label: pick("Aksi", "Actions") } satisfies ColumnMeta,
         cell: ({ row }) =>
           readOnly ? null : (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" aria-label={`Decide on ${row.original.product.name}`} onClick={(e) => e.stopPropagation()}>
+                <Button size="icon-sm" variant="ghost" aria-label={pick(`Putuskan ${row.original.product.name}`, `Decide on ${row.original.product.name}`)} onClick={(e) => e.stopPropagation()}>
                   <MoreHorizontal aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem icon={<Check />} onSelect={() => openEdit([row.original.id], "accepted", row.original.forecast, row.original.product.name)}>
-                  Terima perkiraan
+                  {pick("Terima perkiraan", "Accept forecast")}
                 </DropdownMenuItem>
                 <DropdownMenuItem icon={<Pencil />} onSelect={() => openEdit([row.original.id], "adjusted", row.original.proposed, row.original.product.name)}>
-                  Sesuaikan jumlah
+                  {pick("Sesuaikan jumlah", "Adjust quantity")}
                 </DropdownMenuItem>
                 <DropdownMenuItem icon={<Flag />} onSelect={() => openEdit([row.original.id], "flagged", row.original.forecast, row.original.product.name)}>
-                  Tandai untuk ditindaklanjuti
+                  {pick("Tandai untuk ditindaklanjuti", "Flag for follow-up")}
                 </DropdownMenuItem>
                 <DropdownMenuItem icon={<X />} destructive onSelect={() => openEdit([row.original.id], "rejected", row.original.forecast, row.original.product.name)}>
-                  Tolak (rencanakan nol)
+                  {pick("Tolak (rencanakan nol)", "Reject (plan zero)")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -168,73 +155,7 @@ export function PlanView() {
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [readOnly],
-  ), React.useMemo<ColumnDef<PlanRow, unknown>[]>(
-    () => [
-      { id: "product", header: "Product", meta: { width: "minmax(260px, 2.4fr)", sortKey: "product", pinned: true, label: "Product" } satisfies ColumnMeta, cell: ({ row }) => <ProductIdentity product={row.original.product} href={`/forecasting/detail/${row.original.productId}`} /> },
-      { id: "forecast", header: "Forecast", meta: { width: "110px", numeric: true, sortKey: "forecast", description: "Baseline forecast for the plan period." } satisfies ColumnMeta, cell: ({ row }) => formatNumber(row.original.forecast) },
-      {
-        id: "proposed",
-        header: "Planned",
-        meta: { width: "110px", numeric: true, sortKey: "proposed", description: "Quantity that will be sent to replenishment." } satisfies ColumnMeta,
-        cell: ({ row }) => <span className={cn("font-semibold", row.original.proposed !== row.original.forecast && "text-primary")}>{formatNumber(row.original.proposed)}</span>,
-      },
-      {
-        id: "delta",
-        header: "Change",
-        meta: { width: "110px", numeric: true, sortKey: "delta", hideBelow: "md" } satisfies ColumnMeta,
-        cell: ({ row }) => {
-          const d = row.original.proposed - row.original.forecast;
-          return d === 0 ? <span className="text-fg-tertiary">—</span> : <SignedPercent percent={d / Math.max(1, row.original.forecast)} />;
-        },
-      },
-      {
-        id: "exceptions",
-        header: "Exceptions",
-        meta: { width: "100px", numeric: true, sortKey: "exceptions", hideBelow: "lg" } satisfies ColumnMeta,
-        cell: ({ row }) =>
-          row.original.exceptionCount > 0 ? (
-            <Link href={`/planning/exceptions?q=${encodeURIComponent(row.original.product.sku)}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-warning-fg hover:underline">
-              {row.original.exceptionCount} open
-            </Link>
-          ) : (
-            <span className="text-fg-tertiary">None</span>
-          ),
-      },
-      { id: "decision", header: "Decision", meta: { width: "110px", sortKey: "decision" } satisfies ColumnMeta, cell: ({ row }) => <Tag tone={DECISION[row.original.decision].tone}>{DECISION[row.original.decision].label}</Tag> },
-      { id: "note", header: "Note", meta: { width: "minmax(160px, 1.4fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-xs text-fg-secondary" title={row.original.note ?? undefined}>{row.original.note ?? ""}</span> },
-      {
-        id: "actions",
-        header: () => <span className="sr-only">{"Actions"}</span>,
-        meta: { width: "52px", pinned: true, label: "Actions" } satisfies ColumnMeta,
-        cell: ({ row }) =>
-          readOnly ? null : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" aria-label={`Decide on ${row.original.product.name}`} onClick={(e) => e.stopPropagation()}>
-                  <MoreHorizontal aria-hidden />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuItem icon={<Check />} onSelect={() => openEdit([row.original.id], "accepted", row.original.forecast, row.original.product.name)}>
-                  Terima perkiraan
-                </DropdownMenuItem>
-                <DropdownMenuItem icon={<Pencil />} onSelect={() => openEdit([row.original.id], "adjusted", row.original.proposed, row.original.product.name)}>
-                  Sesuaikan jumlah
-                </DropdownMenuItem>
-                <DropdownMenuItem icon={<Flag />} onSelect={() => openEdit([row.original.id], "flagged", row.original.forecast, row.original.product.name)}>
-                  Tandai untuk ditindaklanjuti
-                </DropdownMenuItem>
-                <DropdownMenuItem icon={<X />} destructive onSelect={() => openEdit([row.original.id], "rejected", row.original.forecast, row.original.product.name)}>
-                  Tolak (rencanakan nol)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ),
-      },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readOnly],
-  ));
+  );
 
   if (q.isPending) return <PageContainer><PageSkeleton /></PageContainer>;
   if (q.isError) {
@@ -256,9 +177,11 @@ export function PlanView() {
         meta={
           <>
             <StatusBadge status={plan.status === "in_review" ? "in_review" : plan.status === "published" ? "published" : "draft"} />
-            <MetaItem>Periode {formatDateRange(plan.periodStart, plan.periodEnd)}</MetaItem>
             <MetaItem>
-              Acuan{" "}
+              {pick("Periode", "Period")} {formatDateRange(plan.periodStart, plan.periodEnd)}
+            </MetaItem>
+            <MetaItem>
+              {pick("Acuan", "Baseline")}{" "}
               {baseline ? (
                 <Link href={`/forecasting/runs/${baseline.id}`} className="mono-id text-primary hover:underline">
                   {baseline.id}
@@ -267,31 +190,70 @@ export function PlanView() {
                 "—"
               )}
             </MetaItem>
-            <MetaItem>Penanggung jawab {actorName(plan.ownerId)} · diperbarui {formatDateTime(plan.updatedAt)}</MetaItem>
+            <MetaItem>
+              {pick(`Penanggung jawab ${actorName(plan.ownerId)} · diperbarui ${formatDateTime(plan.updatedAt)}`, `Owner ${actorName(plan.ownerId)} · updated ${formatDateTime(plan.updatedAt)}`)}
+            </MetaItem>
           </>
         }
         actions={
           plan.status === "draft" && can("plan.edit") ? (
             <Button variant="primary" onClick={() => { setSubmitNote(""); setSubmitOpen(true); }}>
-              <Send aria-hidden /> Kirim rencana untuk persetujuan
+              <Send aria-hidden /> {pick("Kirim untuk persetujuan", "Submit for approval")}
             </Button>
           ) : undefined
         }
       />
       {plan.status === "in_review" && (
         <InlineAlert tone="info" title={pick("Rencana ini menunggu persetujuan dan tidak dapat diubah.", "This plan is waiting for approval and cannot be edited.")} action={approval ? <Link href={`/planning/approvals?id=${approval.id}`} className={buttonVariants({ size: "sm" })}>{pick("Lihat persetujuan", "View approval")}</Link> : undefined}>
-Diajukan {approval ? formatDateTime(approval.requestedAt) : ""}. Jika perlu perubahan, penyetuju akan mengembalikannya.
+{pick(
+            `Diajukan ${approval ? formatDateTime(approval.requestedAt) : ""}. Jika perlu perubahan, penyetuju akan mengembalikannya.`,
+            `Submitted ${approval ? formatDateTime(approval.requestedAt) : ""}. If changes are needed, the approver will send it back.`,
+          )}
         </InlineAlert>
       )}
       {plan.status === "published" && <InlineAlert tone="success" title={pick("Diterbitkan. Jumlah yang direncanakan sudah dikirim ke pengisian ulang.", "Published. Planned quantities were sent to replenishment.")} />}
       {!can("plan.edit") && plan.status === "draft" && <PermissionNotice permission="plan.edit" compact message={pick("Anda dapat melihat rencana ini, tetapi tidak mengubahnya.", "You can view this plan but not change it.")} />}
       {baseline && baseline.status !== "published" && <InlineAlert tone="warning" title={pick("Proses acuan sudah tidak diterbitkan.", "The baseline run is no longer published.")}>{pick("Bangun ulang rencana pada acuan saat ini sebelum mengirim.", "Rebuild the plan on the current baseline before submitting.")}</InlineAlert>}
 
+      {/* PAGE-PLANNING-CARDS-001: compact signals, then the plan table carries the work. */}
       <MetricStrip>
-        <MetricCard label={pick("Perkiraan acuan", "Baseline forecast")} value={formatNumber(totals.forecast)} unit={pick("unit", "units")} context={pick(`${pluralize(plan.lines.length, "baris")} pada rencana ini`, `${pluralize(plan.lines.length, "line")} in this plan`)} />
-        <MetricCard label={pick("Jumlah direncanakan", "Planned quantity")} value={formatNumber(totals.proposed)} unit={pick("unit", "units")} context={pick(`${formatDeltaPercent(totals.deltaPercent)} (${formatDeltaNumber(totals.delta)}) dibanding perkiraan`, `${formatDeltaPercent(totals.deltaPercent)} (${formatDeltaNumber(totals.delta)}) vs forecast`)} />
-        <MetricCard label={pick("Baris perlu keputusan", "Lines needing a decision")} value={formatNumber(unresolved)} context={pick(`${counts.pending} menunggu · ${counts.flagged} ditandai`, `${counts.pending} pending · ${counts.flagged} flagged`)} href="/planning?decision=pending,flagged" hrefLabel={pick("Lihat baris belum diputuskan", "Show undecided lines")} />
-        <MetricCard label={pick("Sudah diputuskan", "Decided")} value={formatNumber(counts.accepted + counts.adjusted + counts.rejected)} context={pick(`${counts.accepted} diterima · ${counts.adjusted} disesuaikan · ${counts.rejected} ditolak`, `${counts.accepted} accepted · ${counts.adjusted} adjusted · ${counts.rejected} rejected`)} />
+        <MetricCard
+          variant="compact"
+          icon={Package}
+          label={pick("Perkiraan Acuan", "Baseline forecast")}
+          value={formatMetric(totals.forecast)}
+          exactValue={`${formatNumber(totals.forecast)} ${pick("unit", "units")}`}
+          unit={pick("unit", "units")}
+          meta={pick(`${formatNumber(plan.lines.length)} baris`, `${formatNumber(plan.lines.length)} lines`)}
+        />
+        <MetricCard
+          variant="compact"
+          icon={ClipboardCheck}
+          label={pick("Jumlah Direncanakan", "Planned quantity")}
+          value={formatMetric(totals.proposed)}
+          exactValue={`${formatNumber(totals.proposed)} ${pick("unit", "units")}`}
+          unit={pick("unit", "units")}
+          delta={<MetricDelta value={totals.deltaPercent} />}
+          comparison={pick("vs perkiraan", "vs forecast")}
+        />
+        <MetricCard
+          variant="compact"
+          icon={ListTodo}
+          tone={unresolved > 0 ? "warning" : "neutral"}
+          label={pick("Baris yang Perlu Diputuskan", "Lines needing a decision")}
+          value={formatNumber(unresolved)}
+          meta={pick(`${counts.pending} menunggu · ${counts.flagged} ditandai`, `${counts.pending} pending · ${counts.flagged} flagged`)}
+          href="/planning?decision=pending,flagged"
+          destination={pick("tampilkan baris yang belum diputuskan", "shows undecided lines")}
+        />
+        <MetricCard
+          variant="compact"
+          icon={CheckCheck}
+          label={pick("Sudah Diputuskan", "Decided")}
+          value={formatNumber(counts.accepted + counts.adjusted + counts.rejected)}
+          meta={pick(`${counts.accepted} diterima · ${counts.adjusted} disesuaikan`, `${counts.accepted} accepted · ${counts.adjusted} adjusted`)}
+          tooltip={pick(`${counts.rejected} ditolak`, `${counts.rejected} rejected`)}
+        />
       </MetricStrip>
 
       <DataTable
@@ -304,16 +266,16 @@ Diajukan {approval ? formatDateTime(approval.requestedAt) : ""}. Jika perlu peru
         selection={!readOnly ? { selected: selection, onChange: setSelection } : undefined}
         bulkBar={
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="body-sm font-semibold">{pluralize(selectedIds.length, "line")} selected</span>
+            <span className="body-sm font-semibold">{pick(`${formatNumber(selectedIds.length)} baris dipilih`, `${pluralize(selectedIds.length, "line")} selected`)}</span>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="primary" loading={update.isPending} onClick={() => update.mutate({ ids: selectedIds, decision: "accepted" })}>
-                <Check aria-hidden /> Terima perkiraan
+                <Check aria-hidden /> {pick("Terima perkiraan", "Accept forecast")}
               </Button>
-              <Button size="sm" variant="secondary" onClick={() => openEdit(selectedIds, "flagged", 0, `${selectedIds.length} lines`)}>
-                <Flag aria-hidden /> Tandai
+              <Button size="sm" variant="secondary" onClick={() => openEdit(selectedIds, "flagged", 0, pick(`${selectedIds.length} baris`, `${selectedIds.length} lines`))}>
+                <Flag aria-hidden /> {pick("Tandai", "Flag")}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setSelection({})}>
-                Clear
+                {pick("Batalkan pilihan", "Clear")}
               </Button>
             </div>
           </div>
@@ -343,7 +305,7 @@ Diajukan {approval ? formatDateTime(approval.requestedAt) : ""}. Jika perlu peru
             footer={
               <>
                 <Button variant="ghost" onClick={() => setEdit(null)}>
-                  Cancel
+                  {pick("Batal", "Cancel")}
                 </Button>
                 <Button
                   variant={edit.decision === "rejected" ? "danger" : "primary"}
@@ -376,17 +338,17 @@ Diajukan {approval ? formatDateTime(approval.requestedAt) : ""}. Jika perlu peru
           footer={
             <>
               <Button variant="ghost" onClick={() => setSubmitOpen(false)}>
-                Back to plan
+                {pick("Kembali ke rencana", "Back to plan")}
               </Button>
               <Button variant="primary" disabled={unresolved > 0} loading={submit.isPending} onClick={() => submit.mutate(submitNote)}>
-                Submit for approval
+                {pick("Kirim untuk persetujuan", "Submit for approval")}
               </Button>
             </>
           }
         >
           {unresolved > 0 && (
             <InlineAlert tone="critical" title={pick(`${pluralize(unresolved, "baris")} masih perlu keputusan.`, `${pluralize(unresolved, "line")} still need a decision.`)} className="mb-4">
-              Accept, adjust or reject every pending or flagged line before submitting.
+              {pick("Terima, sesuaikan, atau tolak setiap baris yang menunggu atau ditandai sebelum mengirim.", "Accept, adjust or reject every pending or flagged line before submitting.")}
             </InlineAlert>
           )}
           <ConsequenceSummary

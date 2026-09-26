@@ -1,6 +1,7 @@
 import { can, PermissionError, type Permission } from "@/lib/permissions";
 import type { ListQuery, Page, Role } from "@/types/domain";
 import { delay } from "@/lib/utils";
+import { pick } from "@/lib/i18n/core";
 
 /**
  * Mock API transport. Every call goes through `request`, which adds realistic
@@ -63,7 +64,7 @@ function latency() {
 export async function read<T>(fn: () => T): Promise<T> {
   await delay(latency());
   if (demoControls.failReads) {
-    throw new ApiError("The service did not respond.", "unavailable", "Demo control “Fail reads” is on. Turn it off in the user menu to recover.");
+    throw new ApiError(pick("Layanan tidak merespons.", "The service did not respond."), "unavailable", pick("Kontrol demo “Gagal membaca” aktif. Matikan di menu pengguna untuk memulihkan.", "Demo control “Fail reads” is on. Turn it off in the user menu to recover."));
   }
   return fn();
 }
@@ -72,7 +73,7 @@ export async function write<T>(ctx: ApiContext, permission: Permission | null, f
   await delay(latency());
   if (permission && !can(ctx.role, permission)) throw new PermissionError(permission);
   if (demoControls.failWrites) {
-    throw new ApiError("The change was not saved.", "unavailable", "Demo control “Fail writes” is on. Turn it off in the user menu to recover.");
+    throw new ApiError(pick("Perubahan tidak tersimpan.", "The change was not saved."), "unavailable", pick("Kontrol demo “Gagal menulis” aktif. Matikan di menu pengguna untuk memulihkan.", "Demo control “Fail writes” is on. Turn it off in the user menu to recover."));
   }
   return fn();
 }
@@ -84,7 +85,7 @@ export function authorize(ctx: ApiContext, permission: Permission) {
 export function errorMessage(error: unknown) {
   if (error instanceof ApiError) return error.detail ? `${error.message} ${error.detail}` : error.message;
   if (error instanceof Error) return error.message;
-  return "Unknown error.";
+  return pick("Galat tidak diketahui.", "Unknown error.");
 }
 
 /* ── List helpers ──────────────────────────────────────────────────── */

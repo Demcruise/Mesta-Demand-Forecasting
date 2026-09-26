@@ -63,6 +63,35 @@ export function formatDeltaNumber(value: number | null | undefined) {
   return `${r > 0 ? "+" : "−"}${integer.format(Math.abs(r))}`;
 }
 
+/**
+ * Scan-first headline number for metric cards (FE-METRIC-003): 4.77M, 816K, 87.
+ * Three significant digits once the value passes 10,000; exact below that. Tables,
+ * tooltips and detail views keep formatNumber().
+ */
+export function formatMetric(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return "—";
+  if (Math.abs(value) < 10_000) return formatNumber(value);
+  return new Intl.NumberFormat(currentLocale === "id" ? "id-ID" : "en-US", { notation: "compact", maximumSignificantDigits: 3 }).format(value);
+}
+
+/** Signed compact number for scan-first surfaces: +176K, −1.2M. */
+export function formatDeltaCompact(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return "—";
+  if (Math.round(value) === 0) return "0";
+  return `${value > 0 ? "+" : "−"}${compact.format(Math.abs(value))}`;
+}
+
+/** Signed difference between two ratios, in percentage points: +1.4 pts / +1,4 poin. */
+export function formatDeltaPoints(ratioDelta: number | null | undefined, digits = 1) {
+  if (ratioDelta == null || Number.isNaN(ratioDelta)) return "—";
+  const rounded = Number((ratioDelta * 100).toFixed(digits));
+  const val = Math.abs(rounded).toFixed(digits);
+  const formatted = currentLocale === "id" ? val.replace(".", ",") : val;
+  const unit = currentLocale === "id" ? "poin" : "pts";
+  if (rounded === 0) return `${formatted} ${unit}`;
+  return `${rounded > 0 ? "+" : "−"}${formatted} ${unit}`;
+}
+
 export function formatDecimal(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return "—";
   return oneDecimal.format(value);

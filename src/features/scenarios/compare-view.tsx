@@ -97,7 +97,7 @@ export function CompareView() {
     <PageContainer>
       <PageHeader
         title={pick("Bandingkan Skenario", "Scenario comparison")}
-        description={`Baseline ${q.data.baseline?.id ?? first.baselineRunId} · ${q.data.baseline ? `${q.data.baseline.horizonDays}-day horizon from ${formatDate(base.points[0]?.date)}` : ""} · all categories, all regions`}
+        description={pick(`Acuan ${q.data.baseline?.id ?? first.baselineRunId} · ${q.data.baseline ? `periode ${q.data.baseline.horizonDays} hari sejak ${formatDate(base.points[0]?.date)}` : ""} · semua kategori, semua wilayah`, `Baseline ${q.data.baseline?.id ?? first.baselineRunId} · ${q.data.baseline ? `${q.data.baseline.horizonDays}-day horizon from ${formatDate(base.points[0]?.date)}` : ""} · all categories, all regions`)}
         actions={
           <>
             {picker}
@@ -107,15 +107,15 @@ export function CompareView() {
       />
       {!q.data.sameBaseline && (
         <InlineAlert tone="warning" title={pick("Skenario ini memakai acuan yang berbeda.", "These scenarios use different baselines.")}>
-          Deltas are shown against each scenario's own baseline. For a like-for-like comparison, rebuild them on the same published run.
+          {pick("Perubahan dihitung terhadap acuan masing-masing skenario. Untuk perbandingan setara, bangun ulang pada proses terbit yang sama.", "Deltas are shown against each scenario's own baseline. For a like-for-like comparison, rebuild them on the same published run.")}
         </InlineAlert>
       )}
       <ChartFrame
         title={pick("Permintaan harian: acuan vs skenario", "Daily demand: baseline vs scenarios")}
         question={pick("Bagaimana tiap skenario mengubah permintaan selama periode perkiraan?", "How does each scenario change demand across the horizon?")}
-        unit="units per day"
+        unit={pick("unit per hari", "units per day")}
         timeframe={`${formatDate(base.points[0]?.date)} – ${formatDate(base.points[base.points.length - 1]?.date)}`}
-        source={`Baseline ${first.baselineRunId}`}
+        source={pick(`Acuan ${first.baselineRunId}`, `Baseline ${first.baselineRunId}`)}
         asOf={base.simulatedAt}
         legend={
           <>
@@ -191,11 +191,11 @@ function ScenarioCard({ scenario: s, color }: { scenario: Scenario; color: strin
         </span>
       }
       actions={<StatusBadge status={s.status} size="sm" />}
-      footer={r ? <span className="caption">Simulated {formatDateTime(r.simulatedAt)}</span> : undefined}
+      footer={r ? <span className="caption">{pick(`Disimulasikan ${formatDateTime(r.simulatedAt)}`, `Simulated ${formatDateTime(r.simulatedAt)}`)}</span> : undefined}
     >
       {r && (
         <p className="body-sm">
-          <span className="font-semibold">{formatDeltaPercent(r.deltaPercent)}</span> <span className="text-fg-secondary">({formatDeltaNumber(r.deltaUnits)} units). Range {formatNumber(r.lowerBound)} – {formatNumber(r.upperBound)}.</span>
+          <span className="font-semibold">{formatDeltaPercent(r.deltaPercent)}</span> <span className="text-fg-secondary">{pick(`(${formatDeltaNumber(r.deltaUnits)} unit). Rentang ${formatNumber(r.lowerBound)} – ${formatNumber(r.upperBound)}.`, `(${formatDeltaNumber(r.deltaUnits)} units). Range ${formatNumber(r.lowerBound)} – ${formatNumber(r.upperBound)}.`)}</span>
         </p>
       )}
       <ul className="mt-3 flex flex-col gap-2">

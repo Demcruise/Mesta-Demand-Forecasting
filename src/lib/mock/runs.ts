@@ -3,16 +3,16 @@ import { pick, localized } from "@/lib/i18n/core";
 
 export const RUN_STEPS: { key: RunStepKey; label: string }[] = localized([
   { key: "queued", label: "Menunggu" },
-  { key: "loading", label: pick("Menyiapkan data", "Loading data") },
-  { key: "validating", label: pick("Memeriksa data", "Validating data") },
-  { key: "modelling", label: pick("Menjalankan model", "Running model") },
+  { key: "loading", label: "Menyiapkan data" },
+  { key: "validating", label: "Memeriksa data" },
+  { key: "modelling", label: "Menjalankan model" },
   { key: "generating", label: "Membuat hasil" },
   { key: "writing", label: "Menyimpan hasil" },
 ], [
   { key: "queued", label: "Queued" },
-  { key: "loading", label: pick("Menyiapkan data", "Loading data") },
-  { key: "validating", label: pick("Memeriksa data", "Validating data") },
-  { key: "modelling", label: pick("Menjalankan model", "Running model") },
+  { key: "loading", label: "Loading data" },
+  { key: "validating", label: "Validating data" },
+  { key: "modelling", label: "Running model" },
   { key: "generating", label: "Generating forecast" },
   { key: "writing", label: "Writing results" },
 ]);

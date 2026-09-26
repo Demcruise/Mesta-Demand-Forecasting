@@ -2,6 +2,7 @@
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCompact, formatDate, formatDeltaPercent, formatNumber, formatShortDate } from "@/lib/format";
+import { pick } from "@/lib/i18n/core";
 
 const AXIS = { fontSize: 11, fill: "var(--chart-axis)", fontFamily: "var(--font-sans)" };
 export const SCENARIO_COLORS = ["var(--chart-scenario)", "var(--chart-series-2)", "var(--chart-series-4)", "var(--chart-series-3)"];
@@ -24,7 +25,7 @@ export function ScenarioChart({ rows, scenarios, height = 280 }: { rows: Record<
                   <div className="mb-1 font-semibold">{formatDate(label as string)}</div>
                   {payload.map((p) => {
                     const v = p.value as number;
-                    const s = p.dataKey === "baseline" ? { label: "Baseline" } : scenarios.find((x) => x.key === p.dataKey);
+                    const s = p.dataKey === "baseline" ? { label: pick("Acuan", "Baseline") } : scenarios.find((x) => x.key === p.dataKey);
                     return (
                       <div key={String(p.dataKey)} className="flex items-center justify-between gap-6">
                         <span className="inline-flex items-center gap-1.5 text-fg-secondary">

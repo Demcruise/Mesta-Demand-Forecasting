@@ -22,25 +22,40 @@ import { DateRangeFilter, FilterBar } from "@/components/tables/filter-bar";
 import { EmptyState, PermissionNotice } from "@/components/feedback/states";
 import { Tag } from "@/components/feedback/status";
 import { EntityId, UserIdentity } from "@/components/entities/identity";
-import { ACTION_LABELS, entityHref } from "@/components/governance/audit";
-import { pick } from "@/lib/i18n";
+import { ACTION_LABELS, auditStateLabel, entityHref } from "@/components/governance/audit";
+import { pick, localized } from "@/lib/i18n";
 
-const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
+const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = localized({
   session: "Sesi",
   workspace: "Ruang kerja",
-  forecast_run: pick("Proses perkiraan", "Forecast run"),
-  forecast: pick("Perkiraan", "Forecast"),
-  scenario: pick("Skenario", "Scenario"),
-  plan: pick("Rencana", "Plan workspace"),
+  forecast_run: "Proses perkiraan",
+  forecast: "Perkiraan",
+  scenario: "Skenario",
+  plan: "Rencana",
   exception: "Perlu Ditinjau",
-  approval: pick("Persetujuan", "Approval"),
-  override: pick("Perubahan manual", "Override"),
-  model: pick("Model", "Model"),
-  backtest: pick("Uji model", "Backtests"),
-  data_source: pick("Sumber data", "Data sources"),
-  user: pick("Pengguna", "User"),
-  settings: pick("Pengaturan", "Configuration"),
-};
+  approval: "Persetujuan",
+  override: "Perubahan manual",
+  model: "Model",
+  backtest: "Uji model",
+  data_source: "Sumber data",
+  user: "Pengguna",
+  settings: "Pengaturan",
+}, {
+  session: "Sesi",
+  workspace: "Ruang kerja",
+  forecast_run: "Forecast run",
+  forecast: "Forecast",
+  scenario: "Scenario",
+  plan: "Plan workspace",
+  exception: "Perlu Ditinjau",
+  approval: "Approval",
+  override: "Override",
+  model: "Model",
+  backtest: "Backtests",
+  data_source: "Data sources",
+  user: "User",
+  settings: "Settings",
+});
 
 /** PAGE-AUDIT: a trustworthy, immutable record of consequential activity. */
 export function AuditView() {
@@ -68,9 +83,9 @@ export function AuditView() {
 
   const columns = React.useMemo<ColumnDef<AuditEvent, unknown>[]>(
     () => [
-      { id: "time", header: pick("Kapan", "When"), meta: { width: "160px", sortKey: "timestamp" } satisfies ColumnMeta, cell: ({ row }) => <span className="whitespace-nowrap text-xs tabular">{formatDateTime(row.original.timestamp)}</span> },
+      { id: "time", header: pick("Kapan", "When"), meta: { width: "160px", align: "left", sortKey: "timestamp" } satisfies ColumnMeta, cell: ({ row }) => <span className="whitespace-nowrap text-xs tabular">{formatDateTime(row.original.timestamp)}</span> },
       { id: "actor", header: pick("Siapa", "Who"), meta: { width: "minmax(160px, 1fr)", sortKey: "actor" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.actorId} /> },
-      { id: "action", header: pick("Apa yang terjadi", "What happened"), meta: { width: "minmax(170px, 1fr)", sortKey: "action" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate font-semibold">{ACTION_LABELS[row.original.action]}</span> },
+      { id: "action", header: pick("Apa yang Terjadi", "What happened"), meta: { width: "minmax(170px, 1fr)", sortKey: "action" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate font-semibold">{ACTION_LABELS[row.original.action]}</span> },
       {
         id: "entity",
         header: pick("Objek", "Object"),
@@ -97,7 +112,7 @@ export function AuditView() {
         meta: { width: "minmax(180px, 1.4fr)", hideBelow: "lg" } satisfies ColumnMeta,
         cell: ({ row }) => (
           <span className="truncate text-xs tabular text-fg-secondary">
-            {row.original.previousState ?? "—"} → {row.original.newState ?? "—"}
+            {auditStateLabel(row.original.previousState)} → {auditStateLabel(row.original.newState)}
           </span>
         ),
       },
@@ -110,7 +125,7 @@ export function AuditView() {
   if (!can("audit.view")) {
     return (
       <PageContainer>
-        <PageHeader title={pick("Riwayat Aktivitas", "Audit log")} />
+        <PageHeader title={pick("Riwayat Aktivitas", "Audit Log")} />
         <PermissionNotice permission="audit.view" />
       </PageContainer>
     );
@@ -118,7 +133,7 @@ export function AuditView() {
 
   return (
     <PageContainer>
-      <PageHeader title={pick("Riwayat Aktivitas", "Audit log")} description={pick("Lihat perubahan dan tindakan di ruang kerja: siapa, kapan, apa yang berubah, dan mengapa. Catatan bersifat tambah-saja dan tidak dapat diubah.", "Every consequential action in this workspace: who did it, when, what changed and why. Events are append-only and cannot be edited.")} />
+      <PageHeader title={pick("Riwayat Aktivitas", "Audit Log")} description={pick("Lihat siapa yang mengubah apa, kapan, dan alasannya.", "See who changed what, when, and why.")} />
       <DataTable
         label={pick("Aktivitas", "Audit events")}
         columns={columns}
@@ -130,13 +145,12 @@ export function AuditView() {
         onRetry={() => q.refetch()}
         errorWhat={pick("Riwayat aktivitas tidak dapat dimuat.", "The audit log could not be loaded.")}
         storageKey="audit"
-        density="compact"
         activeRowId={selected?.eventId}
         onRowClick={(e) => state.setParam("event", e.eventId)}
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page ?? 1, pageSize: state.query.pageSize ?? 50, total: q.data?.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
         onExport={(format) => exp.mutate(format)}
-        exportLabel={q.data ? pick(`Ekspor ${q.data.total} aktivitas`, pick(`Ekspor ${q.data.total} kejadian`, pick(`Ekspor ${q.data.total} kejadian`, `Export ${q.data.total} events`))) : pick("Ekspor", "Export")}
+        exportLabel={q.data ? pick(`Ekspor ${q.data.total} aktivitas`, `Export ${q.data.total} events`) : pick("Ekspor", "Export")}
         toolbarStart={
           <FilterBar
             state={state}
@@ -162,10 +176,10 @@ export function AuditView() {
                   { label: pick("Apa yang terjadi?", "What happened?"), value: ACTION_LABELS[selected.action] },
                   { label: pick("Siapa yang melakukannya?", "Who did it?"), value: <UserIdentity userId={selected.actorId} /> },
                   { label: pick("Kapan?", "When?"), value: formatDateTime(selected.timestamp) },
-                  { label: pick("Apa yang berubah?", "What changed?"), value: `${selected.previousState ?? "—"} → ${selected.newState ?? "—"}` },
+                  { label: pick("Apa yang berubah?", "What changed?"), value: `${auditStateLabel(selected.previousState)} → ${auditStateLabel(selected.newState)}` },
                   { label: pick("Mengapa?", "Why?"), value: selected.reason ?? pick("Tidak ada alasan tercatat", "No reason recorded") },
                   {
-                    label: "Related object",
+                    label: pick("Objek terkait", "Related object"),
                     value: entityHref(selected) ? (
                       <Link href={entityHref(selected) as string} className="text-primary hover:underline">
                         {selected.entityLabel}
@@ -181,9 +195,9 @@ export function AuditView() {
               <Panel title={pick("Referensi teknis", "Technical reference")}>
                 <DescriptionList
                   items={[
-                    { label: "Event ID", value: <EntityId value={selected.eventId} /> },
-                    { label: "Request ID", value: <EntityId value={selected.requestId} /> },
-                    { label: "Workspace", value: <EntityId value={selected.workspaceId} /> },
+                    { label: pick("ID kejadian", "Event ID"), value: <EntityId value={selected.eventId} /> },
+                    { label: pick("ID permintaan", "Request ID"), value: <EntityId value={selected.requestId} /> },
+                    { label: pick("Ruang kerja", "Workspace"), value: <EntityId value={selected.workspaceId} /> },
                   ]}
                 />
               </Panel>

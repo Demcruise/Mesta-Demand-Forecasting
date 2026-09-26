@@ -46,7 +46,7 @@ export function ScenarioDetailView({ scenarioId }: { scenarioId: string }) {
   const submit = useApiMutation((c, v: string) => submitScenario(c, scenarioId, v), {
     invalidate: inv,
     success: pick("Dikirim untuk ditinjau", "Submitted for review"),
-    successDescription: "A Manager will review the assumptions and impact.",
+    successDescription: pick("Manajer akan meninjau asumsi dan dampaknya.", "A Manager will review the assumptions and impact."),
     failure: pick("Skenario tidak dapat dikirim.", "The scenario was not submitted."),
     onSuccess: () => setSubmitOpen(false),
   });
@@ -85,46 +85,50 @@ export function ScenarioDetailView({ scenarioId }: { scenarioId: string }) {
         meta={
           <>
             <StatusBadge status={s.status} />
-            <MetaItem>Penanggung jawab {actorName(s.ownerId)}</MetaItem>
             <MetaItem>
-              Acuan{" "}
+              {pick("Penanggung jawab", "Owner")} {actorName(s.ownerId)}
+            </MetaItem>
+            <MetaItem>
+              {pick("Acuan", "Baseline")}{" "}
               <Link href={`/forecasting/runs/${s.baselineRunId}`} className="mono-id text-primary hover:underline">
                 {s.baselineRunId}
               </Link>
             </MetaItem>
-            <MetaItem>Diubah {formatDateTime(s.modifiedAt)}</MetaItem>
+            <MetaItem>
+              {pick("Diubah", "Modified")} {formatDateTime(s.modifiedAt)}
+            </MetaItem>
           </>
         }
         actions={
           <>
             {can("scenario.create") && (
               <Button variant="secondary" onClick={() => duplicate.mutate()} loading={duplicate.isPending}>
-                <Copy aria-hidden /> Duplikat
+                <Copy aria-hidden /> {pick("Duplikat", "Duplicate")}
               </Button>
             )}
             {can("scenario.create") && s.status !== "archived" && s.status !== "in_review" && (
               <Button variant="ghost" onClick={() => archive.mutate()} loading={archive.isPending}>
-                <Archive aria-hidden /> Arsipkan
+                <Archive aria-hidden /> {pick("Arsipkan", "Archive")}
               </Button>
             )}
             {editable && can("scenario.create") && (
               <Link href={`/scenarios/${s.id}?edit=1`} className={buttonVariants({ variant: "secondary" })}>
-                <Pencil aria-hidden /> Ubah asumsi
+                <Pencil aria-hidden /> {pick("Ubah asumsi", "Edit assumptions")}
               </Link>
             )}
             {r && (
               <Link href={`/scenarios/compare?ids=${s.id}`} className={buttonVariants({ variant: "secondary" })}>
-                <GitCompareArrows aria-hidden /> Bandingkan
+                <GitCompareArrows aria-hidden /> {pick("Bandingkan", "Compare")}
               </Link>
             )}
             {!r && can("scenario.create") && s.status !== "archived" && (
               <Button variant="primary" onClick={() => simulate.mutate()} loading={simulate.isPending} loadingText={pick("Menyimulasikan", "Simulating")}>
-                <Play aria-hidden /> Jalankan Simulasi
+                <Play aria-hidden /> {pick("Jalankan Simulasi", "Run simulation")}
               </Button>
             )}
             {r && s.status === "simulated" && can("scenario.submit") && (
               <Button variant="primary" onClick={() => { setNote(""); setSubmitOpen(true); }}>
-                <Send aria-hidden /> Kirim untuk persetujuan
+                <Send aria-hidden /> {pick("Kirim untuk persetujuan", "Submit for approval")}
               </Button>
             )}
           </>
@@ -132,12 +136,15 @@ export function ScenarioDetailView({ scenarioId }: { scenarioId: string }) {
       />
       {s.status === "in_review" && approval && (
         <InlineAlert tone="info" title={pick("Sedang ditinjau.", "In review.")} action={<Link href={`/planning/approvals?id=${approval.id}`} className={buttonVariants({ size: "sm" })}>{pick("Lihat persetujuan", "View approval")}</Link>}>
-          Dikirim {formatDateTime(approval.requestedAt)}. Batas {formatDate(approval.dueAt)}. Skenario tidak dapat diubah selama ditinjau.
+          {pick(
+            `Dikirim ${formatDateTime(approval.requestedAt)}. Batas ${formatDate(approval.dueAt)}. Skenario tidak dapat diubah selama ditinjau.`,
+            `Submitted ${formatDateTime(approval.requestedAt)}. Due ${formatDate(approval.dueAt)}. The scenario cannot be edited while in review.`,
+          )}
         </InlineAlert>
       )}
       {s.status === "rejected" && approval && (
         <InlineAlert tone="critical" title={pick("Ditolak.", "Rejected.")}>
-          {approval.history[approval.history.length - 1]?.text} Ubah asumsinya lalu kirim lagi.
+          {approval.history[approval.history.length - 1]?.text} {pick("Ubah asumsinya lalu kirim lagi.", "Edit the assumptions and submit again.")}
         </InlineAlert>
       )}
       {s.status === "approved" && <InlineAlert tone="success" title={pick("Disetujui. Skenario ini dapat dipakai sebagai acuan perencanaan.", "Approved. This scenario can be used as a planning baseline.")} />}
@@ -152,8 +159,8 @@ export function ScenarioDetailView({ scenarioId }: { scenarioId: string }) {
             question={pick("Bagaimana permintaan harian berubah pada skenario ini?", "How does daily demand change under this scenario?")}
             unit={pick("unit per hari", "units per day")}
             timeframe={`${formatDate(r.points[0]?.date)} – ${formatDate(r.points[r.points.length - 1]?.date)}`}
-            source={`Baseline ${s.baselineRunId}`}
-            summary={`Total demand ${formatDeltaPercent(r.deltaPercent)} (${formatDeltaNumber(r.deltaUnits)} units) versus the baseline.`}
+            source={pick(`Acuan ${s.baselineRunId}`, `Baseline ${s.baselineRunId}`)}
+            summary={pick(`Total permintaan ${formatDeltaPercent(r.deltaPercent)} (${formatDeltaNumber(r.deltaUnits)} unit) dibanding acuan.`, `Total demand ${formatDeltaPercent(r.deltaPercent)} (${formatDeltaNumber(r.deltaUnits)} units) versus the baseline.`)}
             legend={
               <>
                 <LegendItem color="var(--chart-forecast)" label={pick("Acuan", "Baseline")} />
@@ -218,14 +225,14 @@ export function ScenarioDetailView({ scenarioId }: { scenarioId: string }) {
         {r && (
           <DialogContent
             title={pick("Kirim skenario untuk ditinjau?", "Submit scenario for review?")}
-            description="A Manager decides whether this scenario can be adopted into a plan."
+            description={pick("Manajer memutuskan apakah skenario ini dapat dipakai dalam rencana.", "A Manager decides whether this scenario can be adopted into a plan.")}
             footer={
               <>
                 <Button variant="ghost" onClick={() => setSubmitOpen(false)}>
-                  Cancel
+                  {pick("Batal", "Cancel")}
                 </Button>
                 <Button variant="primary" loading={submit.isPending} onClick={() => submit.mutate(note)}>
-                  Submit for review
+                  {pick("Kirim untuk ditinjau", "Submit for review")}
                 </Button>
               </>
             }

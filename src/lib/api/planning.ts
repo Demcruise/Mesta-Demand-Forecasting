@@ -12,6 +12,7 @@ import { actorName } from "@/lib/mock/directory";
 import { simulateScenario } from "@/lib/mock/scenarios";
 import { iso } from "@/lib/mock/time";
 import { applyAll, applyList, ApiError, read, write, type ApiContext, type ListSpec } from "./client";
+import { pick } from "@/lib/i18n/core";
 
 /* ── Exceptions ────────────────────────────────────────────────────── */
 
@@ -68,7 +69,7 @@ export function getException(ctx: ApiContext, id: string) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
     const ex = db.exceptions.find((e) => e.id === id);
-    if (!ex) throw new ApiError("This exception was not found in the current workspace.", "not_found");
+    if (!ex) throw new ApiError(pick("Item ini tidak ditemukan di ruang kerja saat ini.", "This exception was not found in the current workspace."), "not_found");
     const product = db.productById.get(ex.productId) as Product;
     const run = db.runs.find((r) => r.id === ex.runId) ?? null;
     const row = run ? runResult(db, run).rows.find((r) => r.productId === ex.productId) ?? null : null;
@@ -86,7 +87,7 @@ export function updateExceptions(
   return write(ctx, "exception.update", () => {
     const db = getDb(ctx.workspaceId);
     if ((change.status === "resolved" || change.status === "dismissed") && !change.note?.trim()) {
-      throw new ApiError("Add a note explaining the resolution.", "validation");
+      throw new ApiError(pick("Tambahkan catatan yang menjelaskan penyelesaiannya.", "Add a note explaining the resolution."), "validation");
     }
     const updated: ForecastException[] = [];
     for (const id of ids) {
@@ -155,7 +156,7 @@ export function getApproval(ctx: ApiContext, id: string) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
     const approval = db.approvals.find((a) => a.id === id);
-    if (!approval) throw new ApiError("This approval request was not found in the current workspace.", "not_found");
+    if (!approval) throw new ApiError(pick("Permintaan persetujuan ini tidak ditemukan di ruang kerja saat ini.", "This approval request was not found in the current workspace."), "not_found");
     return approval;
   });
 }
@@ -169,19 +170,19 @@ export function decideApproval(
   return write(ctx, "approval.decide", () => {
     const db = getDb(ctx.workspaceId);
     const a = db.approvals.find((x) => x.id === id);
-    if (!a) throw new ApiError("Approval request not found.", "not_found");
-    if (a.status !== "pending") throw new ApiError(`This request was already ${a.status.replace("_", " ")}.`, "conflict");
+    if (!a) throw new ApiError(pick("Permintaan persetujuan tidak ditemukan.", "Approval request not found."), "not_found");
+    if (a.status !== "pending") throw new ApiError(pick(`Permintaan ini sudah diputuskan (${a.status.replace("_", " ")}).`, `This request was already ${a.status.replace("_", " ")}.`), "conflict");
     if (a.requestedBy === ctx.userId) {
-      throw new ApiError("You cannot decide on your own request.", "permission", "Segregation of duties requires a different approver.");
+      throw new ApiError(pick("Anda tidak dapat memutuskan permintaan Anda sendiri.", "You cannot decide on your own request."), "permission", pick("Pemisahan tugas mengharuskan penyetuju yang berbeda.", "Segregation of duties requires a different approver."));
     }
-    if (decision !== "approved" && comment.trim().length < 5) throw new ApiError("Explain the decision so the requester can act on it.", "validation");
+    if (decision !== "approved" && comment.trim().length < 5) throw new ApiError(pick("Jelaskan keputusan agar pengaju dapat menindaklanjutinya.", "Explain the decision so the requester can act on it."), "validation");
     const now = iso(Date.now());
     a.status = decision;
     a.history.push({
       id: nextId(db, "h"),
       at: now,
       actorId: ctx.userId,
-      text: decision === "approved" ? `Approved.${comment.trim() ? ` ${comment.trim()}` : ""}` : decision === "rejected" ? `Rejected: ${comment.trim()}` : `Requested revision: ${comment.trim()}`,
+      text: decision === "approved" ? pick(`Disetujui.${comment.trim() ? ` ${comment.trim()}` : ""}`, `Approved.${comment.trim() ? ` ${comment.trim()}` : ""}`) : decision === "rejected" ? pick(`Ditolak: ${comment.trim()}`, `Rejected: ${comment.trim()}`) : pick(`Meminta revisi: ${comment.trim()}`, `Requested revision: ${comment.trim()}`),
     });
     applyDecision(db, a, decision);
     audit(db, {
@@ -198,8 +199,11 @@ export function decideApproval(
     db.notifications.unshift({
       id: nextId(db, "ntf"),
       category: "approval_completed",
-      title: `${decision === "approved" ? "Approved" : decision === "rejected" ? "Rejected" : "Revision requested"}: ${a.objectLabel}`,
-      body: `${actorName(ctx.userId)} ${decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : "requested a revision of"} the request.`,
+      title: `${decision === "approved" ? pick("Disetujui", "Approved") : decision === "rejected" ? pick("Ditolak", "Rejected") : pick("Perlu revisi", "Revision requested")}: ${a.objectLabel}`,
+      body: pick(
+        `${actorName(ctx.userId)} ${decision === "approved" ? "menyetujui" : decision === "rejected" ? "menolak" : "meminta revisi atas"} permintaan ini.`,
+        `${actorName(ctx.userId)} ${decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : "requested a revision of"} the request.`,
+      ),
       href: `/planning/approvals?id=${a.id}`,
       createdAt: now,
       read: false,
@@ -268,7 +272,7 @@ export function getScenario(ctx: ApiContext, id: string) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
     const scenario = db.scenarios.find((s) => s.id === id);
-    if (!scenario) throw new ApiError("This scenario was not found in the current workspace.", "not_found");
+    if (!scenario) throw new ApiError(pick("Skenario ini tidak ditemukan di ruang kerja saat ini.", "This scenario was not found in the current workspace."), "not_found");
     const baseline = db.runs.find((r) => r.id === scenario.baselineRunId) ?? null;
     const approval = db.approvals.find((a) => a.type === "scenario" && a.objectId === id) ?? null;
     return { scenario, baseline, approval, audit: db.audit.filter((e) => e.entityId === id) };
@@ -285,9 +289,9 @@ export function scenarioBaselines(ctx: ApiContext) {
 export type ScenarioInput = { name: string; description: string; baselineRunId: string; assumptions: Assumption[] };
 
 function validateScenario(input: ScenarioInput) {
-  if (input.name.trim().length < 3) throw new ApiError("Give the scenario a name of at least 3 characters.", "validation");
+  if (input.name.trim().length < 3) throw new ApiError(pick("Beri nama skenario minimal 3 karakter.", "Give the scenario a name of at least 3 characters."), "validation");
   const missing = input.assumptions.filter((a) => a.rationale.trim().length === 0);
-  if (missing.length > 0) throw new ApiError(`${missing.length} assumption${missing.length === 1 ? " has" : "s have"} no rationale.`, "validation", "Every changed assumption needs a source or rationale.");
+  if (missing.length > 0) throw new ApiError(pick(`${missing.length} asumsi belum punya alasan.`, `${missing.length} assumption${missing.length === 1 ? " has" : "s have"} no rationale.`), "validation", pick("Setiap asumsi yang diubah perlu sumber atau alasan.", "Every changed assumption needs a source or rationale."));
 }
 
 export function saveScenario(ctx: ApiContext, id: string | null, input: ScenarioInput) {
@@ -297,8 +301,8 @@ export function saveScenario(ctx: ApiContext, id: string | null, input: Scenario
     const now = iso(Date.now());
     if (id) {
       const s = db.scenarios.find((x) => x.id === id);
-      if (!s) throw new ApiError("Scenario not found.", "not_found");
-      if (s.status === "in_review" || s.status === "approved") throw new ApiError(`A scenario that is ${s.status.replace("_", " ")} cannot be edited.`, "conflict", "Duplicate it to make changes.");
+      if (!s) throw new ApiError(pick("Skenario tidak ditemukan.", "Scenario not found."), "not_found");
+      if (s.status === "in_review" || s.status === "approved") throw new ApiError(pick(`Skenario berstatus ${s.status.replace("_", " ")} tidak dapat diubah.`, `A scenario that is ${s.status.replace("_", " ")} cannot be edited.`), "conflict", pick("Duplikat untuk membuat perubahan.", "Duplicate it to make changes."));
       Object.assign(s, { ...input, modifiedAt: now, status: "draft", result: null });
       audit(db, { actorId: ctx.userId, action: "edit_scenario", entityType: "scenario", entityId: s.id, entityLabel: s.name, previousState: null, newState: "draft", reason: null, source: "web" });
       return s;
@@ -319,7 +323,7 @@ export function simulateSavedScenario(ctx: ApiContext, id: string) {
   return write(ctx, "scenario.create", () => {
     const db = getDb(ctx.workspaceId);
     const s = db.scenarios.find((x) => x.id === id);
-    if (!s) throw new ApiError("Scenario not found.", "not_found");
+    if (!s) throw new ApiError(pick("Skenario tidak ditemukan.", "Scenario not found."), "not_found");
     s.result = simulateScenario(db, s);
     if (s.status === "draft") s.status = "simulated";
     s.modifiedAt = iso(Date.now());
@@ -332,9 +336,9 @@ export function submitScenario(ctx: ApiContext, id: string, note: string) {
   return write(ctx, "scenario.submit", () => {
     const db = getDb(ctx.workspaceId);
     const s = db.scenarios.find((x) => x.id === id);
-    if (!s) throw new ApiError("Scenario not found.", "not_found");
-    if (!s.result) throw new ApiError("Run the simulation before submitting for review.", "conflict");
-    if (s.status === "in_review") throw new ApiError("This scenario is already in review.", "conflict");
+    if (!s) throw new ApiError(pick("Skenario tidak ditemukan.", "Scenario not found."), "not_found");
+    if (!s.result) throw new ApiError(pick("Jalankan simulasi sebelum mengirim untuk ditinjau.", "Run the simulation before submitting for review."), "conflict");
+    if (s.status === "in_review") throw new ApiError(pick("Skenario ini sudah dalam tinjauan.", "This scenario is already in review."), "conflict");
     s.status = "in_review";
     s.modifiedAt = iso(Date.now());
     const approvalId = nextId(db, "apr");
@@ -347,13 +351,13 @@ export function submitScenario(ctx: ApiContext, id: string, note: string) {
       requestedAt: s.modifiedAt,
       dueAt: iso(Date.now() + 2 * 86_400_000),
       status: "pending",
-      impact: { units: s.result.deltaUnits, percent: s.result.deltaPercent, skuCount: db.products.length, summary: "Adopting this scenario replaces the baseline for affected categories in the next plan." },
+      impact: { units: s.result.deltaUnits, percent: s.result.deltaPercent, skuCount: db.products.length, summary: pick("Memakai skenario ini mengganti acuan untuk kategori terdampak di rencana berikutnya.", "Adopting this scenario replaces the baseline for affected categories in the next plan.") },
       changeSet: s.assumptions.map((a) => ({ field: a.scope, from: `${a.baselineValue}${a.unit}`, to: `${a.value}${a.unit}` })),
       evidence: note ? [note] : [],
       assumptions: s.assumptions.map((a) => a.rationale),
-      policy: { name: "Scenario adoption", rule: "Scenarios adopted into a plan need Manager approval.", requiredRole: "manager" },
-      afterApproval: "The scenario becomes available as the baseline when building the next plan.",
-      history: [{ id: `${approvalId}-h1`, at: s.modifiedAt, actorId: ctx.userId, text: `Submitted for review.${note ? ` ${note}` : ""}` }],
+      policy: { name: pick("Pemakaian skenario", "Scenario adoption"), rule: pick("Skenario yang dipakai dalam rencana perlu persetujuan Manajer.", "Scenarios adopted into a plan need Manager approval."), requiredRole: "manager" },
+      afterApproval: pick("Skenario dapat dipakai sebagai acuan saat menyusun rencana berikutnya.", "The scenario becomes available as the baseline when building the next plan."),
+      history: [{ id: `${approvalId}-h1`, at: s.modifiedAt, actorId: ctx.userId, text: pick(`Dikirim untuk ditinjau.${note ? ` ${note}` : ""}`, `Submitted for review.${note ? ` ${note}` : ""}`) }],
     });
     audit(db, { actorId: ctx.userId, action: "submit_scenario", entityType: "scenario", entityId: s.id, entityLabel: s.name, previousState: "simulated", newState: "in_review", reason: note || null, source: "web" });
     return { scenario: s, approvalId };
@@ -364,7 +368,7 @@ export function duplicateScenario(ctx: ApiContext, id: string) {
   return write(ctx, "scenario.create", () => {
     const db = getDb(ctx.workspaceId);
     const s = db.scenarios.find((x) => x.id === id);
-    if (!s) throw new ApiError("Scenario not found.", "not_found");
+    if (!s) throw new ApiError(pick("Skenario tidak ditemukan.", "Scenario not found."), "not_found");
     const now = iso(Date.now());
     const copy: Scenario = {
       ...structuredClone(s),
@@ -377,7 +381,7 @@ export function duplicateScenario(ctx: ApiContext, id: string) {
       result: null,
     };
     db.scenarios.unshift(copy);
-    audit(db, { actorId: ctx.userId, action: "create_scenario", entityType: "scenario", entityId: copy.id, entityLabel: copy.name, previousState: null, newState: "draft", reason: `Duplicated from ${s.name}`, source: "web" });
+    audit(db, { actorId: ctx.userId, action: "create_scenario", entityType: "scenario", entityId: copy.id, entityLabel: copy.name, previousState: null, newState: "draft", reason: pick(`Diduplikasi dari ${s.name}`, `Duplicated from ${s.name}`), source: "web" });
     return copy;
   });
 }
@@ -386,8 +390,8 @@ export function archiveScenario(ctx: ApiContext, id: string) {
   return write(ctx, "scenario.create", () => {
     const db = getDb(ctx.workspaceId);
     const s = db.scenarios.find((x) => x.id === id);
-    if (!s) throw new ApiError("Scenario not found.", "not_found");
-    if (s.status === "in_review") throw new ApiError("Withdraw the review request before archiving.", "conflict");
+    if (!s) throw new ApiError(pick("Skenario tidak ditemukan.", "Scenario not found."), "not_found");
+    if (s.status === "in_review") throw new ApiError(pick("Tarik permintaan tinjauan sebelum mengarsipkan.", "Withdraw the review request before archiving."), "conflict");
     const prev = s.status;
     s.status = "archived";
     audit(db, { actorId: ctx.userId, action: "edit_scenario", entityType: "scenario", entityId: s.id, entityLabel: s.name, previousState: prev, newState: "archived", reason: null, source: "web" });
@@ -451,10 +455,10 @@ export function getPlan(ctx: ApiContext, query: ListQuery) {
 export function updatePlanLines(ctx: ApiContext, ids: string[], change: { decision: PlanDecision; proposed?: number; note?: string }) {
   return write(ctx, "plan.edit", () => {
     const db = getDb(ctx.workspaceId);
-    if (db.plan.status !== "draft") throw new ApiError(`The plan is ${db.plan.status.replace("_", " ")} and cannot be edited.`, "conflict");
-    if (change.decision === "adjusted" && (change.proposed == null || change.proposed < 0)) throw new ApiError("Enter the adjusted quantity.", "validation");
+    if (db.plan.status !== "draft") throw new ApiError(pick(`Rencana berstatus ${db.plan.status.replace("_", " ")} dan tidak dapat diubah.`, `The plan is ${db.plan.status.replace("_", " ")} and cannot be edited.`), "conflict");
+    if (change.decision === "adjusted" && (change.proposed == null || change.proposed < 0)) throw new ApiError(pick("Masukkan jumlah yang disesuaikan.", "Enter the adjusted quantity."), "validation");
     if ((change.decision === "adjusted" || change.decision === "rejected" || change.decision === "flagged") && !change.note?.trim()) {
-      throw new ApiError("Add a note for adjusted, rejected or flagged lines.", "validation");
+      throw new ApiError(pick("Tambahkan catatan untuk baris yang disesuaikan, ditolak, atau ditandai.", "Add a note for adjusted, rejected or flagged lines."), "validation");
     }
     let n = 0;
     for (const id of ids) {
@@ -474,9 +478,9 @@ export function updatePlanLines(ctx: ApiContext, ids: string[], change: { decisi
 export function submitPlan(ctx: ApiContext, note: string) {
   return write(ctx, "plan.edit", () => {
     const db = getDb(ctx.workspaceId);
-    if (db.plan.status !== "draft") throw new ApiError(`The plan is already ${db.plan.status.replace("_", " ")}.`, "conflict");
+    if (db.plan.status !== "draft") throw new ApiError(pick(`Rencana sudah berstatus ${db.plan.status.replace("_", " ")}.`, `The plan is already ${db.plan.status.replace("_", " ")}.`), "conflict");
     const pending = db.plan.lines.filter((l) => l.decision === "pending" || l.decision === "flagged").length;
-    if (pending > 0) throw new ApiError(`${pending} line${pending === 1 ? " is" : "s are"} still pending or flagged.`, "validation", "Accept, adjust or reject every line before submitting.");
+    if (pending > 0) throw new ApiError(pick(`${pending} baris masih menunggu atau ditandai.`, `${pending} line${pending === 1 ? " is" : "s are"} still pending or flagged.`), "validation", pick("Terima, sesuaikan, atau tolak setiap baris sebelum mengirim.", "Accept, adjust or reject every line before submitting."));
     db.plan.status = "in_review";
     const forecast = db.plan.lines.reduce((s, l) => s + l.forecast, 0);
     const proposed = db.plan.lines.reduce((s, l) => s + l.proposed, 0);
@@ -491,18 +495,18 @@ export function submitPlan(ctx: ApiContext, note: string) {
       requestedAt: now,
       dueAt: iso(Date.now() + 86_400_000),
       status: "pending",
-      impact: { units: proposed - forecast, percent: forecast ? (proposed - forecast) / forecast : 0, skuCount: db.plan.lines.length, summary: "Publishing sends planned quantities to replenishment." },
-      changeSet: [{ field: "Plan status", from: "Draft", to: "Published" }],
+      impact: { units: proposed - forecast, percent: forecast ? (proposed - forecast) / forecast : 0, skuCount: db.plan.lines.length, summary: pick("Penerbitan mengirim jumlah yang direncanakan ke pengisian ulang.", "Publishing sends planned quantities to replenishment.") },
+      changeSet: [{ field: pick("Status rencana", "Plan status"), from: pick("Draf", "Draft"), to: pick("Diterbitkan", "Published") }],
       evidence: note ? [note] : [],
-      assumptions: ["Baseline is the latest published forecast run."],
-      policy: { name: "Plan publication", rule: "Publishing a plan needs Manager approval.", requiredRole: "manager" },
-      afterApproval: "The plan is published and becomes read-only. Replenishment receives the planned quantities.",
-      history: [{ id: `${approvalId}-h1`, at: now, actorId: ctx.userId, text: `Requested publication.${note ? ` ${note}` : ""}` }],
+      assumptions: [pick("Acuan adalah proses perkiraan terbit terakhir.", "Baseline is the latest published forecast run.")],
+      policy: { name: pick("Penerbitan rencana", "Plan publication"), rule: pick("Penerbitan rencana perlu persetujuan Manajer.", "Publishing a plan needs Manager approval."), requiredRole: "manager" },
+      afterApproval: pick("Rencana diterbitkan dan menjadi hanya baca. Pengisian ulang menerima jumlah yang direncanakan.", "The plan is published and becomes read-only. Replenishment receives the planned quantities."),
+      history: [{ id: `${approvalId}-h1`, at: now, actorId: ctx.userId, text: pick(`Meminta penerbitan.${note ? ` ${note}` : ""}`, `Requested publication.${note ? ` ${note}` : ""}`) }],
     });
     for (const a of db.approvals) {
       if (a.type === "plan_publish" && a.objectId === db.plan.id && a.status === "pending" && a.id !== approvalId) {
         a.status = "revision_requested";
-        a.history.push({ id: nextId(db, "h"), at: now, actorId: "system", text: `Superseded by ${approvalId}.` });
+        a.history.push({ id: nextId(db, "h"), at: now, actorId: "system", text: pick(`Digantikan oleh ${approvalId}.`, `Superseded by ${approvalId}.`) });
       }
     }
     audit(db, { actorId: ctx.userId, action: "update_plan", entityType: "plan", entityId: db.plan.id, entityLabel: db.plan.name, previousState: "draft", newState: "in_review", reason: note || null, source: "web" });

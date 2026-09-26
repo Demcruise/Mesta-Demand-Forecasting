@@ -31,7 +31,7 @@ export function PerformanceView() {
   if (q.isError) {
     return (
       <PageContainer>
-        <PageHeader title={pick("Performa Model", pick("Performa model", "Model performance"))} />
+        <PageHeader title={pick("Performa Model", "Model performance")} />
         <Panel><ErrorState what={pick("Performa model tidak dapat dimuat.", "Model performance could not be loaded.")} error={q.error} onRetry={() => q.refetch()} /></Panel>
       </PageContainer>
     );
@@ -45,8 +45,8 @@ export function PerformanceView() {
   return (
     <PageContainer>
       <PageHeader
-        title={pick("Performa Model", pick("Performa model", "Model performance"))}
-        description={pick("Seberapa akurat dan seberapa bias tiap model dari minggu ke minggu, pada populasi yang sama.", pick("Seberapa akurat dan seberapa bias tiap model, minggu demi minggu, pada populasi yang sama.", "How accurate and how biased each model has been, week by week, on the same population."))}
+        title={pick("Performa Model", "Model performance")}
+        description={pick("Seberapa akurat dan seberapa bias tiap model dari minggu ke minggu, pada populasi yang sama.", "How accurate and how biased each model has been, week by week, on the same population.")}
         actions={
           <div className="w-[min(24rem,90vw)]">
             <MultiSelect
@@ -65,13 +65,13 @@ export function PerformanceView() {
       ) : (
         <>
           <InlineAlert tone="info" title={pick("Definisi metrik masih perlu disepakati dengan pemilik analitik.", "Metric definitions need agreement with analytics owners.")}>
-            Values below use the proposed definitions shown next to each metric. Compare models over identical windows; different windows can create false precision.
+            {pick("Nilai di bawah memakai definisi yang tertera di tiap metrik. Bandingkan model pada periode yang sama; periode berbeda dapat menyesatkan.", "Values below use the proposed definitions shown next to each metric. Compare models over identical windows; different windows can create false precision.")}
           </InlineAlert>
           <ChartFrame
-            title={`${def.name} by week`}
-            question={metric === "wape" ? pick("Apakah selisih perkiraan membaik atau memburuk?", "Is forecast error improving or drifting?") : pick("Apakah ada model yang konsisten terlalu tinggi atau terlalu rendah?", pick("Adakah model yang konsisten memperkirakan terlalu tinggi atau rendah?", "Is any model consistently over- or under-forecasting?"))}
+            title={pick(`${def.name} per minggu`, `${def.name} by week`)}
+            question={metric === "wape" ? pick("Apakah selisih perkiraan membaik atau memburuk?", "Is forecast error improving or drifting?") : pick("Apakah ada model yang konsisten terlalu tinggi atau terlalu rendah?", "Is any model consistently over- or under-forecasting?")}
             unit={def.unit}
-            timeframe={firstWeek && lastWeek ? `Weeks of ${formatDate(firstWeek)} – ${formatDate(lastWeek)}` : ""}
+            timeframe={firstWeek && lastWeek ? pick(`Minggu ${formatDate(firstWeek)} – ${formatDate(lastWeek)}`, `Weeks of ${formatDate(firstWeek)} – ${formatDate(lastWeek)}`) : ""}
             source={pick("Proses evaluasi mingguan", "Weekly evaluation job")}
             actions={
               <Segmented
@@ -97,7 +97,7 @@ export function PerformanceView() {
             chart={<MetricTrend rows={q.data.series} series={series} xKey="week" format={(v) => (metric === "wape" ? formatPercent(v) : formatDeltaPercent(v))} />}
             table={
               <ChartDataTable
-                caption={`${def.name} by week`}
+                caption={pick(`${def.name} per minggu`, `${def.name} by week`)}
                 columns={[{ key: "week", label: pick("Minggu", "Week of") }, ...series.map((s) => ({ key: s.key, label: s.label, numeric: true }))]}
                 rows={q.data.series.map((r) => ({
                   week: formatDate(r.week as string),
@@ -144,7 +144,7 @@ export function PerformanceView() {
                   { key: "share", label: pick("Bagian volume", "Volume share"), numeric: true },
                   ...models.flatMap((m) => [
                     { key: `${m.id}:wape`, label: `WAPE · ${m.version}`, numeric: true },
-                    { key: `${m.id}:bias`, label: `Bias · ${m.version}`, numeric: true },
+                    { key: `${m.id}:bias`, label: pick(`Bias · ${m.version}`, `Bias · ${m.version}`), numeric: true },
                   ]),
                 ]}
                 rows={(q.data.backtests[models[0]?.id ?? ""]?.segments ?? []).map((seg) => ({

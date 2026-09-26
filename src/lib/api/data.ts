@@ -5,6 +5,7 @@ import { expectedAt, HISTORY_DAYS } from "@/lib/mock/series";
 import { createRng, hashString } from "@/lib/mock/random";
 import { DAY_MS, iso, isoDate, MINUTE_MS } from "@/lib/mock/time";
 import { applyList, ApiError, read, write, type ApiContext, type ListSpec } from "./client";
+import { pick } from "@/lib/i18n/core";
 
 /* ── Products ──────────────────────────────────────────────────────── */
 
@@ -138,7 +139,7 @@ export function getSource(ctx: ApiContext, id: string) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
     const source = db.sources.find((s) => s.id === id);
-    if (!source) throw new ApiError("This data source does not exist in the current workspace.", "not_found");
+    if (!source) throw new ApiError(pick("Sumber data ini tidak ada di ruang kerja saat ini.", "This data source does not exist in the current workspace."), "not_found");
     const issues = db.dqIssues.filter((i) => i.sourceId === id);
     const activity = db.audit.filter((e) => e.entityId === id).slice(0, 10);
     return { source, issues, activity };
@@ -149,7 +150,7 @@ function mutateSource(ctx: ApiContext, id: string, fn: (s: DataSource) => DataSo
   const db = getDb(ctx.workspaceId);
   const idx = db.sources.findIndex((s) => s.id === id);
   const source = db.sources[idx];
-  if (!source) throw new ApiError("Data source not found.", "not_found");
+  if (!source) throw new ApiError(pick("Sumber data tidak ditemukan.", "Data source not found."), "not_found");
   const next = fn(source);
   db.sources[idx] = next;
   audit(db, {
@@ -170,12 +171,12 @@ export function testConnection(ctx: ApiContext, id: string) {
   return write(ctx, "integration.manage", () => {
     const db = getDb(ctx.workspaceId);
     const s = db.sources.find((x) => x.id === id);
-    if (!s) throw new ApiError("Data source not found.", "not_found");
-    if (s.status === "disconnected") return { ok: false, message: "The source is disconnected. Connect it before testing." };
+    if (!s) throw new ApiError(pick("Sumber data tidak ditemukan.", "Data source not found."), "not_found");
+    if (s.status === "disconnected") return { ok: false, message: pick("Sumber belum tersambung. Sambungkan dulu sebelum menguji.", "The source is disconnected. Connect it before testing.") };
     if (s.id === "src_promo" && s.status === "failed") {
-      return { ok: false, message: "Authentication failed (HTTP 401). Rotate the service credential with the source owner, then test again." };
+      return { ok: false, message: pick("Autentikasi gagal (HTTP 401). Perbarui kredensial layanan bersama pemilik sumber, lalu uji lagi.", "Authentication failed (HTTP 401). Rotate the service credential with the source owner, then test again.") };
     }
-    return { ok: true, message: `Connected in ${120 + Math.round(Math.random() * 180)} ms. Schema matches the configured mapping.` };
+    return { ok: true, message: pick(`Tersambung dalam ${120 + Math.round(Math.random() * 180)} md. Skema sesuai pemetaan yang dikonfigurasi.`, `Connected in ${120 + Math.round(Math.random() * 180)} ms. Schema matches the configured mapping.`) };
   });
 }
 
@@ -185,13 +186,13 @@ export function syncNow(ctx: ApiContext, id: string) {
       ctx,
       id,
       (s) => {
-        if (s.status === "disconnected") throw new ApiError("Connect the source before syncing.", "conflict");
+        if (s.status === "disconnected") throw new ApiError(pick("Sambungkan sumber sebelum sinkronisasi.", "Connect the source before syncing."), "conflict");
         if (s.id === "src_promo" && s.status === "failed") {
-          return { ...s, lastSyncAt: iso(Date.now()), lastFailureAt: iso(Date.now()), lastError: "Authentication to the promotions API failed (HTTP 401). The service credential may have expired." };
+          return { ...s, lastSyncAt: iso(Date.now()), lastFailureAt: iso(Date.now()), lastError: pick("Autentikasi ke API promosi gagal (HTTP 401). Kredensial layanan mungkin kedaluwarsa.", "Authentication to the promotions API failed (HTTP 401). The service credential may have expired.") };
         }
         return { ...s, status: "connected", lastSyncAt: iso(Date.now()), lastSuccessAt: iso(Date.now()), lastError: null };
       },
-      "Manual sync requested",
+      pick("Sinkronisasi manual diminta", "Manual sync requested"),
     ),
   );
 }
@@ -208,13 +209,13 @@ export function setSourceConnection(ctx: ApiContext, id: string, connected: bool
         const records = s.records > 0 ? s.records : s.type === "POS" ? db.products.length * db.locations.length * 182 : Math.round(db.products.length * 410);
         return { ...s, status: "connected", lastSyncAt: iso(Date.now()), lastSuccessAt: iso(Date.now()), lastError: null, records };
       },
-      connected ? "Connected" : "Disconnected",
+      connected ? pick("Tersambung", "Connected") : pick("Terputus", "Disconnected"),
     ),
   );
 }
 
 export function updateSourceSchedule(ctx: ApiContext, id: string, schedule: string) {
-  return write(ctx, "integration.manage", () => mutateSource(ctx, id, (s) => ({ ...s, schedule }), `Schedule changed to “${schedule}”`));
+  return write(ctx, "integration.manage", () => mutateSource(ctx, id, (s) => ({ ...s, schedule }), pick(`Jadwal diubah menjadi “${schedule}”`, `Schedule changed to “${schedule}”`)));
 }
 
 /* ── Data quality ──────────────────────────────────────────────────── */
@@ -258,7 +259,7 @@ export function getDataQualityIssue(ctx: ApiContext, id: string) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
     const issue = db.dqIssues.find((i) => i.id === id);
-    if (!issue) throw new ApiError("This data quality issue was not found.", "not_found");
+    if (!issue) throw new ApiError(pick("Masalah kualitas data ini tidak ditemukan.", "This data quality issue was not found."), "not_found");
     return {
       issue,
       source: db.sources.find((s) => s.id === issue.sourceId) ?? null,
@@ -276,7 +277,7 @@ export function updateDataQualityIssue(
   return write(ctx, "data.manage", () => {
     const db = getDb(ctx.workspaceId);
     const issue = db.dqIssues.find((i) => i.id === id);
-    if (!issue) throw new ApiError("This data quality issue was not found.", "not_found");
+    if (!issue) throw new ApiError(pick("Masalah kualitas data ini tidak ditemukan.", "This data quality issue was not found."), "not_found");
     const prev = issue.status;
     if (change.status) issue.status = change.status;
     if (change.ownerId !== undefined) issue.ownerId = change.ownerId;
@@ -288,7 +289,7 @@ export function updateDataQualityIssue(
       entityLabel: issue.title,
       previousState: prev,
       newState: issue.status,
-      reason: change.note || (change.ownerId !== undefined ? `Assigned to ${actorName(change.ownerId)}` : null),
+      reason: change.note || (change.ownerId !== undefined ? pick(`Ditugaskan ke ${actorName(change.ownerId)}`, `Assigned to ${actorName(change.ownerId)}`) : null),
       source: "web",
     });
     return issue;
@@ -299,7 +300,7 @@ export function retryDataCheck(ctx: ApiContext, id: string) {
   return write(ctx, "data.manage", () => {
     const db = getDb(ctx.workspaceId);
     const issue = db.dqIssues.find((i) => i.id === id);
-    if (!issue) throw new ApiError("This data quality issue was not found.", "not_found");
+    if (!issue) throw new ApiError(pick("Masalah kualitas data ini tidak ditemukan.", "This data quality issue was not found."), "not_found");
     audit(db, {
       actorId: ctx.userId,
       action: "update_exception",
@@ -308,7 +309,7 @@ export function retryDataCheck(ctx: ApiContext, id: string) {
       entityLabel: issue.title,
       previousState: issue.status,
       newState: issue.status,
-      reason: "Re-ran the data check. The issue is still present.",
+      reason: pick("Pemeriksaan data dijalankan ulang. Masalah masih ada.", "Re-ran the data check. The issue is still present."),
       source: "web",
     });
     return { stillPresent: true, checkedAt: iso(Date.now()), id: nextId(db, "chk") };

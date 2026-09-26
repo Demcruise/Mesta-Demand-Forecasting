@@ -13,7 +13,7 @@ import { formatRelative } from "@/lib/format";
 import { Kbd } from "@/components/ui/controls";
 import { STATUS } from "@/components/feedback/status";
 import type { StatusKey } from "@/types/domain";
-import { getActiveLocale, useI18n } from "@/lib/i18n";
+import { getActiveLocale, useI18n, pick } from "@/lib/i18n";
 import { NAV } from "./nav-config";
 
 const RESULT_ICONS: Record<SearchResult["type"], React.ComponentType<{ className?: string }>> = {
@@ -28,7 +28,7 @@ const RESULT_ICONS: Record<SearchResult["type"], React.ComponentType<{ className
 /** Search categories (v3 §9 NAV-002). */
 const RESULT_LABELS_ID: Record<SearchResult["type"], string> = {
   Product: "Produk",
-  "Forecast run": "Perkiraan",
+  "Forecast run": "Proses Perkiraan",
   Scenario: "Skenario",
   Model: "Model",
   Exception: "Perlu Ditinjau",
@@ -167,7 +167,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
                 })}
                 {debounced.trim().length < 2 && (
                   <>
-                    <Command.Group heading="Actions" className="mb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:metadata">
+                    <Command.Group heading={pick("Aksi", "Actions")} className="mb-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:metadata">
                       {actions.map((a) => (
                         <Command.Item key={a.href} value={`${a.label} ${a.keywords}`} onSelect={() => go(a.href)} className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-[0.8125rem] font-semibold data-[selected=true]:bg-hover">
                           <a.icon className="size-4 text-fg-tertiary" aria-hidden />
@@ -175,7 +175,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
                         </Command.Item>
                       ))}
                     </Command.Group>
-                    <Command.Group heading="Go to" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:metadata">
+                    <Command.Group heading={pick("Buka", "Go to")} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:metadata">
                       {NAV.flatMap((g) => g.items).map((item) => (
                         <Command.Item key={item.href} value={item.label} onSelect={() => go(item.href)} className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-[0.8125rem] font-semibold data-[selected=true]:bg-hover">
                           <item.icon className="size-4 text-fg-tertiary" aria-hidden />
@@ -187,10 +187,10 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
                 )}
               </Command.List>
               <div className="flex items-center justify-between border-t border-border px-4 py-2 caption">
-                <span className="truncate">Scoped to {workspace.name} · {workspace.environment} and your permissions.</span>
+                <span className="truncate">{pick(`Terbatas pada ${workspace.name} · ${workspace.environment} dan hak akses Anda.`, `Scoped to ${workspace.name} · ${workspace.environment} and your permissions.`)}</span>
                 <span className="hidden items-center gap-1 sm:inline-flex">
                   <Kbd>↑</Kbd>
-                  <Kbd>↓</Kbd> to move · <Kbd>↵</Kbd> to open
+                  <Kbd>↓</Kbd> {pick("pindah", "to move")} · <Kbd>↵</Kbd> {pick("buka", "to open")}
                 </span>
               </div>
             </Command>

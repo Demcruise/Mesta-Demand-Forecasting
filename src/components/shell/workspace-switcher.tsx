@@ -46,7 +46,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         "flex w-full items-center rounded-md border border-border bg-subtle text-left transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus",
         collapsed ? "size-10 justify-center" : "gap-2 px-2.5 py-2",
       )}
-      aria-label={`Ruang kerja: ${workspace.name}, ${ENV_LABELS[workspace.environment]}. Ganti ruang kerja`}
+      aria-label={pick(`Ruang kerja: ${workspace.name}, ${ENV_LABELS[workspace.environment]}. Ganti ruang kerja`, `Workspace: ${workspace.name}, ${ENV_LABELS[workspace.environment]}. Switch workspace`)}
     >
       <span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-primary text-[0.6875rem] font-bold text-primary-fg" aria-hidden>
         {workspace.name.slice(0, 1)}
@@ -71,19 +71,19 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
       <PopoverContent className="w-80 p-0" align="start" side={collapsed ? "right" : "bottom"}>
         <div className="border-b border-border p-2">
           <label className="relative block">
-            <span className="sr-only">Cari ruang kerja</span>
+            <span className="sr-only">{pick("Cari ruang kerja", "Search workspaces")}</span>
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-tertiary" aria-hidden />
             <input
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Cari ruang kerja"
+              placeholder={pick("Cari ruang kerja", "Search workspaces")}
               className="h-8 w-full rounded-md border border-border bg-surface pl-8 pr-2 text-sm outline-none focus-visible:border-focus"
             />
           </label>
         </div>
-        <ul role="listbox" aria-label="Ruang Kerja" className="max-h-72 overflow-y-auto p-1">
-          {filtered.length === 0 && <li className="px-3 py-6 text-center caption">Tidak ada ruang kerja yang cocok dengan “{q}”.</li>}
+        <ul role="listbox" aria-label={pick("Ruang kerja", "Workspaces")} className="max-h-72 overflow-y-auto p-1">
+          {filtered.length === 0 && <li className="px-3 py-6 text-center caption">{pick(`Tidak ada ruang kerja yang cocok dengan “${q}”.`, `No workspace matches “${q}”.`)}</li>}
           {filtered.map((w) => {
             const current = w.id === workspace.id;
             return (
@@ -108,9 +108,11 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                     <span className="truncate text-xs text-fg-tertiary">
                       {w.organization} · {w.region}
                     </span>
-                    <span className="text-xs text-fg-secondary">Peran Anda: {ROLE_LABELS[session.role]}</span>
+                    <span className="text-xs text-fg-secondary">
+                      {pick("Peran Anda", "Your role")}: {ROLE_LABELS[session.role]}
+                    </span>
                   </span>
-                  {current && <Check className="mt-1 size-4 shrink-0 text-primary" aria-label="Ruang kerja aktif" />}
+                  {current && <Check className="mt-1 size-4 shrink-0 text-primary" aria-label={pick("Ruang kerja aktif", "Current workspace")} />}
                 </button>
               </li>
             );

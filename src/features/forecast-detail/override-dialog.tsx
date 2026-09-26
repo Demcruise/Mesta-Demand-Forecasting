@@ -17,14 +17,21 @@ import { InlineAlert, PermissionNotice } from "@/components/feedback/states";
 import { ConsequenceSummary } from "@/components/governance/audit";
 import { pick, localized } from "@/lib/i18n";
 
-export const OVERRIDE_REASONS: { value: OverrideReason; label: string }[] = [
-  { value: "promotion_not_in_model", label: pick("Promosi belum ada di model", pick("Promosi tidak ada di model", "Promotion not in the model")) },
-  { value: "supply_constraint", label: pick("Kendala pasokan atau alokasi", "Supply or allocation constraint") },
-  { value: "new_listing", label: pick("Produk baru atau perubahan rangkaian", "New listing or range change") },
-  { value: "known_event", label: pick("Acara lokal yang diketahui", "Known local event") },
-  { value: "data_issue", label: pick("Masalah data pada riwayat", "Data issue in history") },
-  { value: "other", label: pick("Lainnya (jelaskan di catatan)", "Other (explain in comment)") },
-];
+export const OVERRIDE_REASONS: { value: OverrideReason; label: string }[] = localized([
+  { value: "promotion_not_in_model", label: "Promosi belum ada di model" },
+  { value: "supply_constraint", label: "Kendala pasokan atau alokasi" },
+  { value: "new_listing", label: "Produk baru atau perubahan rangkaian" },
+  { value: "known_event", label: "Acara lokal yang diketahui" },
+  { value: "data_issue", label: "Masalah data pada riwayat" },
+  { value: "other", label: "Lainnya (jelaskan di catatan)" },
+], [
+  { value: "promotion_not_in_model", label: "Promotion not in the model" },
+  { value: "supply_constraint", label: "Supply or allocation constraint" },
+  { value: "new_listing", label: "New listing or range change" },
+  { value: "known_event", label: "Known local event" },
+  { value: "data_issue", label: "Data issue in history" },
+  { value: "other", label: "Other (explain in comment)" },
+]);
 
 /**
  * OVERRIDE-001: attributable, explained changes to a forecast. Captures previous and
@@ -75,15 +82,15 @@ export function OverrideDialog({
   const valid = value.trim() !== "" && Number.isFinite(parsed);
   const newUnits = valid ? Math.max(0, Math.round(mode === "units" ? parsed : originalUnits * (1 + parsed / 100))) : originalUnits;
   const preview = valid ? previewOverride(ctx, { runId, productIds, newUnits }) : null;
-  const commentError = localized(touched && comment.trim().length < 10 ? pick("Jelaskan perubahan manual minimal 10 karakter.", "Explain the override in at least 10 characters.") : null, touched && comment.trim().length < 10 ? "Explain the override in at least 10 characters." : null);
-  const valueError = localized(touched && !valid ? pick("Masukkan perkiraan baru.", "Enter the new forecast.") : touched && valid && newUnits === originalUnits ? pick("Nilai baru sama dengan perkiraan saat ini.", "The new value is the same as the current forecast.") : null, touched && !valid ? "Enter the new forecast." : touched && valid && newUnits === originalUnits ? "The new value is the same as the current forecast." : null);
+  const commentError = localized(touched && comment.trim().length < 10 ? "Jelaskan perubahan manual minimal 10 karakter." : null, touched && comment.trim().length < 10 ? "Explain the override in at least 10 characters." : null);
+  const valueError = localized(touched && !valid ? "Masukkan perkiraan baru." : touched && valid && newUnits === originalUnits ? "Nilai baru sama dengan perkiraan saat ini." : null, touched && !valid ? "Enter the new forecast." : touched && valid && newUnits === originalUnits ? "The new value is the same as the current forecast." : null);
 
   const mutation = localized(useApiMutation((c, _v: void) => applyOverride(c, { runId, productIds, newUnits, reason, evidence, comment }), {
     invalidate: [["forecast-rows"], ["forecast-detail"], ["run-result"], ["overview"], ["approvals"], ["nav-counts"], ["notifications"]],
     success: (o) => (o.status === "applied" ? pick("Perubahan diterapkan", "Override applied") : pick("Perubahan dikirim untuk persetujuan", "Override submitted for approval")),
     successDescription: (o) =>
       o.status === "applied" ? `${label}: ${formatNumber(o.originalUnits)} → ${formatNumber(o.newUnits)} unit.` : pick("Acuan perencanaan berubah setelah Manajer menyetujuinya.", "The planning baseline changes once a Manager approves it."),
-    failure: pick("Perubahan manual tidak tersimpan.", "The override was not saved."),
+    failure: "Perubahan manual tidak tersimpan.",
     onSuccess: (o) => {
       track("override_applied", { pendingApproval: o.status !== "applied" });
       onOpenChange(false);
@@ -113,25 +120,25 @@ export function OverrideDialog({
       <DialogContent
         size="md"
         title={step === "edit" ? pick(`Ubah Perkiraan · ${label}`, `Override forecast · ${label}`) : preview?.needsApproval ? pick("Kirim perubahan untuk persetujuan?", "Submit override for approval?") : pick("Terapkan perubahan ini?", "Apply this override?")}
-        description={step === "edit" ? `${horizonDays}-day forecast for ${pluralize(productIds.length, "SKU")}. Overrides are attributed to you and recorded in the audit log.` : undefined}
+        description={step === "edit" ? pick(`Perkiraan ${horizonDays} hari untuk ${productIds.length} SKU. Perubahan tercatat atas nama Anda di riwayat aktivitas.`, `${horizonDays}-day forecast for ${pluralize(productIds.length, "SKU")}. Overrides are attributed to you and recorded in the audit log.`) : undefined}
         footer={
           !can("forecast.override") ? (
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
-              Close
+              {pick("Tutup", "Close")}
             </Button>
           ) : step === "edit" ? (
             <>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>
-                Cancel
+                {pick("Batal", "Cancel")}
               </Button>
               <Button variant="primary" onClick={toConfirm}>
-                Review override
+                {pick("Tinjau perubahan", "Review override")}
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" onClick={() => setStep("edit")}>
-                Back to edit
+                {pick("Kembali mengubah", "Back to edit")}
               </Button>
               <Button variant="primary" loading={mutation.isPending} onClick={() => mutation.mutate()}>
                 {preview?.needsApproval ? pick("Kirim untuk persetujuan", "Submit for approval") : pick("Terapkan Perubahan", "Apply override")}
@@ -186,9 +193,9 @@ export function OverrideDialog({
               <Select id="ovr-reason" value={reason} onValueChange={(v) => setReason(v as OverrideReason)} options={OVERRIDE_REASONS} />
             </Field>
             <Field label={pick("Bukti", "Evidence")} htmlFor="ovr-evidence" optional hint={pick("Sebutkan dokumen, ringkasan promosi, atau tiket terkait.", "Reference a document, promotion brief or ticket.")}>
-              <Input id="ovr-evidence" value={evidence} onChange={(e) => setEvidence(e.target.value)} placeholder="e.g. Trade promotion brief TPB-1142" />
+              <Input id="ovr-evidence" value={evidence} onChange={(e) => setEvidence(e.target.value)} placeholder={pick("mis. Brief promosi dagang TPB-1142", "e.g. Trade promotion brief TPB-1142")} />
             </Field>
-            <Field label={pick("Catatan", "Comment")} htmlFor="ovr-comment" required error={commentError} hint={pick("Hal yang belum diketahui model, dengan bahasa sederhana.", pick("Apa yang tidak diketahui model, dalam bahasa sederhana.", "What the model does not know, in plain language."))}>
+            <Field label={pick("Catatan", "Comment")} htmlFor="ovr-comment" required error={commentError} hint={pick("Hal yang belum diketahui model, dengan bahasa sederhana.", "What the model does not know, in plain language.")}>
               <Textarea id="ovr-comment" value={comment} onChange={(e) => setComment(e.target.value)} aria-invalid={!!commentError} rows={3} />
             </Field>
           </div>

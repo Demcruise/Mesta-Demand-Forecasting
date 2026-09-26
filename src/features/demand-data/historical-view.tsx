@@ -60,7 +60,7 @@ export function HistoricalView() {
           row.original.quality === "ok" ? (
             <span className="text-xs text-fg-tertiary">{pick("Lolos", "Passed")}</span>
           ) : (
-            <Tooltip content={row.original.quality === "blocking" ? pick("Data hilang: tidak ada data POS untuk hari ini (DQ-001).", pick("Catatan hilang: tidak ada data POS yang diterima untuk hari ini (DQ-001).", "Missing record: no POS data received for this day (DQ-001).")) : pick("Terkena peringatan kualitas data yang masih terbuka.", pick("Terdampak peringatan kualitas data yang terbuka.", "Affected by an open data quality warning."))}>
+            <Tooltip content={row.original.quality === "blocking" ? pick("Data hilang: tidak ada data POS untuk hari ini (DQ-001).", "Missing record: no POS data received for this day (DQ-001).") : pick("Terkena peringatan kualitas data yang masih terbuka.", "Affected by an open data quality warning.")}>
               <span tabIndex={0}>
                 <Tag tone={row.original.quality === "blocking" ? "critical" : "warning"}>{row.original.quality === "blocking" ? pick("Hilang", "Missing") : pick("Peringatan", "Warning")}</Tag>
               </span>
@@ -79,14 +79,14 @@ export function HistoricalView() {
         description={pick("Permintaan harian per produk, seperti yang dipakai model perkiraan. Catatan diambil per halaman dari penyimpanan permintaan.", "Daily demand by product, as used by the forecasting models. Records are queried page by page from the demand store.")}
         meta={
           <>
-            {q.data && <span className="text-xs font-medium text-fg-secondary">History available from {formatDate(q.data.window.earliest)}</span>}
+            {q.data && <span className="text-xs font-medium text-fg-secondary">{pick(`Riwayat tersedia sejak ${formatDate(q.data.window.earliest)}`, `History available from ${formatDate(q.data.window.earliest)}`)}</span>}
             <FreshnessIndicator timestamp={q.data?.page.asOf} label={pick("Data POS diperbarui", "POS data updated")} source={pick("Transaksi POS", "POS transactions")} />
           </>
         }
       />
       {state.query.filters?.quality?.length ? (
         <InlineAlert tone="info" title={pick("Filter kualitas memeriksa maksimal 5.000 catatan.", "Quality filter scans at most 5,000 records.")}>
-          Narrow the date range or category for complete results.
+          {pick("Persempit rentang tanggal atau kategori untuk hasil lengkap.", "Narrow the date range or category for complete results.")}
         </InlineAlert>
       ) : null}
       <DataTable
@@ -102,8 +102,6 @@ export function HistoricalView() {
         storageKey="historical"
         maxHeight="min(70vh, 44rem)"
         pageSizeOptions={[25, 50, 100, 250]}
-        density="compact"
-        hideDensityToggle
         sort={{ key: "date", dir: state.query.dir, onChange: (_k, dir) => state.setSort("date", dir) }}
         pagination={{ page: q.data?.page.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.page.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
         toolbarStart={
@@ -149,7 +147,7 @@ export function HistoricalView() {
             description={pick("Rentang tanggal mungkin di luar riwayat yang dimuat, atau tidak ada produk yang cocok dengan pencarian.", "The date range may be outside the loaded history, or no product matches the search.")}
             action={
               <Button variant="secondary" onClick={state.clearFilters}>
-                Clear filters
+                {pick("Hapus filter", "Clear filters")}
               </Button>
             }
           />

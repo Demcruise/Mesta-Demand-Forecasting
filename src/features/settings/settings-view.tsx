@@ -24,40 +24,49 @@ import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
 import { ApiAccessSection } from "./api-access";
 import { NotificationRulesSection } from "./notification-rules";
 import type { SectionKey } from "./sections";
-import { pick } from "@/lib/i18n";
+import { localizedRecord, pick } from "@/lib/i18n";
 
 
-const SECTIONS: { key: SectionKey; label: string; icon: React.ComponentType<{ className?: string }>; group: "Personal" | "Workspace administration" }[] = [
-  { key: "personal", label: "Pribadi", icon: UserRound, group: "Personal" },
-  { key: "notifications", label: "Notifikasi", icon: Bell, group: "Personal" },
-  { key: "workspace", label: "Ruang Kerja", icon: Building2, group: "Workspace administration" },
-  { key: "forecasting", label: pick("Perkiraan", "Forecast"), icon: Workflow, group: "Workspace administration" },
-  { key: "data", label: pick("Data & Integrasi", "Data & integrations"), icon: Database, group: "Workspace administration" },
-  { key: "approvals", label: pick("Persetujuan", "Approval"), icon: ShieldCheck, group: "Workspace administration" },
-  { key: "roles", label: pick("Pengguna & Akses", "Users & roles"), icon: Users, group: "Workspace administration" },
-  { key: "audit", label: "Audit & Retensi", icon: ScrollText, group: "Workspace administration" },
-  { key: "security", label: "Keamanan", icon: Lock, group: "Workspace administration" },
-  { key: "api", label: "API", icon: KeyRound, group: "Workspace administration" },
-];
+type SectionGroup = "personal" | "workspace";
+
+/** Built per render so labels follow the active locale (module-scope pick() would freeze them). */
+function getSections(): { key: SectionKey; label: string; icon: React.ComponentType<{ className?: string }>; group: SectionGroup }[] {
+  return [
+    { key: "personal", label: pick("Pribadi", "Personal"), icon: UserRound, group: "personal" },
+    { key: "notifications", label: pick("Notifikasi", "Notifications"), icon: Bell, group: "personal" },
+    { key: "workspace", label: pick("Ruang Kerja", "Workspace"), icon: Building2, group: "workspace" },
+    { key: "forecasting", label: pick("Perkiraan", "Forecasting"), icon: Workflow, group: "workspace" },
+    { key: "data", label: pick("Data & Integrasi", "Data & integrations"), icon: Database, group: "workspace" },
+    { key: "approvals", label: pick("Persetujuan", "Approvals"), icon: ShieldCheck, group: "workspace" },
+    { key: "roles", label: pick("Pengguna & Peran", "Users & roles"), icon: Users, group: "workspace" },
+    { key: "audit", label: pick("Audit & Retensi", "Audit & retention"), icon: ScrollText, group: "workspace" },
+    { key: "security", label: pick("Keamanan", "Security"), icon: Lock, group: "workspace" },
+    { key: "api", label: "API", icon: KeyRound, group: "workspace" },
+  ];
+}
 
 /**
  * PAGE-SETTINGS: personal preferences are separated from workspace administration;
  * administrative sections are permission-gated and every change is audited.
  */
 export function SettingsView({ section }: { section: SectionKey }) {
+  const SECTIONS = getSections();
   const current = SECTIONS.find((s) => s.key === section) ?? SECTIONS[0]!;
   useBreadcrumbLeaf(current.label);
-  const groups = ["Personal", "Workspace administration"] as const;
+  const groups: { key: SectionGroup; label: string }[] = [
+    { key: "personal", label: pick("Pribadi", "Personal") },
+    { key: "workspace", label: pick("Administrasi ruang kerja", "Workspace administration") },
+  ];
   return (
     <PageContainer>
-      <PageHeader title={pick("Pengaturan", "Configuration")} description={pick("Preferensi pribadi hanya berlaku untuk Anda. Pengaturan ruang kerja berlaku untuk semua orang dan tercatat di riwayat aktivitas.", "Personal preferences apply only to you. Workspace settings apply to everyone and are recorded in the audit log.")} />
-      <div className="grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <nav aria-label={pick("Bagian pengaturan", "Settings section")} className="lg:sticky lg:top-[calc(var(--topbar-h)+1.5rem)] lg:self-start">
+      <PageHeader title={pick("Pengaturan", "Settings")} description={pick("Preferensi pribadi hanya berlaku untuk Anda. Pengaturan ruang kerja berlaku untuk semua orang dan tercatat di riwayat aktivitas.", "Personal preferences apply only to you. Workspace settings apply to everyone and are recorded in the audit log.")} />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
+        <nav aria-label={pick("Bagian pengaturan", "Settings sections")} className="min-w-0 lg:sticky lg:top-[calc(var(--topbar-h)+1.5rem)] lg:self-start">
           {groups.map((g) => (
-            <div key={g} className="mb-4">
-              <p className="mb-1 px-2 metadata">{g}</p>
+            <div key={g.key} className="mb-4">
+              <p className="mb-1 px-2 metadata">{g.label}</p>
               <ul className="flex gap-1 overflow-x-auto lg:flex-col">
-                {SECTIONS.filter((s) => s.group === g).map((s) => {
+                {SECTIONS.filter((s) => s.group === g.key).map((s) => {
                   const Icon = s.icon;
                   const active = s.key === current.key;
                   return (
@@ -101,18 +110,18 @@ function PersonalSection() {
   const isId = locale === "id";
   return (
     <div className="flex flex-col gap-4">
-      <Panel title={isId ? "Profil" : "Profile"} description={isId ? pick("Dikelola oleh penyedia identitas Anda.", "Managed by your identity provider.") : "Managed by your identity provider."}>
+      <Panel title={isId ? "Profil" : "Profile"} description={isId ? "Dikelola oleh penyedia identitas Anda." : "Managed by your identity provider."}>
         <DescriptionList
           columns={2}
           items={[
             { label: isId ? "Nama" : "Name", value: session.name },
             { label: isId ? "Email" : "Email", value: session.email },
-            { label: isId ? pick("Peran di ruang kerja ini", "Roles in this workspace") : "Role in this workspace", value: ROLE_LABELS[session.role] },
+            { label: isId ? "Peran di ruang kerja ini" : "Role in this workspace", value: ROLE_LABELS[session.role] },
             { label: isId ? "Masuk melalui" : "Signed in via", value: session.idp },
           ]}
         />
       </Panel>
-      <Panel title={isId ? "Tampilan" : "Appearance"} description={isId ? pick("Hanya tersimpan di peramban ini.", "Stored in this browser only.") : "Saved in this browser only."}>
+      <Panel title={isId ? "Tampilan" : "Appearance"} description={isId ? "Hanya tersimpan di peramban ini." : "Saved in this browser only."}>
         <div className="flex flex-col gap-5">
           <Field label={isId ? "Bahasa" : "Language"} htmlFor="locale" hint={isId ? "Pilih bahasa tampilan antarmuka Mesta." : "Choose the interface display language for Mesta."}>
             <RadioCards
@@ -121,8 +130,8 @@ function PersonalSection() {
               value={locale}
               onValueChange={(v) => setPreference("locale", v as "en" | "id")}
               options={[
-                { value: "en", label: "English", description: "Default interface language" },
-                { value: "id", label: "Bahasa Indonesia", description: "Antarmuka bahasa Indonesia" },
+                { value: "en", label: "English", description: isId ? "Antarmuka dalam bahasa Inggris" : "Interface in English" },
+                { value: "id", label: "Bahasa Indonesia", description: isId ? "Antarmuka dalam bahasa Indonesia" : "Interface in Indonesian" },
               ]}
             />
           </Field>
@@ -139,31 +148,31 @@ function PersonalSection() {
               ]}
             />
           </Field>
-          <Field label={isId ? "Kerapatan tabel bawaan" : "Default table density"} htmlFor="density" hint={isId ? "Tiap tabel tetap dapat diubah sendiri-sendiri." : "Tables can still be switched individually."}>
+          <Field label={isId ? "Kerapatan tabel" : "Table density"} htmlFor="density" hint={isId ? "Pilih kerapatan yang digunakan di seluruh Mesta. Berlaku untuk semua tabel." : "Choose the density used across Mesta. Applies to every table."}>
             <RadioCards
-              aria-label={isId ? "Kerapatan tabel bawaan" : "Default table density"}
+              aria-label={isId ? "Kerapatan tabel" : "Table density"}
               columns={2}
               value={density}
               onValueChange={(v) => setPreference("density", v as typeof density)}
               options={[
-                { value: "comfortable", label: isId ? "Nyaman" : "Comfortable", description: isId ? "baris 54px" : "54px rows" },
-                { value: "compact", label: isId ? "Padat" : "Compact", description: isId ? "baris 42px" : "42px rows" },
+                { value: "comfortable", label: isId ? "Nyaman" : "Comfortable", description: isId ? "Jarak antarbaris lebih longgar" : "More spacing between rows" },
+                { value: "compact", label: isId ? "Padat" : "Compact", description: isId ? "Lebih banyak baris terlihat" : "More rows visible at once" },
               ]}
             />
           </Field>
-          <SwitchField id="sidebar" label={isId ? pick("Tutup bilah samping", "Collapse the sidebar") : "Collapse sidebar"} description={isId ? pick("Tampilkan ikon saja agar tabel lebih lega.", "Show icons only to give tables more room.") : "Show icons only to give tables more room."} checked={sidebarCollapsed} onCheckedChange={(v) => setPreference("sidebarCollapsed", v)} />
+          <SwitchField id="sidebar" label={isId ? "Ciutkan bilah samping" : "Collapse sidebar"} description={isId ? "Tampilkan ikon saja agar tabel lebih lega." : "Show icons only to give tables more room."} checked={sidebarCollapsed} onCheckedChange={(v) => setPreference("sidebarCollapsed", v)} />
         </div>
       </Panel>
       <Panel title={isId ? "Format" : "Formats"}>
         <DescriptionList
           columns={3}
           items={[
-            { label: isId ? "Tanggal" : "Dates", value: formatDate(pick("2026-09-25", "25 Sep 2026")) },
+            { label: isId ? "Tanggal" : "Dates", value: formatDate("2026-09-25T00:00:00") },
             { label: isId ? "Angka" : "Numbers", value: formatNumber(12440) },
-            { label: isId ? pick("Perubahan", "Change") : "Changes", value: `${formatDeltaPercent(0.045)} / ${formatDeltaPercent(-0.032)}` },
+            { label: isId ? "Perubahan" : "Changes", value: `${formatDeltaPercent(0.045)} / ${formatDeltaPercent(-0.032)}` },
           ]}
         />
-        <p className="mt-3 caption">{isId ? pick("Format angka dan tanggal otomatis mengikuti bahasa yang dipilih.", "One product-wide convention (backlog §65), so exports and screenshots read the same for everyone.") : pick("Number and date formats automatically follow your selected language.", "Roles & permissions")}</p>
+        <p className="mt-3 caption">{isId ? "Format angka dan tanggal otomatis mengikuti bahasa yang dipilih." : "Number and date formats follow your selected language."}</p>
       </Panel>
     </div>
   );
@@ -172,9 +181,9 @@ function PersonalSection() {
 function RolesSection() {
   return (
     <Panel title={pick("Pengguna & Akses", "Users & roles")}>
-      <p className="body-sm text-fg-secondary">Role assignments and the permission matrix are managed on the Users & roles page.</p>
+      <p className="body-sm text-fg-secondary">{pick("Penetapan peran dan matriks hak akses dikelola di halaman Pengguna & Peran.", "Role assignments and the permission matrix are managed on the Users & roles page.")}</p>
       <Link href="/administration/users" className={cn(buttonVariants({ variant: "secondary" }), "mt-3")}>
-        Open users & roles
+        {pick("Buka Pengguna & Peran", "Open users & roles")}
       </Link>
     </Panel>
   );
@@ -219,10 +228,10 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
         <span className="caption">{dirty ? pick(`${diffs.length} perubahan belum disimpan`, `${diffs.length} unsaved change${diffs.length === 1 ? "" : "s"}`) : pick("Tidak ada perubahan belum disimpan", "No unsaved changes")}</span>
         <div className="flex gap-2">
           <Button variant="ghost" disabled={!dirty} onClick={() => setDraft(structuredClone(saved))}>
-            Discard changes
+            {pick("Buang perubahan", "Discard changes")}
           </Button>
           <Button variant="primary" disabled={!dirty} onClick={() => { setReason(""); setConfirm(true); }}>
-            Save changes
+            {pick("Simpan perubahan", "Save changes")}
           </Button>
         </div>
       </>
@@ -248,26 +257,26 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
       )}
       {section === "data" && (
         <Panel title={pick("Data & Integrasi", "Data & integrations")} footer={<Link href="/administration/integrations" className="text-xs font-semibold text-primary hover:underline">{pick("Kelola integrasi →", "Manage integrations →")}</Link>}>
-          <p className="body-sm text-fg-secondary">Sources, schedules and field mappings are managed in Integrations. Data freshness thresholds are set in Forecasting.</p>
+          <p className="body-sm text-fg-secondary">{pick("Sumber, jadwal, dan pemetaan kolom dikelola di Integrasi. Batas kebaruan data diatur di Perkiraan.", "Sources, schedules and field mappings are managed in Integrations. Data freshness thresholds are set in Forecasting.")}</p>
         </Panel>
       )}
       {section === "forecasting" && (
         <Panel title={pick("Bawaan perkiraan", "Forecasting defaults")} description={pick("Diterapkan saat seseorang membuat proses perkiraan baru. Proses yang sudah ada tidak berubah.", "Applied when someone creates a new forecast run. Existing runs are unchanged.")} footer={footer}>
           <fieldset disabled={!editable} className="grid gap-5 sm:grid-cols-2">
             <Field label={pick("Rentang bawaan", "Default horizon")} htmlFor="def-h">
-              <Select id="def-h" value={String(draft.forecasting.defaultHorizonDays)} onValueChange={(v) => set("forecasting", { defaultHorizonDays: Number(v) })} options={[7, 14, 28, 30, 60, 90].map((d) => ({ value: String(d), label: `${d} days` }))} disabled={!editable} />
+              <Select id="def-h" value={String(draft.forecasting.defaultHorizonDays)} onValueChange={(v) => set("forecasting", { defaultHorizonDays: Number(v) })} options={[7, 14, 28, 30, 60, 90].map((d) => ({ value: String(d), label: pick(`${d} hari`, `${d} days`) }))} disabled={!editable} />
             </Field>
             <Field label={pick("Frekuensi bawaan", "Default frequency")} htmlFor="def-f">
               <Select id="def-f" value={draft.forecasting.defaultFrequency} onValueChange={(v) => set("forecasting", { defaultFrequency: v as "daily" | "weekly" })} options={[{ value: "daily", label: pick("Harian", "Daily") }, { value: "weekly", label: pick("Mingguan", "Weekly") }]} disabled={!editable} />
             </Field>
             <Field label={pick("Rentang historis bawaan", "Default history window")} htmlFor="def-w" hint={pick("Jumlah hari riwayat yang dipakai secara bawaan.", "Days of history used by default.")}>
-              <Select id="def-w" value={String(draft.forecasting.historyWindowDays)} onValueChange={(v) => set("forecasting", { historyWindowDays: Number(v) })} options={[180, 365, 730].map((d) => ({ value: String(d), label: `${d} days` }))} disabled={!editable} />
+              <Select id="def-w" value={String(draft.forecasting.historyWindowDays)} onValueChange={(v) => set("forecasting", { historyWindowDays: Number(v) })} options={[180, 365, 730].map((d) => ({ value: String(d), label: pick(`${d} hari`, `${d} days`) }))} disabled={!editable} />
             </Field>
             <Field label={pick("Model bawaan", "Default model")} htmlFor="def-m" hint={pick("Mengubah model bawaan memerlukan persetujuan Manajer.", "Changing the default model requires Manager approval.")}>
               <div className="flex items-center gap-2">
                 <Input id="def-m" readOnly value={q.data.models.find((m) => m.id === draft.forecasting.defaultModelId)?.name + " " + (q.data.models.find((m) => m.id === draft.forecasting.defaultModelId)?.version ?? "")} />
                 <Link href="/models" className={buttonVariants({ size: "sm", variant: "ghost" })}>
-                  Registry
+                  {pick("Registri", "Registry")}
                 </Link>
               </div>
             </Field>
@@ -280,11 +289,11 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
             <Field label={pick("Lebar rentang", "Interval width")} htmlFor="th-width" hint={pick("Lebar relatif rentang 80%.", "Relative width of the 80% interval.")}>
               <Select id="th-width" value={String(draft.exceptions.intervalWidthThreshold)} onValueChange={(v) => set("exceptions", { intervalWidthThreshold: Number(v) })} options={[0.6, 0.75, 0.9, 1.2].map((d) => ({ value: String(d), label: formatPercent(d, 0) }))} disabled={!editable} />
             </Field>
-            <Field label={pick("Pembaruan data", pick("Kebaruan data", "Data freshness"))} htmlFor="th-fresh" hint={pick("Berapa jam sebelum data dianggap terlambat.", pick("Jam sebelum data dianggap terlambat.", "Hours before data counts as delayed."))}>
-              <Select id="th-fresh" value={String(draft.exceptions.freshnessHours)} onValueChange={(v) => set("exceptions", { freshnessHours: Number(v) })} options={[6, 12, 24, 48].map((d) => ({ value: String(d), label: `${d} hours` }))} disabled={!editable} />
+            <Field label={pick("Pembaruan data", "Data freshness")} htmlFor="th-fresh" hint={pick("Berapa jam sebelum data dianggap terlambat.", "Hours before data counts as delayed.")}>
+              <Select id="th-fresh" value={String(draft.exceptions.freshnessHours)} onValueChange={(v) => set("exceptions", { freshnessHours: Number(v) })} options={[6, 12, 24, 48].map((d) => ({ value: String(d), label: pick(`${d} jam`, `${d} hours`) }))} disabled={!editable} />
             </Field>
           </fieldset>
-          <p className="mt-3 caption">Threshold changes apply from the next forecast run.</p>
+          <p className="mt-3 caption">{pick("Perubahan batas berlaku mulai proses perkiraan berikutnya.", "Threshold changes apply from the next forecast run.")}</p>
         </Panel>
       )}
       {section === "approvals" && (
@@ -294,7 +303,7 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
               <Select id="ap-pct" value={String(draft.approvals.overrideDeltaThreshold)} onValueChange={(v) => set("approvals", { overrideDeltaThreshold: Number(v) })} options={[0, 0.02, 0.05, 0.1].map((d) => ({ value: String(d), label: d === 0 ? pick("Setiap perubahan", "Every override") : formatPercent(d, 0) }))} disabled={!editable} />
             </Field>
             <Field label={pick("Batas perubahan manual (unit)", "Override threshold (units)")} htmlFor="ap-units" hint={pick("Perubahan manual di atas jumlah unit ini perlu persetujuan.", "Overrides above this many units need approval.")}>
-              <Select id="ap-units" value={String(draft.approvals.overrideUnitsThreshold)} onValueChange={(v) => set("approvals", { overrideUnitsThreshold: Number(v) })} options={[1000, 5000, 10000, 50000].map((d) => ({ value: String(d), label: `${d.toLocaleString("en-US")} units` }))} disabled={!editable} />
+              <Select id="ap-units" value={String(draft.approvals.overrideUnitsThreshold)} onValueChange={(v) => set("approvals", { overrideUnitsThreshold: Number(v) })} options={[1000, 5000, 10000, 50000].map((d) => ({ value: String(d), label: pick(`${d.toLocaleString("id-ID")} unit`, `${d.toLocaleString("en-US")} units`) }))} disabled={!editable} />
             </Field>
             <Field label={pick("Peran penyetuju", "Approver role")} htmlFor="ap-role" hint={pick("Administrator tidak dapat menyetujui perubahan bisnis.", "Administrators cannot approve business changes.")}>
               <Select id="ap-role" value={draft.approvals.approverRole} onValueChange={() => undefined} options={[{ value: "manager", label: pick("Manajer", "Manager") }]} disabled />
@@ -307,7 +316,7 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
         <Panel title={pick("Audit & Retensi", "Audit & retention")} description={pick("Catatan aktivitas tidak dapat diubah dari alur kerja biasa.", "Audit events are immutable from normal workflows.")} footer={footer}>
           <fieldset disabled={!editable} className="grid gap-5 sm:grid-cols-2">
             <Field label={pick("Periode retensi", "Retention period")} htmlFor="au-ret" hint={pick("Catatan yang lebih lama dari ini akan diarsipkan. Konfirmasi dengan tim kepatuhan.", "Events older than this are archived. Confirm with compliance (backlog §93 item 19).")}>
-              <Select id="au-ret" value={String(draft.audit.retentionDays)} onValueChange={(v) => set("audit", { retentionDays: Number(v) })} options={[90, 180, 365, 730, 2555].map((d) => ({ value: String(d), label: d === 2555 ? "7 years" : `${d} days` }))} disabled={!editable} />
+              <Select id="au-ret" value={String(draft.audit.retentionDays)} onValueChange={(v) => set("audit", { retentionDays: Number(v) })} options={[90, 180, 365, 730, 2555].map((d) => ({ value: String(d), label: d === 2555 ? pick("7 tahun", "7 years") : pick(`${d} hari`, `${d} days`) }))} disabled={!editable} />
             </Field>
           </fieldset>
           <SwitchField id="au-exp" label={pick("Izinkan ekspor riwayat aktivitas", "Allow audit export")} description={pick("Manajer, analis, dan administrator dapat mengunduh riwayat aktivitas sebagai CSV.", "Managers, analysts and administrators can download the audit log as CSV.")} checked={draft.audit.exportEnabled} onCheckedChange={(v) => set("audit", { exportEnabled: v })} disabled={!editable} />
@@ -316,35 +325,35 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
       {section === "security" && (
         <Panel title={pick("Keamanan", "Security")} description={pick("Autentikasi ditangani penyedia identitas Anda. Pengaturan ini mengatur sesi di Mesta.", "Authentication is handled by your identity provider. These settings control sessions in Mesta.")} footer={footer}>
           <fieldset disabled={!editable} className="grid gap-5 sm:grid-cols-2">
-            <Field label="Durasi sesi" htmlFor="se-len" hint={pick("Pengguna harus masuk lagi setelah periode ini.", "Users must sign in again after this period.")}>
-              <Select id="se-len" value={String(draft.security.sessionHours)} onValueChange={(v) => set("security", { sessionHours: Number(v) })} options={[4, 8, 12, 24].map((d) => ({ value: String(d), label: `${d} hours` }))} disabled={!editable} />
+            <Field label={pick("Durasi sesi", "Session length")} htmlFor="se-len" hint={pick("Pengguna harus masuk lagi setelah periode ini.", "Users must sign in again after this period.")}>
+              <Select id="se-len" value={String(draft.security.sessionHours)} onValueChange={(v) => set("security", { sessionHours: Number(v) })} options={[4, 8, 12, 24].map((d) => ({ value: String(d), label: pick(`${d} jam`, `${d} hours`) }))} disabled={!editable} />
             </Field>
             <Field label={pick("Domain email yang diizinkan", "Allowed email domains")} htmlFor="se-dom" hint={pick("Dipisahkan koma. Hanya domain ini yang dapat diundang.", "Comma separated. Only these domains can be invited.")}>
               <Input id="se-dom" value={draft.security.allowedDomains.join(", ")} onChange={(e) => set("security", { allowedDomains: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} disabled={!editable} />
             </Field>
           </fieldset>
-          <SwitchField id="se-sso" label="Wajibkan single sign-on" description={pick("Masuk dengan kata sandi tidak tersedia. Mematikan ini tidak didukung.", "Password sign-in is not available. Disabling this is not supported.")} checked={draft.security.enforceSso} onCheckedChange={() => undefined} disabled />
+          <SwitchField id="se-sso" label={pick("Wajibkan single sign-on", "Require single sign-on")} description={pick("Masuk dengan kata sandi tidak tersedia. Mematikan ini tidak didukung.", "Password sign-in is not available. Disabling this is not supported.")} checked={draft.security.enforceSso} onCheckedChange={() => undefined} disabled />
         </Panel>
       )}
 
       <Dialog open={confirm} onOpenChange={setConfirm}>
         <DialogContent
           title={pick("Simpan pengaturan ruang kerja?", "Save workspace settings?")}
-          description={`Applies to everyone in ${workspace.name} · ${workspace.environment}.`}
+          description={pick(`Berlaku untuk semua orang di ${workspace.name} · ${workspace.environment}.`, `Applies to everyone in ${workspace.name} · ${workspace.environment}.`)}
           footer={
             <>
               <Button variant="ghost" onClick={() => setConfirm(false)}>
-                Back
+                {pick("Kembali", "Back")}
               </Button>
               <Button variant="primary" disabled={reason.trim().length < 5} loading={save.isPending} onClick={() => save.mutate({ reason })}>
-                Save {diffs.length} change{diffs.length === 1 ? "" : "s"}
+                {pick(`Simpan ${diffs.length} perubahan`, `Save ${diffs.length} change${diffs.length === 1 ? "" : "s"}`)}
               </Button>
             </>
           }
         >
           <ConsequenceSummary rows={diffs.map((d) => ({ label: d.label, value: `${d.from} → ${d.to}`, emphasis: true }))} />
           <InlineAlert tone="info" title={pick("Tercatat di riwayat aktivitas bersama nama dan alasan Anda.", "Recorded in the audit log with your name and reason.")} className="mt-4" />
-          <Field className="mt-4" label="Alasan" htmlFor="set-reason" required hint="Minimal 5 karakter.">
+          <Field className="mt-4" label={pick("Alasan", "Reason")} htmlFor="set-reason" required hint={pick("Minimal 5 karakter.", "At least 5 characters.")}>
             <Textarea id="set-reason" value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
           </Field>
         </DialogContent>
@@ -353,28 +362,45 @@ function WorkspaceSections({ section }: { section: Exclude<SectionKey, "personal
   );
 }
 
-const LABELS: Record<string, string> = {
-  defaultHorizonDays: "Rentang bawaan",
-  defaultFrequency: "Frekuensi bawaan",
-  historyWindowDays: "Rentang historis bawaan",
-  deltaThreshold: pick("Batas perubahan perkiraan", "Forecast change limit"),
-  intervalWidthThreshold: "Batas lebar rentang",
-  freshnessHours: "Batas pembaruan data",
-  overrideDeltaThreshold: pick("Batas perubahan manual (persen)", "Override threshold (change)"),
-  overrideUnitsThreshold: pick("Batas perubahan manual (unit)", "Override threshold (units)"),
-  planPublishRequiresApproval: pick("Rencana perlu persetujuan", "Plans need approval"),
-  retentionDays: "Audit retention",
-  exportEnabled: "Audit export",
-  sessionHours: "Session length",
-  allowedDomains: "Allowed domains",
-};
+const LABELS: Record<string, string> = localizedRecord(
+  {
+    defaultHorizonDays: "Periode bawaan",
+    defaultFrequency: "Frekuensi bawaan",
+    historyWindowDays: "Rentang historis bawaan",
+    deltaThreshold: "Batas perubahan perkiraan",
+    intervalWidthThreshold: "Batas lebar rentang",
+    freshnessHours: "Batas kebaruan data",
+    overrideDeltaThreshold: "Batas perubahan manual (persen)",
+    overrideUnitsThreshold: "Batas perubahan manual (unit)",
+    planPublishRequiresApproval: "Rencana perlu persetujuan",
+    retentionDays: "Retensi audit",
+    exportEnabled: "Ekspor audit",
+    sessionHours: "Durasi sesi",
+    allowedDomains: "Domain yang diizinkan",
+  },
+  {
+    defaultHorizonDays: "Default horizon",
+    defaultFrequency: "Default frequency",
+    historyWindowDays: "Default history window",
+    deltaThreshold: "Forecast change limit",
+    intervalWidthThreshold: "Interval width limit",
+    freshnessHours: "Data freshness limit",
+    overrideDeltaThreshold: "Override threshold (change)",
+    overrideUnitsThreshold: "Override threshold (units)",
+    planPublishRequiresApproval: "Plans need approval",
+    retentionDays: "Audit retention",
+    exportEnabled: "Audit export",
+    sessionHours: "Session length",
+    allowedDomains: "Allowed domains",
+  },
+);
 
 function show(key: string, v: unknown) {
-  if (typeof v === "boolean") return v ? "On" : "Off";
-  if (Array.isArray(v)) return v.join(", ") || "None";
+  if (typeof v === "boolean") return v ? pick("Aktif", "On") : pick("Nonaktif", "Off");
+  if (Array.isArray(v)) return v.join(", ") || pick("Tidak ada", "None");
   if (typeof v === "number" && (key.endsWith("Threshold") && v < 5)) return formatPercent(v, 0);
-  if (key === "freshnessHours" || key === "sessionHours") return `${v} hours`;
-  if (key.endsWith("Days")) return `${v} days`;
+  if (key === "freshnessHours" || key === "sessionHours") return pick(`${v} jam`, `${v} hours`);
+  if (key.endsWith("Days")) return pick(`${v} hari`, `${v} days`);
   return String(v);
 }
 

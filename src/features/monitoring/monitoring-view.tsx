@@ -16,7 +16,7 @@ import { RunIdentity, scopeLabel } from "@/components/entities/identity";
 import { pick, localized } from "@/lib/i18n";
 
 const HEALTH = localized({
-  operational: { label: "Normal", icon: CheckCircle2, cls: "text-success" },
+  operational: { label: "Berjalan Normal", icon: CheckCircle2, cls: "text-success" },
   degraded: { label: "Perlu Perhatian", icon: AlertTriangle, cls: "text-warning" },
   down: { label: "Gangguan", icon: AlertOctagon, cls: "text-critical" },
 } as const, {
@@ -25,7 +25,10 @@ const HEALTH = localized({
   down: { label: "Down", icon: AlertOctagon, cls: "text-critical" },
 } as const);
 
-const KIND_LABELS: Record<ServiceHealth["kind"], string> = localized({ service: "Layanan platform", pipeline: pick("Alur perkiraan", "Forecast pipeline"), source: pick("Sumber data", "Data sources"), model: pick("Model produksi", "Production models") }, { service: "Platform services", pipeline: "Forecast pipeline", source: pick("Sumber data", "Data sources"), model: pick("Model produksi", "Production models") });
+const KIND_LABELS: Record<ServiceHealth["kind"], string> = localized(
+  { service: "Layanan platform", pipeline: "Alur perkiraan", source: "Sumber data", model: "Model produksi" },
+  { service: "Platform services", pipeline: "Forecast pipeline", source: "Data sources", model: "Production models" },
+);
 
 /** PAGE-MONITORING: operational health of pipelines and data dependencies. */
 export function MonitoringView() {
@@ -45,8 +48,14 @@ export function MonitoringView() {
       <div className={cn("flex items-center gap-3 rounded-lg border bg-surface p-4", overall === "down" ? "border-critical/30" : overall === "degraded" ? "border-warning/30" : "border-border")} role="status">
         <O.icon className={cn("size-6 shrink-0", O.cls)} aria-hidden />
         <div>
-          <p className="section-title">{overall === "operational" ? pick("Semua sistem normal", "All systems operational") : `${down ? `${down} gangguan` : ""}${down && degraded ? " · " : ""}${degraded ? `${degraded} perlu perhatian` : ""}`}</p>
-          <p className="caption">Diperiksa {formatRelative(services[0]?.checkedAt)} · {services.length} komponen dipantau</p>
+          <p className="section-title">
+            {overall === "operational"
+              ? pick("Semua sistem berjalan normal", "All systems operational")
+              : [down ? pick(`${down} gangguan`, `${down} down`) : "", degraded ? pick(`${degraded} perlu perhatian`, `${degraded} degraded`) : ""].filter(Boolean).join(" · ")}
+          </p>
+          <p className="caption">
+            {pick(`Diperiksa ${formatRelative(services[0]?.checkedAt)} · ${services.length} komponen dipantau`, `Checked ${formatRelative(services[0]?.checkedAt)} · ${services.length} components monitored`)}
+          </p>
         </div>
       </div>
 
@@ -58,7 +67,7 @@ export function MonitoringView() {
             <ul>
               {alerts.map((a) => (
                 <li key={a.id} className="border-b border-border-subtle last:border-b-0">
-                  <Link href={a.href} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 px-4 py-3 hover:bg-hover">
+                  <Link href={a.href} className="grid grid-cols-[5.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 hover:bg-hover focus-visible:bg-hover focus-visible:outline-none">
                     <SeverityBadge severity={a.severity} size="sm" />
                     <span className="min-w-0">
                       <span className="block body-sm font-semibold">{a.title}</span>
@@ -76,7 +85,7 @@ export function MonitoringView() {
         </Panel>
       </PageSection>
 
-      <PageSection title={pick("Kesehatan sistem", "System health")}>
+      <PageSection title={pick("Kondisi Sistem", "System health")}>
         <div className="grid auto-rows-fr gap-4 lg:grid-cols-2">
           {kinds.map((k) => (
             <Panel key={k} title={KIND_LABELS[k]} flush>
@@ -86,13 +95,13 @@ export function MonitoringView() {
                   .map((s) => {
                     const H = HEALTH[s.status];
                     return (
-                      <li key={s.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border-subtle px-4 py-2.5 last:border-b-0">
+                      <li key={s.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border-subtle px-4 py-2.5 last:border-b-0">
                         <span className="min-w-0">
                           <span className="block truncate body-sm font-semibold">{s.name}</span>
                           <span className="block truncate caption" title={s.detail}>{s.detail}</span>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                          <H.icon className={cn("size-4", H.cls)} aria-hidden />
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold">
+                          <H.icon className={cn("size-4 shrink-0", H.cls)} aria-hidden />
                           {H.label}
                         </span>
                       </li>
@@ -100,7 +109,7 @@ export function MonitoringView() {
                   })}
                 {services.filter((s) => s.kind === k).length === 0 && (
                   <li className="flex items-center gap-2 px-4 py-3 caption">
-                    <CircleSlash className="size-4" aria-hidden /> Tidak ada yang dipantau.
+                    <CircleSlash className="size-4" aria-hidden /> {pick("Tidak ada yang dipantau.", "Nothing monitored.")}
                   </li>
                 )}
               </ul>
@@ -119,8 +128,8 @@ export function MonitoringView() {
           summary={pick(`${history.reduce((s, d) => s + d.succeeded, 0)} proses berhasil dan ${history.reduce((s, d) => s + d.failed, 0)} gagal dalam 14 hari terakhir.`, `${history.reduce((s, d) => s + d.succeeded, 0)} runs succeeded and ${history.reduce((s, d) => s + d.failed, 0)} failed in the last 14 days.`)}
           legend={
             <>
-              <LegendItem color="var(--chart-series-1)" label="Berhasil" variant="bar" />
-              <LegendItem color="var(--critical)" label="Gagal" variant="bar" />
+              <LegendItem color="var(--chart-series-1)" label={pick("Berhasil", "Succeeded")} variant="bar" />
+              <LegendItem color="var(--critical)" label={pick("Gagal", "Failed")} variant="bar" />
             </>
           }
           chart={
@@ -131,17 +140,17 @@ export function MonitoringView() {
                   <XAxis dataKey="day" tickFormatter={(v: string) => formatShortDate(v)} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} tickLine={false} axisLine={{ stroke: "var(--chart-grid)" }} minTickGap={20} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} tickLine={false} axisLine={false} width={28} />
                   <Tooltip cursor={{ fill: "var(--bg-hover)" }} labelFormatter={(v) => formatDate(v as string)} contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: 6, fontSize: 12 }} />
-                  <Bar dataKey="succeeded" name="Succeeded" stackId="a" fill="var(--chart-series-1)" isAnimationActive={false} />
-                  <Bar dataKey="failed" name="Failed" stackId="a" fill="var(--critical)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+                  <Bar dataKey="succeeded" name={pick("Berhasil", "Succeeded")} stackId="a" fill="var(--chart-series-1)" isAnimationActive={false} />
+                  <Bar dataKey="failed" name={pick("Gagal", "Failed")} stackId="a" fill="var(--critical)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           }
           table={
             <ChartDataTable
-              caption={pick("Proses perkiraan per hari", pick("Pekerjaan perkiraan per hari", "Forecast jobs per day"))}
+              caption={pick("Proses perkiraan per hari", "Forecast jobs per day")}
               columns={[{ key: "d", label: pick("Hari", "Day") }, { key: "s", label: pick("Berhasil", "Succeeded"), numeric: true }, { key: "f", label: pick("Gagal", "Failed"), numeric: true }, { key: "m", label: pick("Rata-rata durasi", "Avg duration"), numeric: true }]}
-              rows={history.map((h) => ({ d: formatDate(h.day), s: h.succeeded, f: h.failed, m: `${h.durationMin} min` }))}
+              rows={history.map((h) => ({ d: formatDate(h.day), s: h.succeeded, f: h.failed, m: pick(`${h.durationMin} mnt`, `${h.durationMin} min`) }))}
             />
           }
         />

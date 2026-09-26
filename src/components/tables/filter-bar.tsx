@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/overlay";
 import { Select } from "@/components/ui/select";
+import { pick } from "@/lib/i18n/core";
 
 /**
  * FilterBar (FILTER-001):
@@ -29,7 +30,7 @@ export type SortOption = { value: string; label: string; dir: "asc" | "desc" };
 export function FilterBar({
   state,
   facets,
-  searchPlaceholder = "Search",
+  searchPlaceholder,
   sortOptions,
   children,
   className,
@@ -64,7 +65,7 @@ export function FilterBar({
     <div className={cn("flex min-w-0 flex-1 flex-col gap-2", className)}>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <label className="relative w-full min-w-0 sm:w-64">
-          <span className="sr-only">{searchPlaceholder}</span>
+          <span className="sr-only">{searchPlaceholder ?? pick("Cari", "Search")}</span>
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-tertiary" aria-hidden />
           <input
             type="search"
@@ -78,7 +79,7 @@ export function FilterBar({
                 setSearch("");
               }
             }}
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder ?? pick("Cari", "Search")}
             className="h-[var(--control-h-sm)] w-full rounded-md border border-border-strong bg-surface pl-8 pr-2 text-[0.8125rem] text-fg placeholder:text-fg-tertiary hover:border-fg-tertiary focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus/40 [&::-webkit-search-cancel-button]:hidden"
           />
         </label>
@@ -89,9 +90,9 @@ export function FilterBar({
         {advanced.length > 0 && (
           <Popover>
             <PopoverTrigger asChild>
-              <Button size="sm" variant="secondary" aria-label={advancedActive ? `More filters, ${advancedActive} active` : "More filters"}>
+              <Button size="sm" variant="secondary" aria-label={advancedActive ? pick(`Filter lain, ${advancedActive} aktif`, `More filters, ${advancedActive} active`) : pick("Filter lain", "More filters")}>
                 <ListFilter aria-hidden />
-                Filters
+                {pick("Filter", "Filters")}
                 {advancedActive > 0 && <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] font-bold leading-4 text-primary-fg">{advancedActive}</span>}
               </Button>
             </PopoverTrigger>
@@ -111,8 +112,8 @@ export function FilterBar({
           <Select
             size="sm"
             className="w-auto min-w-44"
-            aria-label="Sort"
-            prefix="Sort:"
+            aria-label={pick("Urutkan", "Sort")}
+            prefix={pick("Urutan:", "Sort:")}
             value={sortValue}
             onValueChange={(v) => {
               const o = sortOptions.find((x) => x.value === v);
@@ -123,9 +124,9 @@ export function FilterBar({
         )}
       </div>
       {(chips.length > 0 || query.q) && (
-        <div className="flex flex-wrap items-center gap-1.5" aria-label="Active filters">
+        <div className="flex flex-wrap items-center gap-1.5" aria-label={pick("Filter aktif", "Active filters")}>
           {query.q && (
-            <Chip label={`Search: “${query.q}”`} onRemove={() => { setText(""); setSearch(""); }} />
+            <Chip label={pick(`Cari: “${query.q}”`, `Search: “${query.q}”`)} onRemove={() => { setText(""); setSearch(""); }} />
           )}
           {chips.map((c) => (
             <Chip
@@ -135,7 +136,7 @@ export function FilterBar({
             />
           ))}
           <Button size="sm" variant="link" className="ml-1 h-6 text-xs" onClick={() => { setText(""); clearFilters(); }}>
-            Clear all
+            {pick("Hapus semua", "Clear all")}
           </Button>
         </div>
       )}
@@ -147,7 +148,7 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <span className="inline-flex h-6 max-w-72 items-center gap-1 rounded-sm border border-border bg-subtle pl-2 pr-0.5 text-xs font-semibold text-fg-secondary">
       <span className="truncate">{label}</span>
-      <button type="button" onClick={onRemove} className="inline-flex size-5 shrink-0 items-center justify-center rounded-xs text-fg-tertiary hover:bg-hover hover:text-fg" aria-label={`Remove filter ${label}`}>
+      <button type="button" onClick={onRemove} className="inline-flex size-5 shrink-0 items-center justify-center rounded-xs text-fg-tertiary hover:bg-hover hover:text-fg" aria-label={pick(`Hapus filter ${label}`, `Remove filter ${label}`)}>
         <X className="size-3" aria-hidden />
       </button>
     </span>
@@ -176,7 +177,7 @@ function FacetMenu({ facet, selected, onChange }: { facet: Facet; selected: stri
         {selected.length > 0 && (
           <div className="mt-1 border-t border-border pt-1">
             <Button size="sm" variant="ghost" className="w-full justify-start" onClick={() => onChange([])}>
-              Clear {facet.label.toLowerCase()}
+              {pick("Hapus", "Clear")} {facet.label.toLowerCase()}
             </Button>
           </div>
         )}
@@ -194,8 +195,8 @@ function OptionList({ facet, selected, onChange }: { facet: Facet; selected: str
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder={`Search ${facet.label.toLowerCase()}`}
-          aria-label={`Search ${facet.label.toLowerCase()}`}
+          placeholder={pick(`Cari ${facet.label.toLowerCase()}`, `Search ${facet.label.toLowerCase()}`)}
+          aria-label={pick(`Cari ${facet.label.toLowerCase()}`, `Search ${facet.label.toLowerCase()}`)}
           className="mb-1.5 h-8 rounded-md border border-border bg-surface px-2 text-[0.8125rem] outline-none focus-visible:border-focus"
         />
       )}
@@ -218,7 +219,7 @@ function OptionList({ facet, selected, onChange }: { facet: Facet; selected: str
             </li>
           );
         })}
-        {options.length === 0 && <li className="px-2 py-3 caption">No options match.</li>}
+        {options.length === 0 && <li className="px-2 py-3 caption">{pick("Tidak ada pilihan yang cocok.", "No options match.")}</li>}
       </ul>
     </div>
   );
@@ -251,7 +252,7 @@ export function DateRangeFilter({
   const invalid = !f || !t || f > t;
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className="inline-flex h-[var(--control-h-sm)] items-center gap-2 rounded-md border border-border-strong bg-surface px-3 text-[0.8125rem] font-semibold text-fg hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-focus" aria-label={`Date range: ${fmt(from)} to ${fmt(to)}`}>
+      <PopoverTrigger className="inline-flex h-[var(--control-h-sm)] items-center gap-2 rounded-md border border-border-strong bg-surface px-3 text-[0.8125rem] font-semibold text-fg hover:border-fg-tertiary focus-visible:outline-2 focus-visible:outline-focus" aria-label={pick(`Rentang tanggal: ${fmt(from)} sampai ${fmt(to)}`, `Date range: ${fmt(from)} to ${fmt(to)}`)}>
         <span className="tabular">
           {fmt(from)} – {fmt(to)}
         </span>
@@ -274,24 +275,24 @@ export function DateRangeFilter({
                 setOpen(false);
               }}
             >
-              Last {d} days
+              {pick(`${d} hari terakhir`, `Last ${d} days`)}
             </Button>
           ))}
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <label className="flex flex-col gap-1">
-            <span className="label">From</span>
+            <span className="label">{pick("Dari", "From")}</span>
             <input type="date" value={f} min={min} max={t || max} onChange={(e) => setF(e.target.value)} className="h-8 rounded-md border border-border-strong bg-surface px-2 text-[0.8125rem] tabular" />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="label">To</span>
+            <span className="label">{pick("Sampai", "To")}</span>
             <input type="date" value={t} min={f || min} max={max} onChange={(e) => setT(e.target.value)} className="h-8 rounded-md border border-border-strong bg-surface px-2 text-[0.8125rem] tabular" />
           </label>
         </div>
-        {invalid && <p className="mt-2 text-xs font-medium text-critical-fg">The start date must be on or before the end date.</p>}
+        {invalid && <p className="mt-2 text-xs font-medium text-critical-fg">{pick("Tanggal mulai harus sama atau sebelum tanggal akhir.", "The start date must be on or before the end date.")}</p>}
         <div className="mt-3 flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
-            Cancel
+            {pick("Batal", "Cancel")}
           </Button>
           <Button
             size="sm"
@@ -302,7 +303,7 @@ export function DateRangeFilter({
               setOpen(false);
             }}
           >
-            Apply date range
+            {pick("Terapkan rentang tanggal", "Apply date range")}
           </Button>
         </div>
       </PopoverContent>

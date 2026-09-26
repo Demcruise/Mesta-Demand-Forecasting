@@ -41,7 +41,7 @@ export function BacktestingView() {
   const [frequency, setFrequency] = React.useState<Frequency>("daily");
   const run = useApiMutation((c, _v: void) => runBacktest(c, { modelId, windowDays: Number(windowDays), frequency }), {
     invalidate: [["backtests"]],
-    success: (b) => `Backtest ${b.id} started`,
+    success: (b) => pick(`Uji model ${b.id} dimulai`, `Backtest ${b.id} started`),
     successDescription: pick("Hasil muncul di bawah setelah selesai.", "Results appear below when it completes."),
     failure: pick("Uji model tidak dimulai.", "The backtest did not start."),
     onSuccess: (b) => {
@@ -73,7 +73,7 @@ export function BacktestingView() {
 
   return (
     <PageContainer>
-      <PageHeader title={pick("Uji Model", "Backtesting")} description={pick("Bandingkan hasil model dengan data historis untuk melihat seberapa dekat perkiraannya.", pick("Putar ulang model pada periode lalu dan bandingkan perkiraannya dengan yang benar-benar terjadi.", "Replay a model over past periods and compare its forecasts with what actually happened."))} />
+      <PageHeader title={pick("Uji Model", "Backtesting")} description={pick("Bandingkan hasil model dengan data historis untuk melihat seberapa dekat perkiraannya.", "Replay a model over past periods and compare its forecasts with what actually happened.")} />
       <Panel title={pick("Jalankan Uji Model", "Run a backtest")}>
         {!can("backtest.run") ? (
           <PermissionNotice permission="backtest.run" compact />
@@ -83,13 +83,13 @@ export function BacktestingView() {
               <Select id="bt-model" value={modelId} onValueChange={setModelId} options={(models.data ?? []).filter((m) => m.status !== "archived").map((m) => ({ value: m.id, label: `${m.name} ${m.version}`, description: m.status }))} />
             </Field>
             <Field label={pick("Periode historis", "Historical window")} htmlFor="bt-window">
-              <Select id="bt-window" value={windowDays} onValueChange={setWindowDays} options={["28", "56", "91", "180"].map((d) => ({ value: d, label: `Last ${d} days` }))} />
+              <Select id="bt-window" value={windowDays} onValueChange={setWindowDays} options={["28", "56", "91", "180"].map((d) => ({ value: d, label: pick(`${d} hari terakhir`, `Last ${d} days`) }))} />
             </Field>
             <Field label={pick("Frekuensi evaluasi", "Evaluation frequency")} htmlFor="bt-freq">
               <Select id="bt-freq" value={frequency} onValueChange={(v) => setFrequency(v as Frequency)} options={[{ value: "daily", label: pick("Harian", "Daily") }, { value: "weekly", label: pick("Mingguan", "Weekly") }]} />
             </Field>
             <Button variant="primary" loading={run.isPending} loadingText={pick("Memulai uji model", "Starting backtest")} onClick={() => run.mutate()}>
-              <Play aria-hidden /> Run backtest
+              <Play aria-hidden /> {pick("Jalankan uji model", "Run backtest")}
             </Button>
           </div>
         )}
@@ -105,12 +105,11 @@ export function BacktestingView() {
         errorWhat={pick("Uji model tidak dapat dimuat.", "Backtests could not be loaded.")}
         activeRowId={selected?.id}
         onRowClick={(b) => state.setParams({ id: b.id })}
-        hideDensityToggle
-        empty={<EmptyState icon={FlaskConical} title={pick("Belum ada uji model di ruang kerja ini.", "No backtests have been run in this workspace.")} description={pick("Jalankan uji model untuk melihat performa sebuah model.", pick("Jalankan uji model untuk melihat bagaimana model akan tampil.", "Run a backtest to see how a model would have performed."))} />}
+        empty={<EmptyState icon={FlaskConical} title={pick("Belum ada uji model di ruang kerja ini.", "No backtests have been run in this workspace.")} description={pick("Jalankan uji model untuk melihat performa sebuah model.", "Run a backtest to see how a model would have performed.")} />}
       />
       {selected && selected.status === "completed" && selected.metrics && (
         <PageSection
-          title={`Results · ${selected.id}`}
+          title={pick(`Hasil · ${selected.id}`, `Results · ${selected.id}`)}
           description={`${modelName(selected.modelId)} · ${formatDateRange(selected.windowStart, selected.windowEnd)} · ${selected.metrics.population}`}
           actions={
             <Select
@@ -120,7 +119,7 @@ export function BacktestingView() {
               prefix={pick("Bandingkan dengan:", "Compare with:")}
               value={compare?.id ?? "none"}
               onValueChange={(v) => state.setParams({ compare: v === "none" ? null : v })}
-              options={[{ value: "none", label: pick("Tanpa pembanding", "No comparison") }, ...(q.data ?? []).filter((b) => b.id !== selected.id && b.status === "completed").map((b) => ({ value: b.id, label: pick(`${b.id} · ${modelName(b.modelId)}`, pick(`${b.id} · ${modelName(b.modelId)}`, `${b.id} · ${modelName(b.modelId)}`)) }))]}
+              options={[{ value: "none", label: pick("Tanpa pembanding", "No comparison") }, ...(q.data ?? []).filter((b) => b.id !== selected.id && b.status === "completed").map((b) => ({ value: b.id, label: pick(`${b.id} · ${modelName(b.modelId)}`, `${b.id} · ${modelName(b.modelId)}`) }))]}
             />
           }
         >
@@ -143,7 +142,7 @@ export function BacktestingView() {
                   return {
                     metric: METRIC_DEFINITIONS[k].label,
                     a: <span className="font-semibold">{metricValue(a, k)}</span>,
-                    ...(b ? { b: metricValue(b, k), diff: diff === null ? "—" : k === "mae" || k === "rmse" ? (diff >= 0 ? "+" : "−") + Math.abs(diff).toFixed(1) : `${diff >= 0 ? "+" : "−"}${Math.abs(diff * 100).toFixed(1)} pp` } : {}),
+                    ...(b ? { b: metricValue(b, k), diff: diff === null ? "—" : k === "mae" || k === "rmse" ? (diff >= 0 ? "+" : "−") + Math.abs(diff).toFixed(1) : `${diff >= 0 ? "+" : "−"}${Math.abs(diff * 100).toFixed(1)} ${pick("poin", "pp")}` } : {}),
                     def: <span className="whitespace-normal text-fg-secondary">{METRIC_DEFINITIONS[k].definition}</span>,
                   };
                 })}
@@ -155,11 +154,11 @@ export function BacktestingView() {
           </Panel>
           <ForecastChart
             title={pick("Perkiraan vs aktual", "Forecast vs actual")}
-            question={pick("Di mana model meleset, dan apakah aktual tetap berada di dalam rentang?", pick("Di mana model meleset, dan apakah aktual tetap dalam rentang?", "Where did the model miss, and did actuals stay inside the interval?"))}
+            question={pick("Di mana model meleset, dan apakah aktual tetap berada di dalam rentang?", "Where did the model miss, and did actuals stay inside the interval?")}
             points={selected.points}
-            unit={pick(`unit per ${selected.frequency === "weekly" ? "minggu" : "hari"}`, pick(`unit per ${selected.frequency === "weekly" ? "minggu" : "hari"}`, `units per ${selected.frequency === "weekly" ? "week" : "day"}`))}
-            source={`Backtest ${selected.id}`}
-            summary={`${formatPercent(selected.metrics.coverage80, 0)} of ${selected.frequency === "weekly" ? "weeks" : "days"} fell inside the 80% interval (target 80%). Bias ${formatDeltaPercent(selected.metrics.bias)}.`}
+            unit={pick(`unit per ${selected.frequency === "weekly" ? "minggu" : "hari"}`, `units per ${selected.frequency === "weekly" ? "week" : "day"}`)}
+            source={pick(`Uji model ${selected.id}`, `Backtest ${selected.id}`)}
+            summary={pick(`${formatPercent(selected.metrics.coverage80, 0)} ${selected.frequency === "weekly" ? "minggu" : "hari"} berada di dalam rentang 80% (target 80%). Bias ${formatDeltaPercent(selected.metrics.bias)}.`, `${formatPercent(selected.metrics.coverage80, 0)} of ${selected.frequency === "weekly" ? "weeks" : "days"} fell inside the 80% interval (target 80%). Bias ${formatDeltaPercent(selected.metrics.bias)}.`)}
             height={260}
           />
           <div className="grid gap-4 xl:grid-cols-2">
@@ -168,7 +167,7 @@ export function BacktestingView() {
               question={pick("Berapa banyak SKU dengan selisih besar?", "How many SKUs have large errors?")}
               unit="SKUs"
               timeframe={formatDateRange(selected.windowStart, selected.windowEnd)}
-              summary={`${formatNumber(selected.errorBuckets.filter((b) => ["40–50%", "50–60%", "60%+"].includes(b.bucket)).reduce((s, b) => s + b.count, 0))} SKUs had WAPE of 40% or more (highlighted).`}
+              summary={pick(`${formatNumber(selected.errorBuckets.filter((b) => ["40–50%", "50–60%", "60%+"].includes(b.bucket)).reduce((s, b) => s + b.count, 0))} SKU memiliki WAPE 40% atau lebih (ditandai).`, `${formatNumber(selected.errorBuckets.filter((b) => ["40–50%", "50–60%", "60%+"].includes(b.bucket)).reduce((s, b) => s + b.count, 0))} SKUs had WAPE of 40% or more (highlighted).`)}
               chart={<Histogram rows={selected.errorBuckets} label="SKUs" highlight={(b) => ["40–50%", "50–60%", "60%+"].includes(b)} />}
               table={<ChartDataTable caption={pick("SKU per kelompok WAPE", "SKUs by WAPE bucket")} columns={[{ key: "bucket", label: "WAPE" }, { key: "count", label: pick("SKU", "SKUs"), numeric: true }]} rows={selected.errorBuckets.map((b) => ({ bucket: b.bucket, count: formatNumber(b.count) }))} />}
             />
@@ -193,7 +192,7 @@ export function BacktestingView() {
       {selected && (selected.status === "queued" || selected.status === "running") && (
         <Panel>
           <p className="body-sm text-fg-secondary" role="status">
-            {selected.id} is {selected.status}. Results appear here when it completes.
+            {pick(`${selected.id} ${selected.status === "queued" ? "dalam antrean" : "sedang berjalan"}. Hasil muncul di sini setelah selesai.`, `${selected.id} is ${selected.status}. Results appear here when it completes.`)}
           </p>
         </Panel>
       )}

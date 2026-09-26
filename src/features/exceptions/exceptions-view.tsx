@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { ArrowUpRight, CheckCircle2, ListChecks, Pencil, TriangleAlert, UserCheck } from "lucide-react";
+import { AlertOctagon, ArrowUpRight, CheckCircle2, CircleDot, ListChecks, Pencil, TriangleAlert, UserCheck, UserRound, UserX } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import type { ExceptionType, ForecastException, StatusKey } from "@/types/domain";
@@ -30,41 +30,41 @@ import { OverrideDialog } from "@/features/forecast-detail/override-dialog";
 import { pick, localized } from "@/lib/i18n";
 
 export const EXCEPTION_TYPE_LABELS: Record<ExceptionType, string> = localized({
-  large_delta: pick("Perubahan perkiraan besar", "Large forecast change"),
+  large_delta: "Perubahan perkiraan besar",
   low_confidence: "Rentang lebar",
-  high_error: pick("Selisih perkiraan tinggi", "High forecast error"),
-  data_freshness: pick("Data belum diperbarui", pick("Kebaruan data", "Data freshness")),
-  data_quality: pick("Masalah data", pick("Kualitas data", "Data quality")),
-  model_anomaly: pick("Anomali model", "Model anomaly"),
+  high_error: "Selisih perkiraan tinggi",
+  data_freshness: "Data belum diperbarui",
+  data_quality: "Masalah data",
+  model_anomaly: "Anomali model",
   manual_override: "Diubah manual",
   threshold_breach: "Melewati batas",
 }, {
   large_delta: "Large forecast change",
   low_confidence: "Low confidence",
   high_error: "High forecast error",
-  data_freshness: pick("Kebaruan data", "Data freshness"),
-  data_quality: pick("Kualitas data", "Data quality"),
-  model_anomaly: pick("Anomali model", "Model anomaly"),
+  data_freshness: "Data freshness",
+  data_quality: "Data quality",
+  model_anomaly: "Model anomaly",
   manual_override: "Manual override",
   threshold_breach: "Threshold breach",
 });
 
 const RECOMMENDED: Record<ExceptionType, string[]> = localized({
-  large_delta: [pick("Periksa apakah ada promosi, perubahan daftar produk, atau kejadian pasokan yang menjelaskan perubahan ini.", "Check for a promotion, listing change or supply event that explains the change."), pick("Jika model kurang konteks, terapkan perubahan manual disertai bukti.", "If the model is missing context, apply an override with evidence."), pick("Jika perubahannya memang diharapkan, tandai selesai dengan catatan.", "If the change is expected, resolve with a note.")],
-  low_confidence: [pick("Tinjau volatilitas permintaan dan nilai ekstrem terakhir.", "Review recent demand volatility and outliers."), pick("Rencanakan stok pengaman memakai batas atas, bukan angka perkiraan saja.", "Plan safety stock against the upper bound, not the point forecast."), pick("Pertimbangkan model permintaan intermiten untuk produk lambat laku.", "Consider the intermittent-demand model for slow movers.")],
-  high_error: [pick("Bandingkan perkiraan terakhir dengan aktual di Detail Perkiraan.", "Compare recent forecasts with actuals in the forecast detail."), pick("Tandai untuk tinjauan model bila selisih berlanjut lebih dari 2 minggu.", "Flag for model review if the error persists for more than 2 weeks.")],
-  data_freshness: [pick("Periksa status sumber di Sumber Data.", "Check the source status in Data sources."), pick("Gunakan perkiraan terdampak dengan hati-hati sampai sumber tersinkron.", "Treat affected forecasts with caution until the source syncs.")],
-  data_quality: [pick("Buka masalah kualitas data terkait.", "Open the related data quality issue."), pick("Hindari perubahan manual berdasarkan riwayat terdampak sampai diperbaiki.", "Avoid overrides based on affected history until it is corrected.")],
-  model_anomaly: [pick("Tandai untuk tinjauan model.", "Flag for model review."), pick("Bandingkan dengan model cadangan.", "Compare with the fallback model.")],
-  manual_override: [pick("Pastikan perubahan manual masih berlaku.", "Confirm the override is still valid.")],
-  threshold_breach: [pick("Tinjau terhadap batas yang dikonfigurasi.", "Review against the configured threshold.")],
+  large_delta: ["Periksa apakah ada promosi, perubahan daftar produk, atau kejadian pasokan yang menjelaskan perubahan ini.", "Jika model kurang konteks, terapkan perubahan manual disertai bukti.", "Jika perubahannya memang diharapkan, tandai selesai dengan catatan."],
+  low_confidence: ["Tinjau volatilitas permintaan dan nilai ekstrem terakhir.", "Rencanakan stok pengaman memakai batas atas, bukan angka perkiraan saja.", "Pertimbangkan model permintaan intermiten untuk produk lambat laku."],
+  high_error: ["Bandingkan perkiraan terakhir dengan aktual di Detail Perkiraan.", "Tandai untuk tinjauan model bila selisih berlanjut lebih dari 2 minggu."],
+  data_freshness: ["Periksa status sumber di Sumber Data.", "Gunakan perkiraan terdampak dengan hati-hati sampai sumber tersinkron."],
+  data_quality: ["Buka masalah kualitas data terkait.", "Hindari perubahan manual berdasarkan riwayat terdampak sampai diperbaiki."],
+  model_anomaly: ["Tandai untuk tinjauan model.", "Bandingkan dengan model cadangan."],
+  manual_override: ["Pastikan perubahan manual masih berlaku."],
+  threshold_breach: ["Tinjau terhadap batas yang dikonfigurasi."],
 }, {
-  large_delta: ["Check for a promotion, listing change or supply event that explains the change.", pick("Jika model kurang konteks, terapkan perubahan manual disertai bukti.", "If the model is missing context, apply an override with evidence."), "If the change is expected, resolve with a note."],
-  low_confidence: ["Review recent demand volatility and outliers.", "Plan safety stock against the upper bound, not the point forecast.", pick("Pertimbangkan model permintaan intermiten untuk produk lambat laku.", "Consider the intermittent-demand model for slow movers.")],
-  high_error: ["Compare recent forecasts with actuals in the forecast detail.", pick("Tandai untuk tinjauan model bila selisih berlanjut lebih dari 2 minggu.", "Flag for model review if the error persists for more than 2 weeks.")],
-  data_freshness: [pick("Periksa status sumber di Sumber Data.", "Check the source status in Data sources."), "Treat affected forecasts with caution until the source syncs."],
-  data_quality: [pick("Buka masalah kualitas data terkait.", "Open the related data quality issue."), "Avoid overrides based on affected history until it is corrected."],
-  model_anomaly: [pick("Tandai untuk tinjauan model.", "Flag for model review."), pick("Bandingkan dengan model cadangan.", "Compare with the fallback model.")],
+  large_delta: ["Check for a promotion, listing change or supply event that explains the change.", "If the model is missing context, apply an override with evidence.", "If the change is expected, resolve with a note."],
+  low_confidence: ["Review recent demand volatility and outliers.", "Plan safety stock against the upper bound, not the point forecast.", "Consider the intermittent-demand model for slow movers."],
+  high_error: ["Compare recent forecasts with actuals in the forecast detail.", "Flag for model review if the error persists for more than 2 weeks."],
+  data_freshness: ["Check the source status in Data sources.", "Treat affected forecasts with caution until the source syncs."],
+  data_quality: ["Open the related data quality issue.", "Avoid overrides based on affected history until it is corrected."],
+  model_anomaly: ["Flag for model review.", "Compare with the fallback model."],
   manual_override: ["Confirm the override is still valid."],
   threshold_breach: ["Review against the configured threshold."],
 });
@@ -82,7 +82,7 @@ export function ExceptionsView() {
 
   const bulkUpdate = useApiMutation((c, v: { status?: ForecastException["status"]; ownerId?: string | null; note?: string }) => updateExceptions(c, selectedIds, v), {
     invalidate: [["exceptions"], ["exception"], ["overview"], ["nav-counts"], ["forecast-rows"]],
-    success: (r) => `${pluralize(r.length, "exception")} updated`,
+    success: (r) => pick(`${r.length} item diperbarui`, `${pluralize(r.length, "exception")} updated`),
     failure: pick("Item tidak dapat diperbarui.", "The exceptions were not updated."),
     onSuccess: (_r, v) => {
       if (v.status === "resolved") track("exception_resolved", { count: selectedIds.length });
@@ -136,10 +136,43 @@ export function ExceptionsView() {
     <PageContainer>
       <PageHeader title={pick("Perlu Ditinjau", "Exceptions")} description={pick("Item yang memerlukan pemeriksaan atau tindakan, diurutkan berdasarkan tingkat kepentingan. Setiap item menjelaskan mengapa ditandai.", "Forecasts that need a human decision, ordered by severity. Each one explains why it was raised.")} />
       <MetricStrip>
-        <MetricCard label={pick("Terbuka", "Open")} value={s ? formatNumber(s.open) : "—"} context={pick("Terbuka, sedang ditelusuri, atau dieskalasi", "Open, investigating or escalated")} href="/planning/exceptions?status=open,investigating,escalated" hrefLabel={pick("Lihat yang terbuka", "Show open")} />
-        <MetricCard label={pick("Kritis", "Critical")} value={s ? formatNumber(s.critical) : "—"} context={pick("Perubahan 25% atau lebih, atau masalah data yang menghambat", pick("Perubahan 25% atau lebih, atau masalah data menghambat", "Change of 25% or more, or a blocking data issue"))} href="/planning/exceptions?severity=critical&status=open,investigating,escalated" hrefLabel={pick("Lihat yang kritis", "Show critical")} />
-        <MetricCard label={pick("Belum ditugaskan", "Unassigned")} value={s ? formatNumber(s.unassigned) : "—"} context={pick("Belum ada yang menangani", "Nobody is working on these yet")} href="/planning/exceptions?owner=unassigned&status=open" hrefLabel={pick("Lihat yang belum ditugaskan", "Show unassigned")} />
-        <MetricCard label={pick("Ditugaskan ke saya", "Assigned to me")} value={s ? formatNumber(s.mine) : "—"} href={`/planning/exceptions?owner=${session.userId}&status=open,investigating,escalated`} hrefLabel={pick("Lihat milik saya", "Show mine")} />
+        <MetricCard
+          variant="compact"
+          icon={CircleDot}
+          label={pick("Terbuka", "Open")}
+          value={s ? formatNumber(s.open) : "—"}
+          meta={pick("Terbuka · ditelusuri · dieskalasi", "Open · investigating · escalated")}
+          href="/planning/exceptions?status=open,investigating,escalated"
+          destination={pick("tampilkan yang terbuka", "shows open items")}
+        />
+        <MetricCard
+          variant="compact"
+          icon={AlertOctagon}
+          tone={s?.critical ? "critical" : "neutral"}
+          label={pick("Kritis", "Critical")}
+          value={s ? formatNumber(s.critical) : "—"}
+          meta={pick("Perubahan ≥25% atau data menghambat", "25%+ change or blocking issue")}
+          href="/planning/exceptions?severity=critical&status=open,investigating,escalated"
+          destination={pick("tampilkan yang kritis", "shows critical items")}
+        />
+        <MetricCard
+          variant="compact"
+          icon={UserX}
+          label={pick("Belum Ditugaskan", "Unassigned")}
+          value={s ? formatNumber(s.unassigned) : "—"}
+          meta={pick("Belum ada penanggung jawab", "No owner yet")}
+          href="/planning/exceptions?owner=unassigned&status=open"
+          destination={pick("tampilkan yang belum ditugaskan", "shows unassigned items")}
+        />
+        <MetricCard
+          variant="compact"
+          icon={UserRound}
+          label={pick("Ditugaskan ke Saya", "Assigned to me")}
+          value={s ? formatNumber(s.mine) : "—"}
+          meta={pick("Perlu perhatian saya", "Needs my attention")}
+          href={`/planning/exceptions?owner=${session.userId}&status=open,investigating,escalated`}
+          destination={pick("tampilkan milik saya", "shows my items")}
+        />
       </MetricStrip>
       <DataTable
         label={pick("Item yang perlu ditinjau", "Forecast exceptions")}
@@ -163,16 +196,16 @@ export function ExceptionsView() {
             <span className="body-sm font-semibold">{pluralize(selectedIds.length, "exception")} selected</span>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="secondary" loading={bulkUpdate.isPending} onClick={() => bulkUpdate.mutate({ ownerId: session.userId })}>
-                <UserCheck aria-hidden /> Assign to me
+                <UserCheck aria-hidden /> {pick("Tugaskan ke saya", "Assign to me")}
               </Button>
               <Button size="sm" variant="secondary" loading={bulkUpdate.isPending} onClick={() => bulkUpdate.mutate({ status: "investigating", ownerId: session.userId })}>
-                Start investigating
+                {pick("Mulai investigasi", "Start investigating")}
               </Button>
               <Button size="sm" variant="primary" onClick={() => { setNote(""); setBulk("resolved"); }}>
-                <CheckCircle2 aria-hidden /> Resolve
+                <CheckCircle2 aria-hidden /> {pick("Selesaikan", "Resolve")}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setSelection({})}>
-                Clear
+                {pick("Batalkan pilihan", "Clear")}
               </Button>
             </div>
           </div>
@@ -205,21 +238,21 @@ export function ExceptionsView() {
       <Dialog open={!!bulk} onOpenChange={(o) => !o && setBulk(null)}>
         <DialogContent
           size="sm"
-          title={`Resolve ${pluralize(selectedIds.length, "exception")}?`}
+          title={pick(`Selesaikan ${selectedIds.length} item?`, `Resolve ${pluralize(selectedIds.length, "exception")}?`)}
           description={pick("Item yang selesai keluar dari antrean. Catatannya ditambahkan ke aktivitas tiap item dan riwayat aktivitas.", "Resolved exceptions leave the queue. The note is added to each exception's activity and the audit log.")}
           footer={
             <>
               <Button variant="ghost" onClick={() => setBulk(null)}>
-                Cancel
+                {pick("Batal", "Cancel")}
               </Button>
               <Button variant="primary" disabled={note.trim().length < 5} loading={bulkUpdate.isPending} onClick={() => bulkUpdate.mutate({ status: "resolved", note })}>
-                Resolve {pluralize(selectedIds.length, "exception")}
+                {pick(`Selesaikan ${selectedIds.length} item`, `Resolve ${pluralize(selectedIds.length, "exception")}`)}
               </Button>
             </>
           }
         >
           <Field label={pick("Catatan penyelesaian", "Resolution note")} htmlFor="bulk-note" required hint={pick("Minimal 5 karakter.", "At least 5 characters.")}>
-            <Textarea id="bulk-note" value={note} onChange={(e) => setNote(e.target.value)} autoFocus placeholder="e.g. Confirmed with the category team: expected after range review." />
+            <Textarea id="bulk-note" value={note} onChange={(e) => setNote(e.target.value)} autoFocus placeholder={pick("mis. Sudah dikonfirmasi dengan tim kategori: sesuai hasil tinjauan rentang.", "e.g. Confirmed with the category team: expected after range review.")} />
           </Field>
         </DialogContent>
       </Dialog>
@@ -258,15 +291,15 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
               d && can("exception.update") && !closed ? (
                 <>
                   <Button variant="ghost" onClick={() => { setNote(""); setDialog("dismissed"); }}>
-                    Dismiss
+                    {pick("Abaikan", "Dismiss")}
                   </Button>
                   {d.exception.status !== "escalated" && (
                     <Button variant="secondary" onClick={() => { setNote(""); setDialog("escalated"); }}>
-                      <TriangleAlert aria-hidden /> Escalate
+                      <TriangleAlert aria-hidden /> {pick("Eskalasi", "Escalate")}
                     </Button>
                   )}
                   <Button variant="primary" onClick={() => { setNote(""); setDialog("resolved"); }}>
-                    <CheckCircle2 aria-hidden /> Resolve
+                    <CheckCircle2 aria-hidden /> {pick("Selesaikan", "Resolve")}
                   </Button>
                 </>
               ) : undefined
@@ -281,16 +314,19 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
                 <div className="flex flex-wrap items-center gap-2">
                   <SeverityBadge severity={d.exception.severity} />
                   <StatusBadge status={d.exception.status} />
-                  <span className="caption">Detected {formatDateTime(d.exception.detectedAt)}</span>
+                  <span className="caption">{pick(`Terdeteksi ${formatDateTime(d.exception.detectedAt)}`, `Detected ${formatDateTime(d.exception.detectedAt)}`)}</span>
                 </div>
                 <section aria-labelledby="ex-why" className="rounded-lg border border-border bg-subtle p-3.5">
                   <h3 id="ex-why" className="mb-1 card-title">
-                    Why it was triggered
+                    {pick("Mengapa muncul", "Why it was triggered")}
                   </h3>
                   <p className="body-sm text-fg">{d.exception.reason}</p>
                   {d.exception.valueUnit === "%" && (
                     <p className="mt-1 caption">
-                      Measured {d.exception.type === "large_delta" ? formatDeltaPercent(d.exception.value) : formatPercent(d.exception.value, 0)} against a threshold of {formatPercent(d.exception.threshold, 0)}. Thresholds are set in Settings › Forecasting.
+                      {pick(
+                        `Terukur ${d.exception.type === "large_delta" ? formatDeltaPercent(d.exception.value) : formatPercent(d.exception.value, 0)} terhadap batas ${formatPercent(d.exception.threshold, 0)}. Batas diatur di Pengaturan › Perkiraan.`,
+                        `Measured ${d.exception.type === "large_delta" ? formatDeltaPercent(d.exception.value) : formatPercent(d.exception.value, 0)} against a threshold of ${formatPercent(d.exception.threshold, 0)}. Thresholds are set in Settings › Forecasting.`,
+                      )}
                     </p>
                   )}
                 </section>
@@ -306,13 +342,16 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
                 {d.row && (
                   <section aria-labelledby="ex-fc">
                     <h3 id="ex-fc" className="mb-2 card-title">
-                      Relevant forecast · next {d.run?.horizonDays ?? 28} days
+                      {pick(`Perkiraan terkait · ${d.run?.horizonDays ?? 28} hari ke depan`, `Relevant forecast · next ${d.run?.horizonDays ?? 28} days`)}
                     </h3>
                     <ForecastInterval lower={d.row.lowerBound} upper={d.row.upperBound} forecast={d.row.forecast} comparison={d.row.previousForecast} unit={d.product.unit} />
                     <div className="mt-3 flex items-center gap-3">
-                      <Sparkline values={d.row.trend} forecastFrom={8} width={160} height={36} label={`Weekly demand trend for ${d.product.name}`} />
+                      <Sparkline values={d.row.trend} forecastFrom={8} width={160} height={36} label={pick(`Tren permintaan mingguan untuk ${d.product.name}`, `Weekly demand trend for ${d.product.name}`)} />
                       <p className="caption">
-                        Historical context: 8 weeks of actuals (grey) then the forecast (blue). Actual in the prior {d.run?.horizonDays ?? 28} days: {formatNumber(d.row.actualLastPeriod)}.
+                        {pick(
+                          `Konteks historis: 8 minggu aktual (abu-abu), lalu perkiraan (biru). Aktual ${d.run?.horizonDays ?? 28} hari sebelumnya: ${formatNumber(d.row.actualLastPeriod)}.`,
+                          `Historical context: 8 weeks of actuals (grey) then the forecast (blue). Actual in the prior ${d.run?.horizonDays ?? 28} days: ${formatNumber(d.row.actualLastPeriod)}.`,
+                        )}
                       </p>
                     </div>
                   </section>
@@ -320,12 +359,12 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
                 {d.dqIssues.length > 0 && (
                   <section aria-labelledby="ex-dq">
                     <h3 id="ex-dq" className="mb-2 card-title">
-                      Data quality
+                      {pick("Kualitas data", "Data quality")}
                     </h3>
                     <ul className="flex flex-col gap-2">
                       {d.dqIssues.map((i) => (
                         <li key={i.id}>
-                          <Link href={`/demand-data/quality?id=${i.id}`} className="flex items-start gap-3 rounded-md border border-border p-3 hover:bg-hover">
+                          <Link href={`/demand-data/quality?id=${i.id}`} className="flex items-center gap-3 rounded-md border border-border p-3 hover:bg-hover">
                             <SeverityBadge severity={i.severity} size="sm" />
                             <span className="min-w-0 flex-1 body-sm">{i.title}</span>
                           </Link>
@@ -336,7 +375,7 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
                 )}
                 <section aria-labelledby="ex-rec">
                   <h3 id="ex-rec" className="mb-2 card-title">
-                    Recommended actions
+                    {pick("Tindakan yang disarankan", "Recommended actions")}
                   </h3>
                   <ol className="list-decimal pl-5 body-sm text-fg-secondary">
                     {RECOMMENDED[d.exception.type].map((r) => (
@@ -353,31 +392,31 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
                         <>
                           {d.exception.ownerId !== session.userId && (
                             <Button size="sm" variant="secondary" loading={update.isPending} onClick={() => update.mutate({ ownerId: session.userId })}>
-                              <UserCheck aria-hidden /> Assign to me
+                              <UserCheck aria-hidden /> {pick("Tugaskan ke saya", "Assign to me")}
                             </Button>
                           )}
                           {d.exception.status === "open" && (
                             <Button size="sm" variant="secondary" loading={update.isPending} onClick={() => update.mutate({ status: "investigating", ownerId: d.exception.ownerId ?? session.userId })}>
-                              Start investigating
+                              {pick("Mulai investigasi", "Start investigating")}
                             </Button>
                           )}
                           {can("forecast.override") && d.row && d.run?.status === "published" && (
                             <Button size="sm" variant="secondary" onClick={() => setOverrideOpen(true)}>
-                              <Pencil aria-hidden /> Override forecast
+                              <Pencil aria-hidden /> {pick("Ubah perkiraan", "Override forecast")}
                             </Button>
                           )}
                         </>
                       )
                     )}
                     <Link href={`/forecasting/detail/${d.product.id}${d.run ? `?run=${d.run.id}` : ""}`} className={buttonVariants({ size: "sm", variant: "ghost" })}>
-                      Open forecast detail <ArrowUpRight aria-hidden />
+                      {pick("Buka detail perkiraan", "Open forecast detail")} <ArrowUpRight aria-hidden />
                     </Link>
                   </div>
                 </section>
                 {d.related.length > 0 && (
                   <section aria-labelledby="ex-rel">
                     <h3 id="ex-rel" className="mb-2 card-title">
-                      Other exceptions for this product
+                      {pick("Item lain untuk produk ini", "Other exceptions for this product")}
                     </h3>
                     <ul className="flex flex-col gap-1.5">
                       {d.related.map((r) => (
@@ -394,11 +433,11 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
                 )}
                 <section aria-labelledby="ex-act">
                   <h3 id="ex-act" className="mb-2 card-title">
-                    Activity
+                    {pick("Aktivitas", "Activity")}
                   </h3>
                   <ActivityList items={[...d.exception.activity].reverse()} />
                 </section>
-                {closed && <InlineAlert tone="success" title={`This exception is ${d.exception.status}.`} />}
+                {closed && <InlineAlert tone="success" title={pick(`Item ini berstatus ${STATUS[d.exception.status].label.toLowerCase()}.`, `This exception is ${STATUS[d.exception.status].label.toLowerCase()}.`)} />}
               </div>
             ) : null}
           </DrawerContent>
@@ -408,7 +447,7 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
         {dialog && d && (
           <DialogContent
             size="sm"
-            title={dialog === "resolved" ? `Resolve ${d.exception.id}?` : dialog === "dismissed" ? `Dismiss ${d.exception.id}?` : `Escalate ${d.exception.id}?`}
+            title={dialog === "resolved" ? pick(`Selesaikan ${d.exception.id}?`, `Resolve ${d.exception.id}?`) : dialog === "dismissed" ? pick(`Abaikan ${d.exception.id}?`, `Dismiss ${d.exception.id}?`) : pick(`Eskalasi ${d.exception.id}?`, `Escalate ${d.exception.id}?`)}
             description={
               dialog === "resolved"
                 ? pick("Jelaskan keputusannya agar orang lain dapat memercayai perkiraan ini.", "Explain what was decided so others can trust the forecast.")
@@ -419,7 +458,7 @@ function ExceptionDrawer({ id, onClose }: { id: string | null; onClose: () => vo
             footer={
               <>
                 <Button variant="ghost" onClick={() => setDialog(null)}>
-                  Cancel
+                  {pick("Batal", "Cancel")}
                 </Button>
                 <Button variant="primary" disabled={note.trim().length < 5} loading={update.isPending} onClick={() => update.mutate({ status: dialog, note })}>
                   {dialog === "resolved" ? pick("Tandai selesai", "Resolve exception") : dialog === "dismissed" ? pick("Abaikan item", "Dismiss exception") : pick("Eskalasi item", "Escalate exception")}

@@ -10,19 +10,23 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Columns3, Rows3 } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Columns3 } from "lucide-react";
 import * as React from "react";
 import type { SortDirection } from "@/types/domain";
 import { usePreferences, type Density } from "@/lib/preferences";
 import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Checkbox, Segmented } from "@/components/ui/controls";
+import { Checkbox } from "@/components/ui/controls";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger, Tooltip } from "@/components/ui/overlay";
 import { Select } from "@/components/ui/select";
 import { ErrorState, TableSkeleton } from "@/components/feedback/states";
 import type { ExportFormat } from "@/lib/export";
 import { ExportMenu } from "./export-menu";
+import { pick } from "@/lib/i18n";
+import { ALIGN_CLASSES, getColumnAlignment, type ColumnAlign } from "./column-alignment";
+
+export { getColumnAlignment, type ColumnAlign } from "./column-alignment";
 
 /**
  * Enterprise DataTable (TABLE-001).
@@ -36,8 +40,13 @@ import { ExportMenu } from "./export-menu";
  */
 
 export type ColumnMeta = {
-  /** Right-align numeric columns (quantities, percentages, ratios). */
+  /** Numeric column: tabular figures, and right-aligned unless `align` says otherwise. */
   numeric?: boolean;
+  /**
+   * Explicit axis for header AND body (TABLE-ALIGN-001). Wins over `numeric`, so a
+   * count used as context (e.g. "SKUs affected") can sit on the left text axis.
+   */
+  align?: ColumnAlign;
   /** Grid track, e.g. "minmax(240px, 2fr)" or "120px". Defaults to minmax(120px, 1fr). */
   width?: string;
   /** Key used for server-side sorting; column is sortable when set. */
@@ -78,8 +87,12 @@ type DataTableProps<T> = {
   bulkBar?: React.ReactNode;
   initialHidden?: string[];
   storageKey?: string;
+  /**
+   * Deliberate internal variant only (e.g. a table embedded in a drawer). Row density
+   * is otherwise the viewer's global preference from Settings (DENSITY-003) — tables
+   * never offer their own toggle.
+   */
   density?: Density;
-  hideDensityToggle?: boolean;
   className?: string;
   footerNote?: React.ReactNode;
   maxHeight?: string;
@@ -126,7 +139,7 @@ export function DataTable<T>({
   isFetching,
   error,
   onRetry,
-  errorWhat = "The table could not be loaded.",
+  errorWhat,
   empty,
   sort,
   pagination,
@@ -134,14 +147,13 @@ export function DataTable<T>({
   onRowClick,
   activeRowId,
   onExport,
-  exportLabel = "Export",
+  exportLabel,
   toolbarStart,
   toolbarEnd,
   bulkBar,
   initialHidden = [],
   storageKey,
   density: densityProp,
-  hideDensityToggle,
   className,
   footerNote,
   maxHeight,
@@ -150,8 +162,7 @@ export function DataTable<T>({
   pageSizeOptions,
 }: DataTableProps<T>) {
   const prefs = usePreferences();
-  const [localDensity, setLocalDensity] = React.useState<Density | null>(null);
-  const density = densityProp ?? localDensity ?? prefs.density;
+  const density = densityProp ?? prefs.density;
   const [visibility, setVisibility] = React.useState<VisibilityState>(() => {
     const v: VisibilityState = Object.fromEntries(initialHidden.map((id) => [id, false]));
     if (storageKey && typeof window !== "undefined") {
@@ -178,14 +189,14 @@ export function DataTable<T>({
   const selectionColumn: ColumnDef<T, unknown> | null = selection
     ? {
         id: "__select",
-        meta: { width: "44px", pinned: true, label: "Select" } satisfies ColumnMeta,
+        meta: { width: "44px", pinned: true, align: "center", label: pick("Pilih", "Select") } satisfies ColumnMeta,
         header: ({ table }) => {
           const rows = table.getRowModel().rows.filter((r) => r.getCanSelect());
           const all = rows.length > 0 && rows.every((r) => r.getIsSelected());
           const some = rows.some((r) => r.getIsSelected());
           return (
             <Checkbox
-              aria-label={all ? "Deselect all rows on this page" : "Select all rows on this page"}
+              aria-label={all ? pick("Batalkan pilihan semua baris di halaman ini", "Deselect all rows on this page") : pick("Pilih semua baris di halaman ini", "Select all rows on this page")}
               checked={all ? true : some ? "indeterminate" : false}
               disabled={rows.length === 0}
               onCheckedChange={(v) => rows.forEach((r) => r.toggleSelected(v === true))}
@@ -194,7 +205,7 @@ export function DataTable<T>({
         },
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label={pick("Pilih baris", "Select row")}
             checked={row.getIsSelected()}
             disabled={!row.getCanSelect()}
             onClick={(e) => e.stopPropagation()}
@@ -284,54 +295,44 @@ export function DataTable<T>({
 
   return (
     <div className={cn("flex min-w-0 flex-col rounded-lg border border-border bg-surface", className)}>
-      {(toolbarStart || toolbarEnd || onExport || !hideDensityToggle) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+      {(toolbarStart || toolbarEnd || onExport || hideable.length > 0) && (
+        /* TOOLBAR-001: search + filters on the left, view controls on the right. When the
+           row is too narrow the right group wraps as one unit, never control by control. */
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border px-3 py-2.5">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbarStart}</div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {toolbarEnd}
-            {!hideDensityToggle && (
-              <Segmented
-                size="sm"
-                aria-label="Row density"
-                value={density}
-                onValueChange={(v) => setLocalDensity(v)}
-                options={[
-                  { value: "comfortable", label: <span className="sr-only sm:not-sr-only">Comfortable</span>, icon: <Rows3 aria-hidden /> },
-                  { value: "compact", label: <span className="sr-only sm:not-sr-only">Compact</span>, icon: <Rows3 className="scale-y-75" aria-hidden /> },
-                ]}
-              />
-            )}
             {hideable.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="secondary" aria-label="Choose columns">
+                  <Button size="sm" variant="secondary" aria-label={pick("Pilih kolom", "Choose columns")}>
                     <Columns3 aria-hidden />
-                    <span className="hidden sm:inline">Columns</span>
+                    <span className="hidden sm:inline">{pick("Kolom", "Columns")}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
+                <DropdownMenuContent className="w-64">
+                  <DropdownMenuLabel>{pick("Kolom yang ditampilkan", "Visible columns")}</DropdownMenuLabel>
                   {hideable.map((c) => {
                     const meta = c.columnDef.meta as ColumnMeta | undefined;
                     const text = meta?.label ?? (typeof c.columnDef.header === "string" ? c.columnDef.header : c.id);
                     return (
                       <DropdownMenuCheckboxItem key={c.id} checked={visibility[c.id] !== false} onCheckedChange={(v) => setVisibility((prev) => ({ ...prev, [c.id]: v === true }))} onSelect={(e) => e.preventDefault()}>
-                        {text}
-                        {meta?.hideBelow && bpHidden[c.id] && <span className="ml-auto text-[0.6875rem] text-fg-tertiary">Hidden at this width</span>}
+                        <span className="min-w-0 flex-1 truncate">{text}</span>
+                        {meta?.hideBelow && bpHidden[c.id] && <span className="shrink-0 text-[0.6875rem] text-fg-tertiary">{pick("Tersembunyi di lebar ini", "Hidden at this width")}</span>}
                       </DropdownMenuCheckboxItem>
                     );
                   })}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            {onExport && <ExportMenu label={exportLabel} onExport={onExport} />}
+            {onExport && <ExportMenu label={exportLabel ?? pick("Ekspor", "Export")} onExport={onExport} />}
           </div>
         </div>
       )}
       {bulkBar && selectedCount > 0 && <div className="border-b border-border bg-selected px-3 py-2">{bulkBar}</div>}
 
       {error ? (
-        <ErrorState what={errorWhat} error={error} onRetry={onRetry} retryLabel="Retry loading" />
+        <ErrorState what={errorWhat ?? pick("Tabel tidak dapat dimuat.", "The table could not be loaded.")} error={error} onRetry={onRetry} retryLabel={pick("Coba muat ulang", "Retry loading")} />
       ) : isLoading ? (
         <TableSkeleton rows={Math.min(pagination?.pageSize ?? 10, 10)} columns={Math.min(visibleColumns.length, 7)} density={density} />
       ) : (
@@ -342,6 +343,7 @@ export function DataTable<T>({
                 <div key={hg.id} role="row" className="grid h-10 items-stretch border-b border-border bg-subtle" style={{ gridTemplateColumns: template }}>
                   {hg.headers.map((header) => {
                     const meta = header.column.columnDef.meta as ColumnMeta | undefined;
+                    const align = getColumnAlignment(meta);
                     const sortable = !!meta?.sortKey && !!sort;
                     const activeSort = sortable && sort?.key === meta?.sortKey;
                     const ariaSort = activeSort ? (sort?.dir === "asc" ? "ascending" : "descending") : sortable ? "none" : undefined;
@@ -353,14 +355,14 @@ export function DataTable<T>({
                         aria-sort={ariaSort}
                         className={cn(
                           "relative flex min-w-0 items-center px-3 text-xs font-semibold text-fg-secondary",
-                          meta?.numeric && "justify-end text-right",
-                          header.column.id === "__select" && "justify-center px-0",
+                          ALIGN_CLASSES[align],
+                          header.column.id === "__select" && "px-0",
                         )}
                       >
                         {sortable ? (
                           <button
                             type="button"
-                            className={cn("inline-flex min-w-0 items-center gap-1 rounded-xs hover:text-fg focus-visible:outline-2 focus-visible:outline-focus", meta?.numeric && "flex-row-reverse", activeSort && "text-fg")}
+                            className={cn("inline-flex min-w-0 items-center gap-1 rounded-xs hover:text-fg focus-visible:outline-2 focus-visible:outline-focus", align === "right" && "flex-row-reverse", activeSort && "text-fg")}
                             onClick={() => sort?.onChange(meta!.sortKey!, activeSort && sort?.dir === "desc" ? "asc" : "desc")}
                             title={meta?.description}
                           >
@@ -432,8 +434,9 @@ export function DataTable<T>({
                             role="cell"
                             className={cn(
                               "flex h-full min-w-0 items-center overflow-hidden px-3 text-[0.8125rem] text-fg",
-                              meta?.numeric && "justify-end text-right tabular",
-                                  cell.column.id === "__select" && "justify-center px-0",
+                              ALIGN_CLASSES[getColumnAlignment(meta)],
+                              meta?.numeric && "tabular",
+                              cell.column.id === "__select" && "px-0",
                             )}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -453,18 +456,18 @@ export function DataTable<T>({
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-3 py-2">
           <p className="caption tabular" aria-live="polite">
             {pagination.total === 0
-              ? "0 rows"
-              : `${formatNumber((pagination.page - 1) * pagination.pageSize + 1)}–${formatNumber(Math.min(pagination.total, pagination.page * pagination.pageSize))} of ${formatNumber(pagination.total)}`}
-            {selectedCount > 0 && ` · ${formatNumber(selectedCount)} selected`}
+              ? pick("0 baris", "0 rows")
+              : `${formatNumber((pagination.page - 1) * pagination.pageSize + 1)}–${formatNumber(Math.min(pagination.total, pagination.page * pagination.pageSize))} ${pick("dari", "of")} ${formatNumber(pagination.total)}`}
+            {selectedCount > 0 && ` · ${formatNumber(selectedCount)} ${pick("dipilih", "selected")}`}
             {footerNote && <span className="ml-2">{footerNote}</span>}
           </p>
           <div className="flex items-center gap-2">
             {pagination.onPageSizeChange && (
               <div className="hidden items-center gap-2 sm:flex">
-                <span className="caption">Rows</span>
+                <span className="caption">{pick("Baris", "Rows")}</span>
                 <Select
                   size="sm"
-                  aria-label="Rows per page"
+                  aria-label={pick("Baris per halaman", "Rows per page")}
                   className="w-20"
                   value={String(pagination.pageSize)}
                   onValueChange={(v) => pagination.onPageSizeChange?.(Number(v))}
@@ -472,20 +475,20 @@ export function DataTable<T>({
                 />
               </div>
             )}
-            <nav aria-label="Pagination" className="flex items-center gap-1">
-              <Button size="icon-sm" variant="ghost" aria-label="First page" disabled={pagination.page <= 1} onClick={() => pagination.onPageChange(1)}>
+            <nav aria-label={pick("Navigasi halaman", "Pagination")} className="flex items-center gap-1">
+              <Button size="icon-sm" variant="ghost" aria-label={pick("Halaman pertama", "First page")} disabled={pagination.page <= 1} onClick={() => pagination.onPageChange(1)}>
                 <ChevronsLeft aria-hidden />
               </Button>
-              <Button size="icon-sm" variant="ghost" aria-label="Previous page" disabled={pagination.page <= 1} onClick={() => pagination.onPageChange(pagination.page - 1)}>
+              <Button size="icon-sm" variant="ghost" aria-label={pick("Halaman sebelumnya", "Previous page")} disabled={pagination.page <= 1} onClick={() => pagination.onPageChange(pagination.page - 1)}>
                 <ChevronLeft aria-hidden />
               </Button>
               <span className="min-w-20 text-center caption tabular">
-                Page {formatNumber(pagination.page)} of {formatNumber(pageCount)}
+                {pick(`Hal. ${formatNumber(pagination.page)} dari ${formatNumber(pageCount)}`, `Page ${formatNumber(pagination.page)} of ${formatNumber(pageCount)}`)}
               </span>
-              <Button size="icon-sm" variant="ghost" aria-label="Next page" disabled={pagination.page >= pageCount} onClick={() => pagination.onPageChange(pagination.page + 1)}>
+              <Button size="icon-sm" variant="ghost" aria-label={pick("Halaman berikutnya", "Next page")} disabled={pagination.page >= pageCount} onClick={() => pagination.onPageChange(pagination.page + 1)}>
                 <ChevronRight aria-hidden />
               </Button>
-              <Button size="icon-sm" variant="ghost" aria-label="Last page" disabled={pagination.page >= pageCount} onClick={() => pagination.onPageChange(pageCount)}>
+              <Button size="icon-sm" variant="ghost" aria-label={pick("Halaman terakhir", "Last page")} disabled={pagination.page >= pageCount} onClick={() => pagination.onPageChange(pageCount)}>
                 <ChevronsRight aria-hidden />
               </Button>
             </nav>

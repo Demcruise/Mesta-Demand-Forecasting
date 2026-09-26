@@ -57,7 +57,7 @@ export function ExplorerView() {
       downloadExport(
         r.format,
         `forecast-${r.run.id}`,
-        [pick("Proses", "Run"), "SKU", pick("Produk", "Product"), pick("Kategori", "Category"), pick("Perkiraan", "Forecast"), "Ubah manual", pick("Perkiraan sebelumnya", "Previous run"), "Aktual periode sebelumnya", pick("Perubahan %", "Change %"), "Batas bawah 80%", "Batas atas 80%", "Status", "Perlu ditinjau"],
+        [pick("Proses", "Run"), "SKU", pick("Produk", "Product"), pick("Kategori", "Category"), pick("Perkiraan", "Forecast"), pick("Ubah manual", "Override"), pick("Perkiraan sebelumnya", "Previous run"), pick("Aktual periode sebelumnya", "Actual prior period"), pick("Perubahan %", "Change %"), pick("Batas bawah 80%", "Lower 80%"), pick("Batas atas 80%", "Upper 80%"), "Status", pick("Perlu ditinjau", "Exceptions")],
         r.rows.map((x) => [r.run.id, x.product.sku, x.product.name, x.product.category, x.forecast, x.overrideUnits, x.previousForecast, x.actualLastPeriod, Number((x.deltaPercent * 100).toFixed(1)), x.lowerBound, x.upperBound, x.status, x.exceptionCount]),
         r.run.id,
       );
@@ -77,7 +77,7 @@ export function ExplorerView() {
       },
       {
         id: "forecast",
-        header: "Forecast",
+        header: pick("Perkiraan", "Forecast"),
         meta: { width: "120px", numeric: true, sortKey: "forecast", description: pick("Total perkiraan selama periode perkiraan. Nilai yang diubah manual menampilkan hasil ubahannya.", "Total forecast over the run horizon. Overridden values show the override.") } satisfies ColumnMeta,
         cell: ({ row }) => {
           const r = row.original;
@@ -102,7 +102,8 @@ export function ExplorerView() {
       {
         id: "actual",
         header: pick("Aktual (sebelumnya)", "Actual (prior)"),
-        meta: { width: "120px", numeric: true, sortKey: "actual", hideBelow: "lg", description: pick("Permintaan aktual pada jumlah hari yang sama tepat sebelum periode perkiraan.", "Actual demand over the same number of days immediately before the forecast period.") } satisfies ColumnMeta,
+        // Contextual column, read with the product rather than summed: left axis (PAGE-EXPLORER-ALIGN-001).
+        meta: { width: "130px", numeric: true, align: "left", sortKey: "actual", hideBelow: "lg", description: pick("Permintaan aktual pada jumlah hari yang sama tepat sebelum periode perkiraan.", "Actual demand over the same number of days immediately before the forecast period.") } satisfies ColumnMeta,
         cell: ({ row }) => <span className="text-fg-secondary">{formatNumber(row.original.actualLastPeriod)}</span>,
       },
       {
@@ -136,11 +137,11 @@ export function ExplorerView() {
       {
         id: "exceptions",
         header: pick("Perlu Ditinjau", "Exceptions"),
-        meta: { width: "100px", numeric: true, sortKey: "exceptions", hideBelow: "md" } satisfies ColumnMeta,
+        meta: { width: "120px", numeric: true, align: "left", sortKey: "exceptions", hideBelow: "md" } satisfies ColumnMeta,
         cell: ({ row }) =>
           row.original.exceptionCount > 0 ? (
             <Link href={`/planning/exceptions?id=${row.original.exceptionIds[0]}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-warning-fg hover:underline">
-              {row.original.exceptionCount} terbuka
+              {pick(`${row.original.exceptionCount} terbuka`, `${row.original.exceptionCount} open`)}
             </Link>
           ) : (
             <span className="text-fg-tertiary">{pick("Tidak ada", "None")}</span>
@@ -153,16 +154,19 @@ export function ExplorerView() {
   const bulkBar = (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <p className="body-sm font-semibold text-fg">
-        {pluralize(selectedRows.length, pick("perkiraan", "forecast"))} dipilih · {formatNumber(selectedUnits)} unit
+        {pick(
+          `${formatNumber(selectedRows.length)} perkiraan dipilih · ${formatNumber(selectedUnits)} unit`,
+          `${pluralize(selectedRows.length, "forecast")} selected · ${formatNumber(selectedUnits)} units`,
+        )}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         {can("forecast.override") && (
           <Button size="sm" variant="primary" onClick={() => setOverrideOpen(true)} disabled={run?.status !== "published"}>
-            <Pencil aria-hidden /> Ubah perkiraan terpilih
+            <Pencil aria-hidden /> {pick("Ubah perkiraan terpilih", "Override selected")}
           </Button>
         )}
         <Button size="sm" variant="ghost" onClick={() => setSelection({})}>
-          Hapus pilihan
+          {pick("Hapus pilihan", "Clear selection")}
         </Button>
       </div>
     </div>
@@ -177,7 +181,8 @@ export function ExplorerView() {
           run ? (
             <>
               <span className="text-xs font-medium text-fg-secondary">
-                {run.status === "published" ? pick("Acuan perencanaan", "Planning baseline") : pick("Belum diterbitkan", "Unpublished run")} · {scopeLabel(run)} · periode {run.horizonDays} hari sejak {formatDate(run.completedAt)}
+                {run.status === "published" ? pick("Acuan perencanaan", "Planning baseline") : pick("Belum diterbitkan", "Unpublished run")} · {scopeLabel(run)} ·{" "}
+                {pick(`periode ${run.horizonDays} hari sejak ${formatDate(run.completedAt)}`, `${run.horizonDays}-day horizon from ${formatDate(run.completedAt)}`)}
               </span>
               <FreshnessIndicator timestamp={run.completedAt} label={pick("Dibuat", "Generated")} />
             </>
@@ -187,7 +192,7 @@ export function ExplorerView() {
           <Select
             className="w-[min(26rem,90vw)]"
             aria-label={pick("Proses perkiraan", "Forecast run")}
-            prefix="Run:"
+            prefix={pick("Proses:", "Run:")}
             value={run?.id}
             onValueChange={(v) => state.setParams({ run: v, id: null }, { resetPage: true })}
             placeholder={pick("Perkiraan terbit terakhir", "Latest published run")}
@@ -197,9 +202,9 @@ export function ExplorerView() {
       />
       {run && run.status !== "published" && (
         <InlineAlert tone="info" title={pick("Anda melihat proses yang belum diterbitkan.", "You are viewing an unpublished run.")}>
-          Perubahan manual hanya dapat diterapkan pada acuan perencanaan yang sudah diterbitkan.{" "}
+          {pick("Perubahan manual hanya dapat diterapkan pada acuan perencanaan yang sudah diterbitkan.", "Overrides can only be applied to the published planning baseline.")}{" "}
           <Link href={`/forecasting/runs/${run.id}`} className="font-semibold text-primary hover:underline">
-            Open run
+            {pick("Buka proses", "Open run")}
           </Link>
         </InlineAlert>
       )}
@@ -226,7 +231,7 @@ export function ExplorerView() {
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.page.total ?? 0, onPageChange: state.setPage, onPageSizeChange: state.setPageSize }}
         onExport={can("export") ? (format) => exportMutation.mutate(format) : undefined}
-        exportLabel={exportMutation.isPending ? pick("Mengekspor…", "Exporting…") : pick(`Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`, pick(`Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`, pick(`Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`, `Export ${q.data ? formatNumber(q.data.page.total) : ""} rows`)))}
+        exportLabel={exportMutation.isPending ? pick("Mengekspor…", "Exporting…") : pick(`Ekspor ${q.data ? formatNumber(q.data.page.total) : ""} baris`, `Export ${q.data ? formatNumber(q.data.page.total) : ""} rows`)}
         toolbarEnd={<SavedViewsMenu surface="explorer" />}
         toolbarStart={
           <FilterBar
@@ -289,7 +294,7 @@ export function ExplorerView() {
             description={pick("Coba kata kunci lain atau hapus filter untuk melihat semua produk pada proses ini.", "Try a different search or clear filters to see all products in this run.")}
             action={
               <Button variant="secondary" onClick={state.clearFilters}>
-                Clear filters
+                {pick("Hapus filter", "Clear filters")}
               </Button>
             }
           />
@@ -303,7 +308,7 @@ export function ExplorerView() {
           runId={run.id}
           productIds={selectedRows.map((r) => r.productId)}
           originalUnits={selectedUnits}
-          label={selectedRows.length === 1 ? (selectedRows[0]?.product.name ?? "") : `${selectedRows.length} selected SKUs`}
+          label={selectedRows.length === 1 ? (selectedRows[0]?.product.name ?? "") : pick(`${selectedRows.length} SKU terpilih`, `${selectedRows.length} selected SKUs`)}
           horizonDays={run.horizonDays}
           onDone={() => setSelection({})}
         />

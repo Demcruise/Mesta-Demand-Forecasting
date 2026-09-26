@@ -49,7 +49,7 @@ export function UsersView() {
   });
   const invite = useApiMutation((c, _v: void) => inviteMember(c, { email: inviteEmail, role: inviteRole }), {
     invalidate: [["members"]],
-    success: `Invitation sent to ${inviteEmail}`,
+    success: pick(`Undangan terkirim ke ${inviteEmail}`, `Invitation sent to ${inviteEmail}`),
     successDescription: pick("Mereka masuk lewat SSO; perannya berlaku setelah menerima undangan.", "They sign in with SSO; the role applies once they accept."),
     failure: pick("Undangan tidak terkirim.", "The invitation was not sent."),
     onSuccess: () => setInviteOpen(false),
@@ -62,18 +62,18 @@ export function UsersView() {
       { id: "role", header: pick("Peran", "Role"), meta: { width: "140px", sortKey: "role" } satisfies ColumnMeta, cell: ({ row }) => <Tag tone={row.original.role === "admin" ? "primary" : "neutral"}>{ROLE_LABELS[row.original.role]}</Tag> },
       { id: "status", header: "Status", meta: { width: "120px", sortKey: "status" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
       { id: "active", header: pick("Terakhir aktif", "Last active"), meta: { width: "130px", sortKey: "lastActiveAt", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{row.original.lastActiveAt ? formatRelative(row.original.lastActiveAt) : pick("Belum pernah", "Never")}</span> },
-      { id: "ws", header: "Ruang kerja", meta: { width: "110px", numeric: true, hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => row.original.workspaces },
+      { id: "ws", header: pick("Ruang kerja", "Workspaces"), meta: { width: "110px", numeric: true, align: "left", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => row.original.workspaces },
       {
         id: "actions",
-        header: () => <span className="sr-only">Aksi</span>,
-        meta: { width: "52px", pinned: true, label: "Aksi" } satisfies ColumnMeta,
+        header: () => <span className="sr-only">{pick("Aksi", "Actions")}</span>,
+        meta: { width: "52px", pinned: true, align: "center", label: pick("Aksi", "Actions") } satisfies ColumnMeta,
         cell: ({ row }) => {
           const m = row.original;
           if (!manage || m.userId === session.userId) return null;
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" aria-label={`Manage access for ${m.name}`}>
+                <Button size="icon-sm" variant="ghost" aria-label={pick(`Kelola akses ${m.name}`, `Manage access for ${m.name}`)}>
                   <MoreHorizontal aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
@@ -86,7 +86,7 @@ export function UsersView() {
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem destructive onSelect={() => { setReason(""); setAction({ kind: "remove", member: m }); }}>
-                  Remove from workspace
+                  {pick("Keluarkan dari ruang kerja", "Remove from workspace")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -102,12 +102,15 @@ export function UsersView() {
   return (
     <PageContainer>
       <PageHeader
-        title={pick("Pengguna & Akses", "Users & roles")}
-        description={`Who can access ${workspace.name} · ${workspace.environment} and what they can do. Identities come from your identity provider; roles are managed here.`}
+        title={pick("Pengguna & Peran", "Users & roles")}
+        description={pick(
+          `Siapa yang dapat mengakses ${workspace.name} · ${workspace.environment} dan apa yang dapat mereka lakukan. Identitas berasal dari penyedia identitas; peran dikelola di sini.`,
+          `Who can access ${workspace.name} · ${workspace.environment} and what they can do. Identities come from your identity provider; roles are managed here.`,
+        )}
         actions={
           manage ? (
             <Button variant="primary" onClick={() => { setInviteEmail(""); setInviteRole("viewer"); setInviteOpen(true); }}>
-              <UserPlus aria-hidden /> Invite user
+              <UserPlus aria-hidden /> {pick("Undang pengguna", "Invite user")}
             </Button>
           ) : undefined
         }
@@ -116,13 +119,13 @@ export function UsersView() {
       <Tabs defaultValue="members">
         <TabsList>
           <TabsTrigger value="members" count={q.data?.total}>
-            Members
+            {pick("Anggota", "Members")}
           </TabsTrigger>
-          <TabsTrigger value="roles">Roles & permissions</TabsTrigger>
+          <TabsTrigger value="roles">{pick("Peran & Hak Akses", "Roles & permissions")}</TabsTrigger>
         </TabsList>
         <TabsContent value="members" className="pt-4">
           <DataTable
-            label="Anggota ruang kerja"
+            label={pick("Anggota ruang kerja", "Workspace members")}
             columns={columns}
             data={q.data?.items}
             getRowId={(m) => m.userId}
@@ -132,7 +135,6 @@ export function UsersView() {
             errorWhat={pick("Anggota tidak dapat dimuat.", "Members could not be loaded.")}
             sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
             pagination={{ page: q.data?.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.total ?? 0, onPageChange: state.setPage }}
-            hideDensityToggle
             toolbarStart={
               <FilterBar
                 state={state}
@@ -148,7 +150,7 @@ export function UsersView() {
         </TabsContent>
         <TabsContent value="roles" className="pt-4">
           <InlineAlert tone="info" title={pick("Model peran yang diusulkan.", "Suggested role model.")} className="mb-4">
-            Role names and permissions need approval by the business (backlog §93 items 2 and 18). Administrators cannot approve business changes or apply overrides.
+            {pick("Nama peran dan hak akses masih perlu disetujui bisnis. Administrator tidak dapat menyetujui perubahan bisnis atau mengubah perkiraan.", "Role names and permissions need approval by the business (backlog §93 items 2 and 18). Administrators cannot approve business changes or apply overrides.")}
           </InlineAlert>
           <Panel flush>
             <div className="overflow-x-auto">
@@ -157,7 +159,7 @@ export function UsersView() {
                 <thead className="bg-subtle">
                   <tr>
                     <th scope="col" className="border-b border-border px-4 py-2.5 text-left text-xs font-semibold text-fg-secondary">
-                      Permission
+                      {pick("Hak akses", "Permission")}
                     </th>
                     {ROLES.map((r) => (
                       <th key={r} scope="col" className="border-b border-border px-3 py-2.5 text-center text-xs font-semibold text-fg-secondary">
@@ -200,17 +202,17 @@ export function UsersView() {
             size="md"
             title={
               action.kind === "role"
-                ? `Change role for ${action.member.name}`
+                ? pick(`Ubah peran ${action.member.name}`, `Change role for ${action.member.name}`)
                 : action.kind === "suspend"
-                  ? `Suspend ${action.member.name}?`
+                  ? pick(`Tangguhkan ${action.member.name}?`, `Suspend ${action.member.name}?`)
                   : action.kind === "reactivate"
-                    ? `Restore access for ${action.member.name}?`
-                    : `Remove ${action.member.name} from this workspace?`
+                    ? pick(`Pulihkan akses ${action.member.name}?`, `Restore access for ${action.member.name}?`)
+                    : pick(`Keluarkan ${action.member.name} dari ruang kerja ini?`, `Remove ${action.member.name} from this workspace?`)
             }
             footer={
               <>
                 <Button variant="ghost" onClick={() => setAction(null)}>
-                  Cancel
+                  {pick("Batal", "Cancel")}
                 </Button>
                 <Button
                   variant={action.kind === "remove" || action.kind === "suspend" ? "danger" : "primary"}
@@ -224,7 +226,7 @@ export function UsersView() {
                     })
                   }
                 >
-                  {action.kind === "role" ? pick("Ubah peran", "Change role") : action.kind === "suspend" ? pick("Tangguhkan akses", "Suspend access") : action.kind === "reactivate" ? pick("Pulihkan akses", "Restore access") : "Hapus anggota"}
+                  {action.kind === "role" ? pick("Ubah peran", "Change role") : action.kind === "suspend" ? pick("Tangguhkan akses", "Suspend access") : action.kind === "reactivate" ? pick("Pulihkan akses", "Restore access") : pick("Hapus anggota", "Remove member")}
                 </Button>
               </>
             }
@@ -237,24 +239,24 @@ export function UsersView() {
               )}
               <ConsequenceSummary
                 rows={[
-                  { label: "Siapa", value: `${action.member.name} (${action.member.email})` },
-                  { label: "Cakupan", value: `${workspace.name} · hanya ${workspace.environment}` },
+                  { label: pick("Siapa", "Who"), value: `${action.member.name} (${action.member.email})` },
+                  { label: pick("Cakupan", "Scope"), value: `${workspace.name} · hanya ${workspace.environment}` },
                   {
-                    label: "Dampak",
+                    label: pick("Dampak", "Impact"),
                     emphasis: true,
                     value:
                       action.kind === "role"
-                        ? `${ROLE_LABELS[action.member.role]} → ${ROLE_LABELS[role]}. Takes effect at their next request.`
+                        ? pick(`${ROLE_LABELS[action.member.role]} → ${ROLE_LABELS[role]}. Berlaku pada permintaan berikutnya.`, `${ROLE_LABELS[action.member.role]} → ${ROLE_LABELS[role]}. Takes effect at their next request.`)
                         : action.kind === "suspend"
                           ? pick("Mereka dikeluarkan dan tidak dapat masuk ke ruang kerja ini. Riwayatnya tetap disimpan.", "They are removed and cannot sign in to this workspace. Their history is retained.")
                           : action.kind === "reactivate"
-                            ? `They can sign in again with the ${ROLE_LABELS[action.member.role]} role.`
+                            ? pick(`Mereka dapat masuk lagi dengan peran ${ROLE_LABELS[action.member.role]}.`, `They can sign in again with the ${ROLE_LABELS[action.member.role]} role.`)
                             : pick("Mereka kehilangan akses ke ruang kerja ini. Riwayat aktivitas tetap menyimpan tindakan mereka sebelumnya.", "They lose access to this workspace. The audit log keeps their previous actions."),
                   },
                   { label: pick("Izin yang diperlukan", "Required permission"), value: pick("Mengelola pengguna dan akses (Administrator)", "Manage users and access (Administrator)") },
                 ]}
               />
-              <Field label="Alasan" htmlFor="access-reason" required hint={pick("Tercatat di riwayat aktivitas. Minimal 5 karakter.", "Recorded in the audit log. At least 5 characters.")}>
+              <Field label={pick("Alasan", "Reason")} htmlFor="access-reason" required hint={pick("Tercatat di riwayat aktivitas. Minimal 5 karakter.", "Recorded in the audit log. At least 5 characters.")}>
                 <Textarea id="access-reason" value={reason} onChange={(e) => setReason(e.target.value)} />
               </Field>
             </div>
@@ -270,19 +272,19 @@ export function UsersView() {
           footer={
             <>
               <Button variant="ghost" onClick={() => setInviteOpen(false)}>
-                Cancel
+                {pick("Batal", "Cancel")}
               </Button>
               <Button variant="primary" disabled={!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inviteEmail.trim())} loading={invite.isPending} onClick={() => invite.mutate()}>
-                Send invitation
+                {pick("Kirim undangan", "Send invitation")}
               </Button>
             </>
           }
         >
           <div className="flex flex-col gap-4">
-            <Field label="Email kantor" htmlFor="invite-email" required hint={pick("Harus memakai domain yang diizinkan untuk ruang kerja ini.", "Must use an allowed domain for this workspace.")}>
+            <Field label={pick("Email kantor", "Work email")} htmlFor="invite-email" required hint={pick("Harus memakai domain yang diizinkan untuk ruang kerja ini.", "Must use an allowed domain for this workspace.")}>
               <Input id="invite-email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="name@mesta.click" autoFocus />
             </Field>
-            <Field label="Role" htmlFor="invite-role" hint={ROLE_DESCRIPTIONS[inviteRole]}>
+            <Field label={pick("Peran", "Role")} htmlFor="invite-role" hint={ROLE_DESCRIPTIONS[inviteRole]}>
               <Select id="invite-role" value={inviteRole} onValueChange={(v) => setInviteRole(v as Role)} options={ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
             </Field>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle2, RefreshCw, ShieldCheck, UserCheck } from "lucide-react";
+import { AlertOctagon, AlertTriangle, CheckCircle2, Database, Gauge, RefreshCw, ShieldCheck, UserCheck } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import type { DataQualityIssue, StatusKey } from "@/types/domain";
@@ -26,19 +26,19 @@ import { AuditTimeline } from "@/components/governance/audit";
 import { pick, localized } from "@/lib/i18n";
 
 const TYPE_LABELS: Record<DataQualityIssue["type"], string> = localized({
-  missing_records: pick("Data belum lengkap", "Missing records"),
-  duplicate_records: pick("Data duplikat", "Duplicate records"),
-  missing_dimensions: pick("Dimensi belum lengkap", "Missing dimensions"),
-  late_data: pick("Data terlambat", "Late data"),
-  unexpected_zero: pick("Permintaan nol tidak wajar", "Unexpected zero demand"),
+  missing_records: "Data belum lengkap",
+  duplicate_records: "Data duplikat",
+  missing_dimensions: "Dimensi belum lengkap",
+  late_data: "Data terlambat",
+  unexpected_zero: "Permintaan nol tidak wajar",
   extreme_outlier: "Nilai ekstrem",
-  schema_mismatch: pick("Skema tidak cocok", "Schema mismatch"),
-  source_unavailable: pick("Sumber tidak tersedia", "Source unavailable"),
+  schema_mismatch: "Skema tidak cocok",
+  source_unavailable: "Sumber tidak tersedia",
 }, {
   missing_records: "Missing records",
   duplicate_records: "Duplicate records",
   missing_dimensions: "Missing dimensions",
-  late_data: pick("Data terlambat", "Late data"),
+  late_data: "Late data",
   unexpected_zero: "Unexpected zero demand",
   extreme_outlier: "Extreme outlier",
   schema_mismatch: "Schema mismatch",
@@ -57,21 +57,22 @@ export function QualityView() {
       { id: "severity", header: pick("Tingkat", "Severity"), meta: { width: "120px", sortKey: "severity" } satisfies ColumnMeta, cell: ({ row }) => <SeverityBadge severity={row.original.severity} size="sm" /> },
       {
         id: "issue",
-        header: "Issue",
-        meta: { width: "minmax(280px, 3fr)", pinned: true, label: "Issue" } satisfies ColumnMeta,
+        header: pick("Masalah", "Issue"),
+        meta: { width: "minmax(280px, 3fr)", pinned: true, label: pick("Masalah", "Issue") } satisfies ColumnMeta,
         cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col">
+          <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-[0.8125rem] font-semibold">{row.original.title}</span>
-            <span className="truncate text-xs text-fg-tertiary">
+            <span className="mt-0.5 truncate text-xs text-fg-tertiary">
               {TYPE_LABELS[row.original.type]} · {row.original.id.toUpperCase().replace("_", "-")}
             </span>
           </span>
         ),
       },
       { id: "source", header: pick("Sumber", "Source"), meta: { width: "minmax(150px, 1fr)", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <span className="truncate text-fg-secondary">{sourceName(row.original.sourceId)}</span> },
-      { id: "skus", header: pick("SKU terdampak", "SKUs affected"), meta: { width: "120px", numeric: true, sortKey: "affectedSkus" } satisfies ColumnMeta, cell: ({ row }) => formatNumber(row.original.affectedSkus) },
+      // Count read as context with the issue, so it shares the left axis (PAGE-DQ-TABLE-002).
+      { id: "skus", header: pick("SKU terdampak", "SKUs affected"), meta: { width: "130px", numeric: true, align: "left", sortKey: "affectedSkus" } satisfies ColumnMeta, cell: ({ row }) => formatNumber(row.original.affectedSkus) },
       { id: "detected", header: pick("Terdeteksi", "Detected"), meta: { width: "120px", sortKey: "detectedAt", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-fg-secondary">{formatRelative(row.original.detectedAt)}</span> },
-      { id: "owner", header: "Owner", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
+      { id: "owner", header: pick("Penanggung jawab", "Owner"), meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
       { id: "status", header: "Status", meta: { width: "140px", sortKey: "status" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,24 +82,56 @@ export function QualityView() {
   const s = q.data?.summary;
   return (
     <PageContainer>
-      <PageHeader title={pick("Kualitas Data", pick("Kualitas data", "Data quality"))} description={pick("Periksa apakah data siap digunakan untuk membuat perkiraan. Temuan yang menghambat menghentikan proses perkiraan; peringatan menurunkan akurasi.", "Is the demand data ready for forecasting? Blocking issues stop forecast runs; warnings reduce accuracy.")} />
+      <PageHeader title={pick("Kualitas Data", "Data quality")} description={pick("Apakah data siap untuk perkiraan? Masalah yang menghambat menghentikan proses; peringatan menurunkan akurasi.", "Is the demand data ready for forecasting? Blocking issues stop runs; warnings reduce accuracy.")} />
       <MetricStrip>
-        <MetricCard label={pick("Temuan menghambat", "Blocking issues")} value={s ? formatNumber(s.blocking) : "—"} context={s?.blocking ? pick("Proses yang mencakup SKU terdampak akan gagal diperiksa.", "Runs covering affected SKUs fail validation.") : pick("Tidak ada temuan yang menghambat.", "No blocking issues.")} href="/demand-data/quality?severity=blocking" hrefLabel={pick("Lihat yang menghambat", "Show blocking")} />
-        <MetricCard label={pick("Peringatan", "Warnings")} value={s ? formatNumber(s.warnings) : "—"} context={pick("Dapat menurunkan akurasi perkiraan.", "May reduce forecast accuracy.")} href="/demand-data/quality?severity=warning&status=open,investigating" hrefLabel={pick("Lihat peringatan", "Show warnings")} />
-        <MetricCard label={pick("Cakupan", "Coverage")} value={s ? formatPercent(s.coverage) : "—"} context={s ? pick(`Perkiraan bagian dari ${formatNumber(s.skus)} SKU tanpa masalah terbuka`, `Share of ${formatNumber(s.skus)} SKUs without open issues (estimate)`) : undefined} tooltip={pick("Perkiraan bagian SKU-hari dalam 28 hari terakhir yang lolos semua pemeriksaan.", "Estimated share of SKU-days in the last 28 days that pass all checks.")} />
-        <MetricCard label={pick("Sumber bermasalah", "Sources with problems")} value={q.data ? formatNumber(q.data.sources.filter((x) => x.status === "failed" || x.status === "warning").length) : "—"} context={q.data ? pick(`dari ${q.data.sources.length} sumber`, pick(`dari ${q.data.sources.length} sumber`, pick(`dari ${q.data.sources.length} sumber`, `of ${q.data.sources.length} sources`))) : undefined} href="/demand-data/sources" hrefLabel={pick("Lihat sumber", "View sources")} />
+        <MetricCard
+          variant="compact"
+          icon={AlertOctagon}
+          tone={s?.blocking ? "critical" : "neutral"}
+          label={pick("Masalah yang Menghambat", "Blocking issues")}
+          value={s ? formatNumber(s.blocking) : "—"}
+          meta={s ? (s.blocking ? pick(`${formatNumber(s.blocking)} masalah perlu ditangani`, `${formatNumber(s.blocking)} ${s.blocking === 1 ? "issue needs" : "issues need"} attention`) : pick("Tidak ada yang menghambat", "Nothing blocking")) : undefined}
+          href="/demand-data/quality?severity=blocking"
+          destination={pick("tampilkan masalah yang menghambat", "shows blocking issues")}
+        />
+        <MetricCard
+          variant="compact"
+          icon={AlertTriangle}
+          label={pick("Peringatan", "Warnings")}
+          value={s ? formatNumber(s.warnings) : "—"}
+          meta={pick("Dapat menurunkan akurasi", "May affect forecast accuracy")}
+          href="/demand-data/quality?severity=warning&status=open,investigating"
+          destination={pick("tampilkan peringatan", "shows warnings")}
+        />
+        <MetricCard
+          variant="compact"
+          icon={Gauge}
+          label={pick("Cakupan", "Coverage")}
+          value={s ? formatPercent(s.coverage) : "—"}
+          meta={pick("SKU tanpa masalah terbuka", "of SKUs without open issues")}
+          tooltip={s ? pick(`Perkiraan bagian SKU-hari dari ${formatNumber(s.skus)} SKU dalam 28 hari terakhir yang lolos semua pemeriksaan.`, `Estimated share of SKU-days across ${formatNumber(s.skus)} SKUs in the last 28 days that pass all checks.`) : undefined}
+        />
+        <MetricCard
+          variant="compact"
+          icon={Database}
+          label={pick("Sumber Bermasalah", "Sources with problems")}
+          value={q.data ? formatNumber(q.data.sources.filter((x) => x.status === "failed" || x.status === "warning").length) : "—"}
+          meta={q.data ? pick(`dari ${q.data.sources.length} sumber`, `of ${q.data.sources.length} sources`) : undefined}
+          href="/demand-data/sources"
+          destination={pick("buka sumber data", "opens data sources")}
+        />
       </MetricStrip>
       {q.data && (
-        <PageSection title={pick("Terakhir Diperbarui", "Source freshness")} description={pick("Pembaruan menentukan apakah perkiraan hari ini memakai data hari ini.", pick("Kebaruan menentukan apakah perkiraan hari ini memakai data hari ini.", "Freshness determines whether today's forecasts use today's data."))}>
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <PageSection title={pick("Kebaruan Sumber", "Source freshness")}>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {q.data.sources.map((src) => (
               <li key={src.id}>
-                <Link href={`/demand-data/sources?id=${src.id}`} className="flex h-full flex-col gap-1.5 rounded-lg border border-border bg-surface p-3 hover:border-border-strong">
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="truncate body-sm font-semibold">{src.name}</span>
-                    <StatusBadge status={src.status} size="sm" />
+                <Link href={`/demand-data/sources?id=${src.id}`} className="flex h-full min-w-0 flex-col gap-2 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus">
+                  <span className="truncate body-sm font-semibold text-fg" title={src.name}>
+                    {src.name}
                   </span>
-                  <FreshnessIndicator timestamp={src.lastSuccessAt} label={pick("Berhasil terakhir", "Last success")} source={src.name} />
+                  <StatusBadge status={src.status} size="sm" className="self-start" />
+                  <FreshnessIndicator variant="cell" className="mt-auto" timestamp={src.lastSuccessAt} label={pick("Berhasil terakhir", "Last success")} source={src.name} />
                 </Link>
               </li>
             ))}
@@ -176,13 +209,13 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
             d && can("data.manage") && !closed ? (
               <>
                 <Button variant="ghost" onClick={() => retry.mutate()} loading={retry.isPending}>
-                  <RefreshCw aria-hidden /> Retry check
+                  <RefreshCw aria-hidden /> {pick("Periksa ulang", "Retry check")}
                 </Button>
                 <Button variant="secondary" onClick={() => { setNote(""); setResolve("dismissed"); }}>
-                  Dismiss
+                  {pick("Abaikan", "Dismiss")}
                 </Button>
                 <Button variant="primary" onClick={() => { setNote(""); setResolve("resolved"); }}>
-                  <CheckCircle2 aria-hidden /> Mark resolved
+                  <CheckCircle2 aria-hidden /> {pick("Tandai selesai", "Mark resolved")}
                 </Button>
               </>
             ) : undefined
@@ -199,7 +232,7 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
                 <StatusBadge status={d.issue.status} />
               </div>
               <section>
-                <h3 className="mb-1 card-title">What happened?</h3>
+                <h3 className="mb-1 card-title">{pick("Apa yang terjadi?", "What happened?")}</h3>
                 <p className="body-sm text-fg-secondary">{d.issue.description}</p>
               </section>
               <DescriptionList
@@ -208,7 +241,7 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
                   { label: pick("Cakupan terdampak", "Affected scope"), value: pick(`${formatNumber(d.issue.affectedSkus)} SKU · ${formatNumber(d.issue.affectedLocations)} lokasi`, `${formatNumber(d.issue.affectedSkus)} SKUs · ${formatNumber(d.issue.affectedLocations)} locations`) },
                   { label: pick("Terdeteksi", "Detected"), value: formatDateTime(d.issue.detectedAt) },
                   { label: pick("Sumber", "Source"), value: d.source ? <Link href={`/demand-data/sources?id=${d.source.id}`} className="text-primary hover:underline">{d.source.name}</Link> : "—" },
-                  { label: "Owner", value: <UserIdentity userId={d.issue.ownerId} /> },
+                  { label: pick("Penanggung jawab", "Owner"), value: <UserIdentity userId={d.issue.ownerId} /> },
                 ]}
               />
               <section className="rounded-lg border border-border bg-subtle p-3.5">
@@ -224,12 +257,12 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
                   <div className="flex flex-wrap gap-2">
                     {d.issue.ownerId !== session.userId && (
                       <Button size="sm" variant="secondary" loading={update.isPending} onClick={() => update.mutate({ ownerId: session.userId })}>
-                        <UserCheck aria-hidden /> Assign to me
+                        <UserCheck aria-hidden /> {pick("Tugaskan ke saya", "Assign to me")}
                       </Button>
                     )}
                     {d.issue.status === "open" && (
                       <Button size="sm" variant="secondary" loading={update.isPending} onClick={() => update.mutate({ status: "investigating", ownerId: d.issue.ownerId ?? session.userId })}>
-                        Start investigating
+                        {pick("Mulai investigasi", "Start investigating")}
                       </Button>
                     )}
                   </div>
@@ -249,7 +282,7 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
               )}
               <section>
                 <h3 className="mb-2 card-title">{pick("Aktivitas", "Activity")}</h3>
-                <AuditTimeline events={d.activity} emptyText={`No actions yet. Detected ${formatRelative(d.issue.detectedAt)} by automated checks; owner ${actorName(d.issue.ownerId)}.`} />
+                <AuditTimeline events={d.activity} emptyText={pick(`Belum ada tindakan. Terdeteksi ${formatRelative(d.issue.detectedAt)} oleh pemeriksaan otomatis; penanggung jawab ${actorName(d.issue.ownerId)}.`, `No actions yet. Detected ${formatRelative(d.issue.detectedAt)} by automated checks; owner ${actorName(d.issue.ownerId)}.`)} />
               </section>
             </div>
           ) : null}
@@ -264,7 +297,7 @@ function IssueDrawer({ id, onClose }: { id: string | null; onClose: () => void }
             footer={
               <>
                 <Button variant="ghost" onClick={() => setResolve(null)}>
-                  Cancel
+                  {pick("Batal", "Cancel")}
                 </Button>
                 <Button variant="primary" disabled={note.trim().length < 5} loading={update.isPending} onClick={() => update.mutate({ status: resolve, note })}>
                   {resolve === "resolved" ? pick("Tandai selesai", "Mark resolved") : pick("Abaikan masalah", "Dismiss issue")}

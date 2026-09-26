@@ -63,7 +63,8 @@ export function FreshnessIndicator({
   label?: string;
   source?: string;
   className?: string;
-  variant?: "inline" | "stacked";
+  /** cell: label and relative time on separate lines, for fixed-width summary cells. */
+  variant?: "inline" | "stacked" | "cell";
   thresholds?: { fresh: number; recent: number; delayed: number };
 }) {
   const isId = getActiveLocale() === "id";
@@ -81,6 +82,19 @@ export function FreshnessIndicator({
       <span>{copy.note}</span>
     </span>
   );
+  if (variant === "cell") {
+    return (
+      <Tooltip content={tooltip}>
+        <div tabIndex={0} className={cn("flex min-w-0 flex-col rounded-xs focus-visible:outline-2 focus-visible:outline-focus", className)} aria-label={`${text}. ${copy.label}. ${copy.note}`}>
+          <span className="inline-flex min-w-0 items-center gap-1.5 body-sm font-semibold text-fg">
+            {state === "unavailable" ? <Clock className="size-3.5 shrink-0" aria-hidden /> : <span className={cn("size-2 shrink-0 rounded-full", copy.dot)} aria-hidden />}
+            <span className="truncate">{effectiveLabel}</span>
+          </span>
+          <span className={cn("caption", copy.text)}>{timestamp ? formatRelative(timestamp, now) : isId ? "Waktu tidak diketahui" : "Time unknown"}</span>
+        </div>
+      </Tooltip>
+    );
+  }
   if (variant === "stacked") {
     return (
       <div className={cn("flex flex-col", className)}>

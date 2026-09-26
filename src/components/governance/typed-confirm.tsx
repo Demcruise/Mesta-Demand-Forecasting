@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { Dialog, DialogContent } from "@/components/ui/overlay";
 import { ConsequenceSummary } from "./audit";
+import { pick } from "@/lib/i18n/core";
 
 /**
  * Destructive confirmation that requires typing the resource name. Used for
@@ -43,7 +44,7 @@ export function TypedConfirmDialog({
         footer={
           <>
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancel
+              {pick("Batal", "Cancel")}
             </Button>
             <Button variant="danger" disabled={!matches} loading={loading} onClick={onConfirm}>
               {confirmLabel}
@@ -52,7 +53,11 @@ export function TypedConfirmDialog({
         }
       >
         <ConsequenceSummary rows={consequences} />
-        <Field className="mt-4" label={<>Type <span className="mono-id rounded-xs bg-muted px-1 text-fg">{resourceName}</span> to confirm</>} htmlFor="typed-confirm">
+        <Field className="mt-4" label={
+            <>
+              {pick("Ketik", "Type")} <span className="mono-id rounded-xs bg-muted px-1 text-fg">{resourceName}</span> {pick("untuk konfirmasi", "to confirm")}
+            </>
+          } htmlFor="typed-confirm">
           <Input
             id="typed-confirm"
             value={typed}

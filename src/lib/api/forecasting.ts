@@ -18,6 +18,7 @@ import { aggregateInterval, simulate, summarise, toPoints } from "@/lib/mock/ser
 import { addDays, DAY_MS, iso, isoDate } from "@/lib/mock/time";
 import { applyAll, applyList, ApiError, read, write, type ApiContext, type ListSpec } from "./client";
 import { pick } from "@/lib/i18n/core";
+import { formatDeltaPercent, formatNumber } from "@/lib/format";
 
 /* ── Run lifecycle ─────────────────────────────────────────────────── */
 
@@ -30,8 +31,8 @@ export function syncRuns(db: WorkspaceDb) {
       db.notifications.unshift({
         id: nextId(db, "ntf"),
         category: "forecast_completed",
-        title: `Forecast run completed: ${next.name}`,
-        body: `${next.id} finished and is ready to review.`,
+        title: pick(`Proses perkiraan selesai: ${next.name}`, `Forecast run completed: ${next.name}`),
+        body: pick(`${next.id} selesai dan siap ditinjau.`, `${next.id} finished and is ready to review.`),
         href: `/forecasting/runs/${next.id}`,
         createdAt: next.completedAt ?? iso(now),
         read: false,
@@ -44,7 +45,7 @@ export function syncRuns(db: WorkspaceDb) {
         entityLabel: next.name,
         previousState: "running",
         newState: "completed",
-        reason: "Processing finished",
+        reason: pick("Pemrosesan selesai", "Processing finished"),
         source: "system",
         timestamp: next.completedAt ?? undefined,
       });
@@ -85,7 +86,7 @@ export function getRun(ctx: ApiContext, runId: string) {
     const db = getDb(ctx.workspaceId);
     syncRuns(db);
     const run = db.runs.find((r) => r.id === runId);
-    if (!run) throw new ApiError(`Forecast run ${runId} was not found in this workspace.`, "not_found");
+    if (!run) throw new ApiError(pick(`Proses perkiraan ${runId} tidak ditemukan di ruang kerja ini.`, `Forecast run ${runId} was not found in this workspace.`), "not_found");
     const model = db.models.find((m) => m.id === run.modelId) ?? null;
     return { run, model };
   });
@@ -179,7 +180,7 @@ function checksFor(db: WorkspaceDb, input: RunInput): ValidationCheck[] {
     key: "duplicates",
     label: pick("Data duplikat", "Duplicate records"),
     result: dup ? "warning" : "pass",
-    detail: dup ? pick(`${dup.description} Data duplikat dihapus sebelum pemodelan.`, pick(`${dup.description} Duplikat dibuang sebelum pemodelan.`, pick(`${dup.description} Duplikat dibuang sebelum pemodelan.`, `${dup.description} Duplicates are removed before modelling.`))) : pick("Tidak ada data duplikat.", "No duplicate records detected."),
+    detail: dup ? pick(`${dup.description} Data duplikat dihapus sebelum pemodelan.`, `${dup.description} Duplicates are removed before modelling.`) : pick("Tidak ada data duplikat.", "No duplicate records detected."),
   });
   const outliers = db.dqIssues.find((i) => i.type === "extreme_outlier" && i.status !== "resolved");
   checks.push({
@@ -200,25 +201,25 @@ function checksFor(db: WorkspaceDb, input: RunInput): ValidationCheck[] {
     key: "fields",
     label: pick("Kolom wajib", "Required fields"),
     result: input.name.trim().length === 0 ? "blocking" : "pass",
-    detail: input.name.trim().length === 0 ? pick("Beri nama proses agar mudah ditemukan lagi.", "Give the run a name so it can be found later.") : pick("Nama proses, cakupan, periode, rentang, dan model sudah diisi.", pick("Nama proses, cakupan, periode, rentang, dan model sudah diatur.", "Run name, scope, window, horizon and model are set.")),
+    detail: input.name.trim().length === 0 ? pick("Beri nama proses agar mudah ditemukan lagi.", "Give the run a name so it can be found later.") : pick("Nama proses, cakupan, periode, rentang, dan model sudah diisi.", "Run name, scope, window, horizon and model are set."),
   });
   const model = db.models.find((m) => m.id === input.modelId);
   const compatible = model && model.status !== "archived" && input.horizonDays <= model.horizonDays && model.frequency === input.frequency;
   checks.push({
     key: "model",
-    label: pick("Kompatibilitas model", pick("Kecocokan model", "Model compatibility")),
+    label: pick("Kompatibilitas model", "Model compatibility"),
     result: !model ? "blocking" : compatible ? (model.status === "candidate" ? "warning" : "pass") : "blocking",
     detail: !model
       ? pick("Pilih model.", "Select a model.")
       : !compatible
         ? model.status === "archived"
-          ? pick(`${model.name} ${model.version} sudah diarsipkan.`, pick(`${model.name} ${model.version} sudah diarsipkan.`, pick(`${model.name} ${model.version} sudah diarsipkan.`, `${model.name} ${model.version} is archived.`)))
+          ? pick(`${model.name} ${model.version} sudah diarsipkan.`, `${model.name} ${model.version} is archived.`)
           : model.frequency !== input.frequency
-            ? pick(`${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency === "daily" ? "harian" : "mingguan"}.`, pick(`${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency}.`, pick(`${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency}.`, `${model.name} ${model.version} only supports ${model.frequency} forecasts.`)))
-            : pick(`${model.name} ${model.version} mendukung rentang hingga ${model.horizonDays} hari.`, pick(`${model.name} ${model.version} mendukung rentang sampai ${model.horizonDays} hari.`, pick(`${model.name} ${model.version} mendukung rentang sampai ${model.horizonDays} hari.`, `${model.name} ${model.version} supports horizons up to ${model.horizonDays} days.`)))
+            ? pick(`${model.name} ${model.version} hanya mendukung perkiraan ${model.frequency === "daily" ? "harian" : "mingguan"}.`, `${model.name} ${model.version} only supports ${model.frequency} forecasts.`)
+            : pick(`${model.name} ${model.version} mendukung rentang hingga ${model.horizonDays} hari.`, `${model.name} ${model.version} supports horizons up to ${model.horizonDays} days.`)
         : model.status === "candidate"
-          ? pick(`${model.name} ${model.version} masih kandidat. Hasilnya sebaiknya tidak diterbitkan sebelum ditinjau.`, pick(`${model.name} ${model.version} adalah kandidat. Hasil sebaiknya tidak diterbitkan tanpa ditinjau.`, pick(`${model.name} ${model.version} adalah kandidat. Hasil sebaiknya tidak diterbitkan tanpa ditinjau.`, `${model.name} ${model.version} is a candidate. Results should not be published without review.`)))
-          : pick(`${model.name} ${model.version} sudah produksi dan mendukung rentang ini.`, pick(`${model.name} ${model.version} sedang di produksi dan mendukung rentang ini.`, pick(`${model.name} ${model.version} sedang di produksi dan mendukung rentang ini.`, `${model.name} ${model.version} is in production and supports this horizon.`))),
+          ? pick(`${model.name} ${model.version} masih kandidat. Hasilnya sebaiknya tidak diterbitkan sebelum ditinjau.`, `${model.name} ${model.version} is a candidate. Results should not be published without review.`)
+          : pick(`${model.name} ${model.version} sudah produksi dan mendukung rentang ini.`, `${model.name} ${model.version} is in production and supports this horizon.`),
   });
   return checks;
 }
@@ -233,7 +234,7 @@ export function createRun(ctx: ApiContext, input: RunInput) {
     const checks = checksFor(db, input);
     const blocking = checks.filter((c) => c.result === "blocking");
     if (blocking.length > 0) {
-      throw new ApiError("The run has blocking validation issues.", "validation", blocking.map((b) => b.detail).join(" "));
+      throw new ApiError(pick("Proses memiliki masalah pemeriksaan yang menghambat.", "The run has blocking validation issues."), "validation", blocking.map((b) => b.detail).join(" "));
     }
     const model = db.models.find((m) => m.id === input.modelId);
     const now = Date.now();
@@ -288,7 +289,7 @@ function mutateRun(ctx: ApiContext, runId: string, fn: (run: ForecastRun, db: Wo
   syncRuns(db);
   const idx = db.runs.findIndex((r) => r.id === runId);
   const run = db.runs[idx];
-  if (!run) throw new ApiError(`Forecast run ${runId} was not found.`, "not_found");
+  if (!run) throw new ApiError(pick(`Proses perkiraan ${runId} tidak ditemukan.`, `Forecast run ${runId} was not found.`), "not_found");
   const next = fn(run, db);
   db.runs[idx] = next;
   return next;
@@ -298,7 +299,7 @@ export function cancelRun(ctx: ApiContext, runId: string, reason: string) {
   return write(ctx, "forecast.run.cancel", () =>
     mutateRun(ctx, runId, (run, db) => {
       if (run.status !== "queued" && run.status !== "running") {
-        throw new ApiError(`Only queued or running runs can be cancelled. This run is ${run.status}.`, "conflict");
+        throw new ApiError(pick(`Hanya proses yang antre atau berjalan yang dapat dibatalkan. Status proses ini ${run.status}.`, `Only queued or running runs can be cancelled. This run is ${run.status}.`), "conflict");
       }
       const now = iso(Date.now());
       audit(db, { actorId: ctx.userId, action: "cancel_forecast_run", entityType: "forecast_run", entityId: run.id, entityLabel: run.name, previousState: run.status, newState: "cancelled", reason: reason || null, source: "web" });
@@ -306,7 +307,7 @@ export function cancelRun(ctx: ApiContext, runId: string, reason: string) {
         ...run,
         status: "cancelled",
         completedAt: now,
-        steps: run.steps.map((s) => (s.status === "running" ? { ...s, status: "skipped", completedAt: now, detail: `Cancelled by ${actorName(ctx.userId)}.` } : s.status === "pending" ? { ...s, status: "skipped" } : s)),
+        steps: run.steps.map((s) => (s.status === "running" ? { ...s, status: "skipped", completedAt: now, detail: pick(`Dibatalkan oleh ${actorName(ctx.userId)}.`, `Cancelled by ${actorName(ctx.userId)}.`) } : s.status === "pending" ? { ...s, status: "skipped" } : s)),
       };
     }),
   );
@@ -316,7 +317,7 @@ export function retryRun(ctx: ApiContext, runId: string) {
   return write(ctx, "forecast.run.create", () =>
     mutateRun(ctx, runId, (run, db) => {
       if (run.status !== "failed" && run.status !== "cancelled") {
-        throw new ApiError("Only failed or cancelled runs can be retried.", "conflict");
+        throw new ApiError(pick("Hanya proses yang gagal atau dibatalkan yang dapat dijalankan ulang.", "Only failed or cancelled runs can be retried."), "conflict");
       }
       const input: RunInput = {
         name: run.name,
@@ -331,7 +332,7 @@ export function retryRun(ctx: ApiContext, runId: string) {
       };
       const blocking = checksFor(db, input).filter((c) => c.result === "blocking");
       if (blocking.length > 0) {
-        throw new ApiError("Validation still fails.", "validation", blocking.map((b) => b.detail).join(" "));
+        throw new ApiError(pick("Pemeriksaan masih gagal.", "Validation still fails."), "validation", blocking.map((b) => b.detail).join(" "));
       }
       const now = Date.now();
       audit(db, { actorId: ctx.userId, action: "retry_forecast_run", entityType: "forecast_run", entityId: run.id, entityLabel: run.name, previousState: run.status, newState: "queued", reason: null, source: "web" });
@@ -343,11 +344,11 @@ export function retryRun(ctx: ApiContext, runId: string) {
 export function publishRun(ctx: ApiContext, runId: string, reason: string) {
   return write(ctx, "forecast.run.publish", () =>
     mutateRun(ctx, runId, (run, db) => {
-      if (run.status !== "completed") throw new ApiError("Only completed runs can be published.", "conflict");
+      if (run.status !== "completed") throw new ApiError(pick("Hanya proses yang selesai yang dapat diterbitkan.", "Only completed runs can be published."), "conflict");
       const previous = baselineRun(db);
       audit(db, { actorId: ctx.userId, action: "publish_forecast_run", entityType: "forecast_run", entityId: run.id, entityLabel: run.name, previousState: "completed", newState: "published", reason: reason || null, source: "web" });
       if (previous) {
-        audit(db, { actorId: ctx.userId, action: "publish_forecast_run", entityType: "forecast_run", entityId: previous.id, entityLabel: previous.name, previousState: "baseline", newState: "superseded", reason: `Superseded by ${run.id}`, source: "web" });
+        audit(db, { actorId: ctx.userId, action: "publish_forecast_run", entityType: "forecast_run", entityId: previous.id, entityLabel: previous.name, previousState: "baseline", newState: "superseded", reason: pick(`Digantikan oleh ${run.id}`, `Superseded by ${run.id}`), source: "web" });
       }
       return { ...run, status: "published", publishedAt: iso(Date.now()) };
     }),
@@ -357,8 +358,8 @@ export function publishRun(ctx: ApiContext, runId: string, reason: string) {
 export function archiveRun(ctx: ApiContext, runId: string) {
   return write(ctx, "forecast.run.archive", () =>
     mutateRun(ctx, runId, (run, db) => {
-      if (run.status === "queued" || run.status === "running") throw new ApiError("Cancel the run before archiving it.", "conflict");
-      if (baselineRun(db)?.id === run.id) throw new ApiError("This run is the current planning baseline and cannot be archived.", "conflict", "Publish a newer run first.");
+      if (run.status === "queued" || run.status === "running") throw new ApiError(pick("Batalkan proses sebelum mengarsipkannya.", "Cancel the run before archiving it."), "conflict");
+      if (baselineRun(db)?.id === run.id) throw new ApiError(pick("Proses ini adalah acuan perencanaan saat ini dan tidak dapat diarsipkan.", "This run is the current planning baseline and cannot be archived."), "conflict", pick("Terbitkan proses yang lebih baru terlebih dahulu.", "Publish a newer run first."));
       audit(db, { actorId: ctx.userId, action: "archive_forecast_run", entityType: "forecast_run", entityId: run.id, entityLabel: run.name, previousState: run.status, newState: "archived", reason: null, source: "web" });
       return { ...run, status: "archived" };
     }),
@@ -443,9 +444,9 @@ const rowSpec: ListSpec<ExplorerRow> = {
 function resolveRun(db: WorkspaceDb, runId?: string | null) {
   syncRuns(db);
   const run = runId ? db.runs.find((r) => r.id === runId) : baselineRun(db);
-  if (!run) throw new ApiError(runId ? `Forecast run ${runId} was not found.` : "No published forecast run exists in this workspace yet.", "not_found");
+  if (!run) throw new ApiError(runId ? pick(`Proses perkiraan ${runId} tidak ditemukan.`, `Forecast run ${runId} was not found.`) : pick("Belum ada proses perkiraan terbit di ruang kerja ini.", "No published forecast run exists in this workspace yet."), "not_found");
   if (run.status !== "completed" && run.status !== "published" && run.status !== "archived") {
-    throw new ApiError(`Results are not available: the run is ${run.status}.`, "conflict");
+    throw new ApiError(pick(`Hasil belum tersedia: status proses ${run.status}.`, `Results are not available: the run is ${run.status}.`), "conflict");
   }
   return run;
 }
@@ -526,10 +527,10 @@ export function getForecastDetail(ctx: ApiContext, productId: string, runId: str
   return read(() => {
     const db = getDb(ctx.workspaceId);
     const product = db.productById.get(productId);
-    if (!product) throw new ApiError("This product does not exist in the current workspace.", "not_found", "It may belong to another workspace.");
+    if (!product) throw new ApiError(pick("Produk ini tidak ada di ruang kerja saat ini.", "This product does not exist in the current workspace."), "not_found", pick("Produk ini mungkin milik ruang kerja lain.", "It may belong to another workspace."));
     const run = resolveRun(db, runId);
     if (!productsInScope(db, run).some((p) => p.id === productId)) {
-      throw new ApiError(`${product.name} is outside the scope of run ${run.id}.`, "not_found");
+      throw new ApiError(pick(`${product.name} berada di luar cakupan proses ${run.id}.`, `${product.name} is outside the scope of run ${run.id}.`), "not_found");
     }
     const model = db.models.find((m) => m.id === run.modelId) ?? null;
     const s = simulate(paramsFor(db, productId), { today: db.today, horizonDays: run.horizonDays, model: modelProfile(model ?? undefined), scale: runScale(run) });
@@ -563,15 +564,15 @@ function signalsFor(db: WorkspaceDb, product: Product) {
   const signals: { label: string; detail: string; effect: "up" | "down" | "neutral" }[] = [];
   const upcomingPromo = p.promoStarts.find((s) => s >= 0 && s < 28);
   if (upcomingPromo !== undefined) {
-    signals.push({ label: "Planned promotion", detail: `Promotion starts in ${upcomingPromo} days (from promotions calendar, 4 days old).`, effect: "up" });
+    signals.push({ label: pick("Promosi terencana", "Planned promotion"), detail: pick(`Promosi mulai dalam ${upcomingPromo} hari (dari kalender promosi, diperbarui 4 hari lalu).`, `Promotion starts in ${upcomingPromo} days (from promotions calendar, 4 days old).`), effect: "up" });
   }
   if (Math.abs(p.trend) > 0.0015) {
-    signals.push({ label: p.trend > 0 ? "Rising trend" : "Declining trend", detail: `Underlying demand is ${p.trend > 0 ? "growing" : "declining"} about ${(Math.abs(p.trend) * 30 * 100).toFixed(1)}% per month.`, effect: p.trend > 0 ? "up" : "down" });
+    signals.push({ label: p.trend > 0 ? pick("Tren naik", "Rising trend") : pick("Tren turun", "Declining trend"), detail: pick(`Permintaan dasar ${p.trend > 0 ? "naik" : "turun"} sekitar ${(Math.abs(p.trend) * 30 * 100).toFixed(1)}% per bulan.`, `Underlying demand is ${p.trend > 0 ? "growing" : "declining"} about ${(Math.abs(p.trend) * 30 * 100).toFixed(1)}% per month.`), effect: p.trend > 0 ? "up" : "down" });
   }
-  if (product.lifecycle === "new") signals.push({ label: "New listing", detail: "Less than 90 days of history; the interval is wider while demand stabilises.", effect: "neutral" });
-  if (product.lifecycle === "end-of-life") signals.push({ label: "Phase-out", detail: "Marked end-of-life in the product master.", effect: "down" });
-  signals.push({ label: "Weekly pattern", detail: "Demand peaks on Saturdays and is lowest mid-week.", effect: "neutral" });
-  if (p.annualAmp > 0.12) signals.push({ label: "Seasonality", detail: `Strong annual seasonality (±${(p.annualAmp * 100).toFixed(0)}%).`, effect: "neutral" });
+  if (product.lifecycle === "new") signals.push({ label: pick("Produk baru", "New listing"), detail: pick("Riwayat kurang dari 90 hari; rentangnya lebih lebar sampai permintaan stabil.", "Less than 90 days of history; the interval is wider while demand stabilises."), effect: "neutral" });
+  if (product.lifecycle === "end-of-life") signals.push({ label: pick("Dihentikan", "Phase-out"), detail: pick("Ditandai akhir masa jual di data induk produk.", "Marked end-of-life in the product master."), effect: "down" });
+  signals.push({ label: pick("Pola mingguan", "Weekly pattern"), detail: pick("Permintaan memuncak pada hari Sabtu dan terendah di tengah pekan.", "Demand peaks on Saturdays and is lowest mid-week."), effect: "neutral" });
+  if (p.annualAmp > 0.12) signals.push({ label: pick("Musiman", "Seasonality"), detail: pick(`Pola musiman tahunan kuat (±${(p.annualAmp * 100).toFixed(0)}%).`, `Strong annual seasonality (±${(p.annualAmp * 100).toFixed(0)}%).`), effect: "neutral" });
   return signals;
 }
 
@@ -601,16 +602,19 @@ export function previewOverride(ctx: ApiContext, input: Pick<OverrideInput, "run
     delta,
     pct,
     needsApproval,
-    policy: `Overrides that change a forecast by more than ${(policy.overrideDeltaThreshold * 100).toFixed(0)}% or ${policy.overrideUnitsThreshold.toLocaleString("en-US")} units need ${policy.approverRole === "manager" ? "Manager" : policy.approverRole} approval.`,
+    policy: pick(
+      `Perubahan yang menggeser perkiraan lebih dari ${(policy.overrideDeltaThreshold * 100).toFixed(0)}% atau ${formatNumber(policy.overrideUnitsThreshold)} unit perlu persetujuan ${policy.approverRole === "manager" ? "Manajer" : policy.approverRole}.`,
+      `Overrides that change a forecast by more than ${(policy.overrideDeltaThreshold * 100).toFixed(0)}% or ${formatNumber(policy.overrideUnitsThreshold)} units need ${policy.approverRole === "manager" ? "Manager" : policy.approverRole} approval.`,
+    ),
   };
 }
 
 export function applyOverride(ctx: ApiContext, input: OverrideInput) {
   return write(ctx, "forecast.override", () => {
     const db = getDb(ctx.workspaceId);
-    if (input.productIds.length === 0) throw new ApiError("Select at least one product.", "validation");
-    if (!Number.isFinite(input.newUnits) || input.newUnits < 0) throw new ApiError("The override value must be zero or more.", "validation");
-    if (input.comment.trim().length < 10) throw new ApiError("Explain the override in at least 10 characters.", "validation");
+    if (input.productIds.length === 0) throw new ApiError(pick("Pilih minimal satu produk.", "Select at least one product."), "validation");
+    if (!Number.isFinite(input.newUnits) || input.newUnits < 0) throw new ApiError(pick("Nilai perubahan harus nol atau lebih.", "The override value must be zero or more."), "validation");
+    if (input.comment.trim().length < 10) throw new ApiError(pick("Jelaskan perubahan minimal 10 karakter.", "Explain the override in at least 10 characters."), "validation");
     const preview = previewOverride(ctx, input);
     const now = iso(Date.now());
     const override: Override = {
@@ -647,24 +651,27 @@ export function applyOverride(ctx: ApiContext, input: OverrideInput) {
         id: approvalId,
         type: "override",
         objectId: override.id,
-        objectLabel: product ? `Override · ${product.name}` : `Override · ${input.productIds.length} SKUs`,
+        objectLabel: product ? pick(`Perubahan · ${product.name}`, `Override · ${product.name}`) : pick(`Perubahan · ${input.productIds.length} SKU`, `Override · ${input.productIds.length} SKUs`),
         requestedBy: ctx.userId,
         requestedAt: now,
         dueAt: iso(Date.now() + DAY_MS),
         status: "pending",
-        impact: { units: preview.delta, percent: preview.pct, skuCount: input.productIds.length, summary: "Changes the planning baseline for the selected products." },
-        changeSet: [{ field: `Forecast (${resolveRun(db, input.runId).horizonDays} days)`, from: `${preview.original.toLocaleString("en-US")} units`, to: `${override.newUnits.toLocaleString("en-US")} units` }],
+        impact: { units: preview.delta, percent: preview.pct, skuCount: input.productIds.length, summary: pick("Mengubah acuan perencanaan untuk produk yang dipilih.", "Changes the planning baseline for the selected products.") },
+        changeSet: [{ field: pick(`Perkiraan (${resolveRun(db, input.runId).horizonDays} hari)`, `Forecast (${resolveRun(db, input.runId).horizonDays} days)`), from: `${preview.original.toLocaleString("en-US")} units`, to: `${override.newUnits.toLocaleString("en-US")} units` }],
         evidence: input.evidence ? [input.evidence] : [],
         assumptions: [input.comment],
-        policy: { name: "Override approval", rule: preview.policy, requiredRole: db.settings.approvals.approverRole },
-        afterApproval: "The override is applied to the planning baseline.",
-        history: [{ id: `${approvalId}-h1`, at: now, actorId: ctx.userId, text: "Requested approval." }],
+        policy: { name: pick("Persetujuan perubahan", "Override approval"), rule: preview.policy, requiredRole: db.settings.approvals.approverRole },
+        afterApproval: pick("Perubahan diterapkan ke acuan perencanaan.", "The override is applied to the planning baseline."),
+        history: [{ id: `${approvalId}-h1`, at: now, actorId: ctx.userId, text: pick("Meminta persetujuan.", "Requested approval.") }],
       });
       db.notifications.unshift({
         id: nextId(db, "ntf"),
         category: "approval_requested",
-        title: `Approval requested: ${product ? product.name : `${input.productIds.length} SKUs`} override`,
-        body: `${actorName(ctx.userId)} requested approval for ${preview.pct >= 0 ? "+" : "−"}${Math.abs(preview.pct * 100).toFixed(1)}%.`,
+        title: pick(`Persetujuan diminta: perubahan ${product ? product.name : `${input.productIds.length} SKU`}`, `Approval requested: ${product ? product.name : `${input.productIds.length} SKUs`} override`),
+        body: pick(
+          `${actorName(ctx.userId)} meminta persetujuan untuk perubahan ${formatDeltaPercent(preview.pct)}.`,
+          `${actorName(ctx.userId)} requested approval for ${formatDeltaPercent(preview.pct)}.`,
+        ),
         href: `/planning/approvals?id=${approvalId}`,
         createdAt: now,
         read: false,

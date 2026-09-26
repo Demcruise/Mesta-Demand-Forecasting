@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/overlay";
 import { isActive, NAV, type NavItem } from "./nav-config";
 import { WorkspaceSwitcher } from "./workspace-switcher";
+import { pick } from "@/lib/i18n";
 
 export function MestaMark({ className }: { className?: string }) {
   return (
@@ -37,7 +38,7 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
   const setup = onboarding.data && !onboarding.data.dismissed && !onboarding.data.complete ? onboarding.data : null;
 
   return (
-    <nav aria-label="Utama" className={cn("flex h-full flex-col bg-surface", !mobile && "border-r border-border")}>
+    <nav aria-label={pick("Utama", "Main")} className={cn("flex h-full flex-col bg-surface", !mobile && "border-r border-border")}>
       <div className={cn("flex h-[var(--topbar-h)] shrink-0 items-center border-b border-border", collapsed ? "justify-center px-2" : "gap-2.5 px-4")}>
         <Link href="/overview" className="flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-focus" onClick={onNavigate}>
           <MestaMark className="size-7 shrink-0" />
@@ -58,12 +59,12 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
             href="/onboarding"
             onClick={onNavigate}
             className={cn("flex items-center gap-2 rounded-md border border-primary/30 bg-primary-subtle text-[0.8125rem] font-semibold text-primary-subtle-fg hover:border-primary/60", collapsed ? "size-10 justify-center" : "px-2.5 py-2")}
-            aria-label={`Finish workspace setup, ${setup.steps.filter((s) => !s.optional && s.done).length} of ${setup.steps.filter((s) => !s.optional).length} steps done`}
+            aria-label={pick(`Selesaikan persiapan ruang kerja, ${setup.steps.filter((s) => !s.optional && s.done).length} dari ${setup.steps.filter((s) => !s.optional).length} langkah selesai`, `Finish workspace setup, ${setup.steps.filter((s) => !s.optional && s.done).length} of ${setup.steps.filter((s) => !s.optional).length} steps done`)}
           >
             <Rocket className="size-4 shrink-0" aria-hidden />
             {!collapsed && (
               <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                <span className="truncate">Selesaikan persiapan</span>
+                <span className="truncate">{pick("Selesaikan persiapan", "Finish setup")}</span>
                 <span className="tabular text-xs">
                   {setup.steps.filter((s) => !s.optional && s.done).length}/{setup.steps.filter((s) => !s.optional).length}
                 </span>
@@ -93,11 +94,11 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
             type="button"
             onClick={() => setPreference("sidebarCollapsed", !sidebarCollapsed)}
             className={cn("flex h-8 w-full items-center gap-2 rounded-md px-2 text-[0.8125rem] font-semibold text-fg-secondary hover:bg-hover hover:text-fg", collapsed && "justify-center px-0")}
-            aria-label={collapsed ? "Buka bilah samping" : "Tutup bilah samping"}
+            aria-label={collapsed ? pick("Buka bilah samping", "Expand sidebar") : pick("Ciutkan bilah samping", "Collapse sidebar")}
             aria-expanded={!collapsed}
           >
             {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
-            {!collapsed && "Tutup"}
+            {!collapsed && pick("Ciutkan", "Collapse")}
           </button>
         </div>
       )}
@@ -121,13 +122,13 @@ function NavLink({ item, active, collapsed, count, locked, onNavigate }: { item:
       {active && <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-primary" aria-hidden />}
       <Icon className="size-4 shrink-0" aria-hidden />
       {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
-      {!collapsed && locked && <Lock className="size-3 shrink-0 text-fg-tertiary" aria-label="Terbatas" />}
+      {!collapsed && locked && <Lock className="size-3 shrink-0 text-fg-tertiary" aria-label={pick("Terbatas", "Restricted")} />}
       {!collapsed && count !== undefined && count > 0 && (
-        <span className="shrink-0 rounded-full bg-muted px-1.5 text-[0.6875rem] font-bold tabular leading-[1.125rem] text-fg-secondary" aria-label={`${count} open`}>
+        <span className="shrink-0 rounded-full bg-muted px-1.5 text-[0.6875rem] font-bold tabular leading-[1.125rem] text-fg-secondary" aria-label={pick(`${count} terbuka`, `${count} open`)}>
           {count > 99 ? "99+" : count}
         </span>
       )}
-      {collapsed && count !== undefined && count > 0 && <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-warning" aria-label={`${count} open`} />}
+      {collapsed && count !== undefined && count > 0 && <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-warning" aria-label={pick(`${count} terbuka`, `${count} open`)} />}
     </Link>
   );
   return collapsed ? (

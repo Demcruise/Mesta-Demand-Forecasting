@@ -352,6 +352,13 @@
   text-transform: uppercase;
   color: var(--fg-tertiary);
 }
+@utility numeric-xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
 @utility numeric-lg {
   font-size: 1.625rem;
   line-height: 2rem;

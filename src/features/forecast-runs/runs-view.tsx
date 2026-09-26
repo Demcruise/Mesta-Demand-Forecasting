@@ -61,7 +61,7 @@ export function RunsView() {
               <StatusBadge status={r.status} size="sm" />
               {(r.status === "running" || r.status === "queued") && (
                 <span className="text-[0.6875rem] text-fg-tertiary">
-                  Langkah {Math.min(p.done + 1, p.total)} dari {p.total}
+                  {pick(`Langkah ${Math.min(p.done + 1, p.total)} dari ${p.total}`, `Step ${Math.min(p.done + 1, p.total)} of ${p.total}`)}
                   {p.current ? ` · ${p.current.label}` : ""}
                 </span>
               )}
@@ -89,8 +89,9 @@ export function RunsView() {
       {
         id: "horizon",
         header: pick("Periode", "Horizon"),
-        meta: { width: "90px", numeric: true, sortKey: "horizon" } satisfies ColumnMeta,
-        cell: ({ row }) => pick(`${row.original.horizonDays} h`, `${row.original.horizonDays} d`),
+        // Horizon is a categorical period, not a quantity: it shares the left text axis (PAGE-RUNS-001).
+        meta: { width: "100px", align: "left", sortKey: "horizon" } satisfies ColumnMeta,
+        cell: ({ row }) => <span className="tabular">{pick(`${row.original.horizonDays} hari`, `${row.original.horizonDays} days`)}</span>,
       },
       {
         id: "created",
@@ -111,8 +112,8 @@ export function RunsView() {
       },
       {
         id: "freshness",
-        header: pick("Terakhir Diperbarui", pick("Kebaruan data", "Data freshness")),
-        meta: { width: "170px", hideBelow: "lg", description: pick("Kapan data permintaan terakhir diperbarui.", pick("Kapan data permintaan masukan terakhir diperbarui.", "When the input demand data was last refreshed.")) } satisfies ColumnMeta,
+        header: pick("Terakhir Diperbarui", "Data freshness"),
+        meta: { width: "170px", hideBelow: "lg", description: pick("Kapan data permintaan masukan terakhir diperbarui.", "When the input demand data was last refreshed.") } satisfies ColumnMeta,
         cell: ({ row }) => <FreshnessIndicator timestamp={row.original.dataAsOf} label={pick("Data", "Data")} />,
       },
       {
@@ -124,7 +125,7 @@ export function RunsView() {
       {
         id: "actions",
         header: () => <span className="sr-only">{pick("Aksi", "Actions")}</span>,
-        meta: { width: "52px", pinned: true, label: pick("Aksi", "Actions") } satisfies ColumnMeta,
+        meta: { width: "52px", pinned: true, align: "center", label: pick("Aksi", "Actions") } satisfies ColumnMeta,
         cell: ({ row }) => <RunActionMenu run={row.original} actions={actions} baselineId={baseline?.id} />,
       },
     ],
@@ -135,11 +136,11 @@ export function RunsView() {
     <PageContainer>
       <PageHeader
         title={pick("Proses Perkiraan", "Forecast runs")}
-        description={pick("Lihat proses yang sedang berjalan dan hasil perkiraan sebelumnya.", "Every forecast generation job in this workspace: what it covered, which model produced it and whether it can be used.")}
+        description={pick("Lihat proses yang sedang berjalan dan hasil perkiraan sebelumnya.", "See running jobs and the results of earlier forecasts.")}
         actions={
           can("forecast.run.create") ? (
             <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "primary" })}>
-              <Plus aria-hidden /> Buat Perkiraan
+              <Plus aria-hidden /> {pick("Buat Perkiraan", "Create forecast")}
             </Link>
           ) : undefined
         }
@@ -195,7 +196,7 @@ export function RunsView() {
               action={
                 can("forecast.run.create") ? (
                   <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "primary" })}>
-                    Buat Perkiraan
+                    {pick("Buat Perkiraan", "Create forecast")}
                   </Link>
                 ) : undefined
               }

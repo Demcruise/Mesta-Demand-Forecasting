@@ -22,9 +22,9 @@ import { ForecastChart } from "@/components/charts/forecast-chart";
 import { AuditTimeline } from "@/components/governance/audit";
 import { useBreadcrumbLeaf } from "@/components/shell/app-shell";
 import { OVERRIDE_REASONS, OverrideDialog } from "./override-dialog";
-import { pick } from "@/lib/i18n";
+import { localizedRecord, pick } from "@/lib/i18n";
 
-const LIFECYCLE_LABELS: Record<string, string> = { new: "Baru", core: "Inti", seasonal: "Musiman", "end-of-life": "Akhir masa" };
+const LIFECYCLE_LABELS: Record<string, string> = localizedRecord({ new: "Baru", core: "Inti", seasonal: "Musiman", "end-of-life": "Akhir masa" }, { new: "New", core: "Core", seasonal: "Seasonal", "end-of-life": "End of life" });
 
 /** PAGE-FORECAST-DETAIL: explain one forecasted entity. */
 export function ForecastDetailView({ productId }: { productId: string }) {
@@ -53,7 +53,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
             onRetry={() => q.refetch()}
             recovery={
               <Link href="/forecasting/explorer" className={buttonVariants({ variant: "secondary" })}>
-                Back to forecast explorer
+                {pick("Kembali ke Perkiraan Permintaan", "Back to forecast explorer")}
               </Link>
             }
           />
@@ -81,22 +81,22 @@ export function ForecastDetailView({ productId }: { productId: string }) {
           <>
             {d.row && <StatusBadge status={d.row.status} />}
             <MetaItem>
-              Proses <Link href={`/forecasting/runs/${d.run.id}`} className="mono-id text-primary hover:underline">{d.run.id}</Link>
+              {pick("Proses", "Run")} <Link href={`/forecasting/runs/${d.run.id}`} className="mono-id text-primary hover:underline">{d.run.id}</Link>
               {d.run.status !== "published" && pick(" (belum diterbitkan)", " (not published)")}
             </MetaItem>
-            <MetaItem>Periode perkiraan {formatDateRange(s.periodStart, s.periodEnd)}</MetaItem>
-            <MetaItem>Siklus produk: {LIFECYCLE_LABELS[d.product.lifecycle] ?? d.product.lifecycle}</MetaItem>
+            <MetaItem>{pick("Periode perkiraan", "Forecast period")} {formatDateRange(s.periodStart, s.periodEnd)}</MetaItem>
+            <MetaItem>{pick("Siklus produk", "Lifecycle")}: {LIFECYCLE_LABELS[d.product.lifecycle] ?? d.product.lifecycle}</MetaItem>
             <FreshnessIndicator timestamp={d.run.dataAsOf} label={pick("Data masukan per", "Input data as of")} />
           </>
         }
         actions={
           <>
             <Link href={`/forecasting/lineage?product=${d.product.id}`} className={buttonVariants({ variant: "secondary" })}>
-              <GitBranch aria-hidden /> Sumber keputusan
+              <GitBranch aria-hidden /> {pick("Jejak perkiraan", "Forecast lineage")}
             </Link>
             {can("forecast.override") && d.run.status === "published" && (
               <Button variant="primary" onClick={() => setOverrideOpen(true)}>
-                <Pencil aria-hidden /> Ubah Perkiraan
+                <Pencil aria-hidden /> {pick("Ubah Perkiraan", "Override forecast")}
               </Button>
             )}
           </>
@@ -109,7 +109,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
             label={pick(`Perkiraan permintaan · ${s.horizonDays} hari`, `Expected demand · ${s.horizonDays} days`)}
             value={formatNumber(s.forecastValue)}
             unit={d.product.unit}
-            context={pick(`rata-rata ${formatNumber(Math.round(s.forecastValue / s.horizonDays))} per hari`, pick(`${formatNumber(Math.round(s.forecastValue / s.horizonDays))} per hari rata-rata`, pick(`${formatNumber(Math.round(s.forecastValue / s.horizonDays))} per hari rata-rata`, `${formatNumber(Math.round(s.forecastValue / s.horizonDays))} per day on average`)))}
+            context={pick(`rata-rata ${formatNumber(Math.round(s.forecastValue / s.horizonDays))} per hari`, `${formatNumber(Math.round(s.forecastValue / s.horizonDays))} per day on average`)}
           />
           <MetricCard label={pick("Perubahan vs proses sebelumnya", "Change vs previous run")} value={<SignedPercent percent={s.deltaPercent} />} delta={<ForecastDelta percent={s.deltaPercent} size="sm" />} context={pick(`${formatDeltaNumber(s.delta)} ${d.product.unit} (sebelumnya ${formatNumber(s.previousForecast)})`, `${formatDeltaNumber(s.delta)} ${d.product.unit} (previous ${formatNumber(s.previousForecast)})`)} />
           <MetricCard label={pick("Perubahan vs aktual terakhir", "Change vs recent actuals")} value={<SignedPercent percent={vsActual} />} context={pick(`Permintaan aktual ${s.horizonDays} hari sebelumnya: ${formatNumber(s.actualLastPeriod)}`, `Actual demand in the ${s.horizonDays} days before: ${formatNumber(s.actualLastPeriod)}`)} />
@@ -122,7 +122,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
                 ? pick("Ada perubahan manual yang menunggu persetujuan.", "An override is waiting for approval.")
                 : d.row?.overrideUnits != null
                   ? pick("Diterapkan pada acuan perencanaan.", "Applied to the planning baseline.")
-                  : pick("Perkiraan model yang dipakai untuk perencanaan.", pick("Perkiraan model dipakai untuk perencanaan.", "The model forecast is used for planning."))
+                  : pick("Perkiraan model yang dipakai untuk perencanaan.", "The model forecast is used for planning.")
             }
           />
         </MetricStrip>
@@ -131,7 +131,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
       <ForecastChart
         title={pick("Permintaan historis dan perkiraan", "Historical demand and forecast")}
         points={pointsWindow}
-        unit={pick(`${d.product.unit} per hari`, pick(`${d.product.unit} per hari`, pick(`${d.product.unit} per hari`, `${d.product.unit} per day`)))}
+        unit={pick(`${d.product.unit} per hari`, `${d.product.unit} per day`)}
         source={pick("Transaksi POS, pesanan penjualan ERP", "POS transactions, ERP sales orders")}
         asOf={d.run.dataAsOf}
         summary={pick(`Periode perkiraan ${formatDateRange(s.periodStart, s.periodEnd)}. Perkiraan permintaan ${formatNumber(s.forecastValue)} ${d.product.unit}; rentang ${formatNumber(s.lowerBound)} – ${formatNumber(s.upperBound)} ${d.product.unit}.`, `Forecast period ${formatDateRange(s.periodStart, s.periodEnd)}. Expected demand ${formatNumber(s.forecastValue)} ${d.product.unit}; range ${formatNumber(s.lowerBound)} – ${formatNumber(s.upperBound)} ${d.product.unit}.`)}
@@ -150,11 +150,15 @@ export function ForecastDetailView({ productId }: { productId: string }) {
           />
           <ForecastInterval className="mt-5" lower={s.lowerBound} upper={s.upperBound} forecast={s.forecastValue} comparison={s.previousForecast} override={d.row?.overrideUnits} unit={d.product.unit} coverage={s.coverage} />
           <p className="mt-4 body-sm text-fg-secondary">
-            Pada 8 dari 10 periode yang sebanding, permintaan aktual berada di antara {formatNumber(s.lowerBound)} dan {formatNumber(s.upperBound)} {d.product.unit}. Rentangnya {formatPercent(width, 0)} dari perkiraan
-            {width > 0.9 ? pick(", yang tergolong lebar: gunakan angka perkiraan dengan hati-hati.", ", which is wide: treat the point forecast with caution.") : "."} Definisi rentang masih perlu dikonfirmasi dengan pemilik analitik.
+            {pick(
+              `Pada 8 dari 10 periode yang sebanding, permintaan aktual berada di antara ${formatNumber(s.lowerBound)} dan ${formatNumber(s.upperBound)} ${d.product.unit}. Rentangnya ${formatPercent(width, 0)} dari perkiraan`,
+              `In 8 of 10 comparable periods, actual demand fell between ${formatNumber(s.lowerBound)} and ${formatNumber(s.upperBound)} ${d.product.unit}. The range is ${formatPercent(width, 0)} of the forecast`,
+            )}
+            {width > 0.9 ? pick(", yang tergolong lebar: gunakan angka perkiraan dengan hati-hati.", ", which is wide: treat the point forecast with caution.") : "."}{" "}
+            {pick("Definisi rentang masih perlu dikonfirmasi dengan pemilik analitik.", "The interval definition still needs confirmation with the analytics owner.")}
           </p>
         </Panel>
-        <Panel title={pick("Pendorong dan asumsi", "Drivers and assumptions")} description={pick("Apa yang dipakai model dan apa yang mungkin belum tercakup.", pick("Apa yang dipakai model dan apa yang mungkin kurang.", "What the model used and what it may be missing."))}>
+        <Panel title={pick("Pendorong dan asumsi", "Drivers and assumptions")} description={pick("Apa yang dipakai model dan apa yang mungkin belum tercakup.", "What the model used and what it may be missing.")}>
           <ul className="flex flex-col gap-3">
             {d.signals.map((sig) => {
               const Icon = sig.effect === "up" ? ArrowUpRight : sig.effect === "down" ? ArrowDownRight : Minus;
@@ -199,7 +203,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
                   { label: pick("Versi", "Version"), value: d.model.version },
                   { label: pick("Terakhir dilatih", "Last trained"), value: formatDate(d.model.lastTrainedAt) },
                   { label: pick("Periode pelatihan", "Training period"), value: formatDateRange(d.model.trainingStart, d.model.trainingEnd) },
-                  { label: pick("WAPE portofolio", "Portfolio WAPE"), value: formatPercent(d.model.metrics.wape), hint: pick(`${formatDate(d.model.metrics.evaluationStart)} – ${formatDate(d.model.metrics.evaluationEnd)}`, pick(`${formatDate(d.model.metrics.evaluationStart)} – ${formatDate(d.model.metrics.evaluationEnd)}`, `${formatDate(d.model.metrics.evaluationStart)} – ${formatDate(d.model.metrics.evaluationEnd)}`)) },
+                  { label: pick("WAPE portofolio", "Portfolio WAPE"), value: formatPercent(d.model.metrics.wape), hint: pick(`${formatDate(d.model.metrics.evaluationStart)} – ${formatDate(d.model.metrics.evaluationEnd)}`, `${formatDate(d.model.metrics.evaluationStart)} – ${formatDate(d.model.metrics.evaluationEnd)}`) },
                 ]}
               />
             )}
@@ -220,7 +224,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
           flush
           actions={
             <Link href={`/planning/exceptions?q=${encodeURIComponent(d.product.sku)}`} className="text-xs font-semibold text-primary hover:underline">
-              Lihat di Perlu Ditinjau
+              {pick("Lihat di Perlu Ditinjau", "View in Exceptions")}
             </Link>
           }
         >
@@ -230,7 +234,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
             <ul>
               {d.exceptions.map((e) => (
                 <li key={e.id} className="border-b border-border-subtle last:border-b-0">
-                  <Link href={`/planning/exceptions?id=${e.id}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 px-4 py-3 hover:bg-hover">
+                  <Link href={`/planning/exceptions?id=${e.id}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 hover:bg-hover">
                     <SeverityBadge severity={e.severity} size="sm" />
                     <span className="min-w-0 body-sm text-fg-secondary">
                       <span className="mono-id mr-1.5 text-fg">{e.id}</span>
@@ -255,7 +259,7 @@ export function ForecastDetailView({ productId }: { productId: string }) {
                 <li key={o.id} className="rounded-md border border-border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="body-sm font-semibold">
-                      {formatNumber(o.originalUnits)} → {formatNumber(o.newUnits)} unit (<SignedPercent percent={(o.newUnits - o.originalUnits) / o.originalUnits} />)
+                      {formatNumber(o.originalUnits)} → {formatNumber(o.newUnits)} {pick("unit", "units")} (<SignedPercent percent={(o.newUnits - o.originalUnits) / o.originalUnits} />)
                     </span>
                     <StatusBadge status={o.status === "applied" ? "approved" : o.status === "pending_approval" ? "pending" : "rejected"} label={o.status === "applied" ? pick("Diterapkan", "Applied") : o.status === "pending_approval" ? pick("Menunggu persetujuan", "Pending approval") : pick("Ditolak", "Rejected")} size="sm" />
                   </div>

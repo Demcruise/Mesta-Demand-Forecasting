@@ -102,7 +102,7 @@ export function getNav(locale: Locale = getActiveLocale()): NavGroup[] {
         { label: isId ? "Pemantauan" : "Monitoring", href: "/monitoring", icon: BarChart3 },
         { label: isId ? "Riwayat Aktivitas" : "Audit Log", href: "/administration/audit", icon: ScrollText, permission: "audit.view" },
         { label: isId ? "Pengguna & Akses" : "Users & Roles", href: "/administration/users", icon: Users, permission: "users.manage" },
-        { label: isId ? "Sumber Keputusan" : "Decision Lineage", href: "/forecasting/lineage", icon: Waypoints },
+        { label: isId ? "Jejak Perkiraan" : "Forecast Lineage", href: "/forecasting/lineage", icon: Waypoints },
         { label: isId ? "Pengaturan" : "Settings", href: "/administration/settings", icon: Settings, match: ["/administration/settings"] },
       ],
     },
@@ -161,7 +161,7 @@ const SEGMENT_LABELS_ID: Record<string, string> = {
   users: "Pengguna & Akses",
   audit: "Riwayat Aktivitas",
   settings: "Pengaturan",
-  lineage: "Sumber Keputusan",
+  lineage: "Jejak Perkiraan",
   onboarding: "Persiapan Ruang Kerja",
   schedules: "Jadwal Perkiraan",
 };
@@ -193,7 +193,7 @@ const SEGMENT_LABELS_EN: Record<string, string> = {
   users: "Users & Roles",
   audit: "Audit Log",
   settings: "Settings",
-  lineage: "Decision Lineage",
+  lineage: "Forecast Lineage",
   onboarding: "Workspace Setup",
   schedules: "Forecast Schedules",
 };

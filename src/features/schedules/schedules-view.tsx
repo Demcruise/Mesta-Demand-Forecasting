@@ -46,8 +46,8 @@ export function SchedulesView() {
 
   const save = useApiMutation((c, v: { id: string | null; input: ScheduleInput }) => saveSchedule(c, v.id, v.input), {
     invalidate: inv,
-    success: (s) => `Schedule “${s.name}” saved`,
-    successDescription: (s) => `Next run ${s.enabled ? "as scheduled" : "paused"}.`,
+    success: (s) => pick(`Jadwal “${s.name}” tersimpan`, `Schedule “${s.name}” saved`),
+    successDescription: (s) => pick(`Proses berikutnya ${s.enabled ? "sesuai jadwal" : "dijeda"}.`, `Next run ${s.enabled ? "as scheduled" : "paused"}.`),
     failure: pick("Jadwal tidak dapat disimpan.", "The schedule was not saved."),
     onSuccess: () => setEditing(null),
   });
@@ -55,7 +55,7 @@ export function SchedulesView() {
   const remove = useApiMutation((c, id: string) => deleteSchedule(c, id), { invalidate: inv, success: pick("Jadwal dihapus", "Schedule deleted"), failure: pick("Jadwal tidak dapat dihapus.", "The schedule was not deleted."), onSuccess: () => setDeleting(null) });
   const runNow = useApiMutation((c, id: string) => runScheduleNow(c, id), {
     invalidate: inv,
-    success: (r) => `Started ${r.id}`,
+    success: (r) => pick(`${r.id} dimulai`, `Started ${r.id}`),
     failure: pick("Proses tidak dimulai.", "The run did not start."),
     onSuccess: (r) => {
       track("forecast_run_started", { source: "schedule" });
@@ -83,7 +83,7 @@ export function SchedulesView() {
         id: "next",
         header: pick("Proses berikutnya", "Next run"),
         meta: { width: "170px" } satisfies ColumnMeta,
-        cell: ({ row }) => (row.original.nextRunAt ? <span className="tabular" title={formatDateTime(row.original.nextRunAt)}>{formatRelative(row.original.nextRunAt)}</span> : <span className="text-fg-tertiary">Dijeda</span>),
+        cell: ({ row }) => (row.original.nextRunAt ? <span className="tabular" title={formatDateTime(row.original.nextRunAt)}>{formatRelative(row.original.nextRunAt)}</span> : <span className="text-fg-tertiary">{pick("Dijeda", "Paused")}</span>),
       },
       {
         id: "last",
@@ -98,21 +98,21 @@ export function SchedulesView() {
           ) : row.original.lastRunAt ? (
             <span className="text-xs text-fg-secondary">{formatRelative(row.original.lastRunAt)}</span>
           ) : (
-            <span className="text-fg-tertiary">Never</span>
+            <span className="text-fg-tertiary">{pick("Belum pernah", "Never")}</span>
           ),
       },
       {
         id: "publish",
-        header: "Penerbitan",
+        header: pick("Penerbitan", "Publication"),
         meta: { width: "140px", hideBelow: "md", description: pick("Penerbitan otomatis menggantikan acuan perencanaan tanpa ditinjau.", "Auto-publish replaces the planning baseline without review.") } satisfies ColumnMeta,
-        cell: ({ row }) => (row.original.autoPublish ? <Tag tone="warning">Otomatis</Tag> : <Tag>Tinjau manual</Tag>),
+        cell: ({ row }) => (row.original.autoPublish ? <Tag tone="warning">{pick("Otomatis", "Automatic")}</Tag> : <Tag>{pick("Tinjau manual", "Manual review")}</Tag>),
       },
-      { id: "owner", header: "Penanggung jawab", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
+      { id: "owner", header: pick("Penanggung jawab", "Owner"), meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.ownerId} /> },
       {
         id: "status",
         header: "Status",
         meta: { width: "110px" } satisfies ColumnMeta,
-        cell: ({ row }) => <StatusBadge status={row.original.enabled ? "active" : "paused"} label={row.original.enabled ? "Enabled" : "Paused"} size="sm" />,
+        cell: ({ row }) => <StatusBadge status={row.original.enabled ? "active" : "paused"} label={row.original.enabled ? pick("Aktif", "Enabled") : pick("Dijeda", "Paused")} size="sm" />,
       },
       {
         id: "actions",
@@ -124,23 +124,23 @@ export function SchedulesView() {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" aria-label={`Actions for ${s.name}`}>
+                <Button size="icon-sm" variant="ghost" aria-label={pick(`Aksi untuk ${s.name}`, `Actions for ${s.name}`)}>
                   <MoreHorizontal aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem icon={<Play />} onSelect={() => runNow.mutate(s.id)}>
-                  Run now
+                  {pick("Jalankan sekarang", "Run now")}
                 </DropdownMenuItem>
                 <DropdownMenuItem icon={<Pencil />} onSelect={() => setEditing({ id: s.id, input: { name: s.name, cadence: s.cadence, time: s.time, categories: s.categories, regions: s.regions, horizonDays: s.horizonDays, modelId: s.modelId, autoPublish: s.autoPublish, enabled: s.enabled } })}>
-                  Edit schedule
+                  {pick("Ubah jadwal", "Edit schedule")}
                 </DropdownMenuItem>
                 <DropdownMenuItem icon={s.enabled ? <Pause /> : <Play />} onSelect={() => toggle.mutate({ id: s.id, enabled: !s.enabled })}>
-                  {s.enabled ? "Pause" : "Resume"}
+                  {s.enabled ? pick("Jeda", "Pause") : pick("Lanjutkan", "Resume")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem icon={<Trash2 />} destructive onSelect={() => setDeleting(s)}>
-                  Delete schedule
+                  {pick("Hapus jadwal", "Delete schedule")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -163,7 +163,7 @@ export function SchedulesView() {
         actions={
           manage ? (
             <Button variant="primary" onClick={() => setEditing({ id: null, input: { ...EMPTY } })}>
-              <Plus aria-hidden /> Create schedule
+              <Plus aria-hidden /> {pick("Buat jadwal", "Create schedule")}
             </Button>
           ) : undefined
         }
@@ -178,7 +178,6 @@ export function SchedulesView() {
         error={q.error}
         onRetry={() => q.refetch()}
         errorWhat={pick("Jadwal tidak dapat dimuat.", "Schedules could not be loaded.")}
-        hideDensityToggle
         empty={
           <EmptyState
             icon={CalendarClock}
@@ -198,7 +197,7 @@ export function SchedulesView() {
             footer={
               <>
                 <Button variant="ghost" onClick={() => setEditing(null)}>
-                  Cancel
+                  {pick("Batal", "Cancel")}
                 </Button>
                 <Button variant="primary" loading={save.isPending} onClick={() => save.mutate(editing)}>
                   {editing.id ? pick("Simpan jadwal", "Save schedule") : pick("Buat jadwal", "Create schedule")}
@@ -207,8 +206,8 @@ export function SchedulesView() {
             }
           >
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field className="sm:col-span-2" label="Name" htmlFor="sch-name" required>
-                <Input id="sch-name" value={e.name} onChange={(x) => set({ name: x.target.value })} placeholder="e.g. Daily refresh · All categories" autoFocus />
+              <Field className="sm:col-span-2" label={pick("Nama", "Name")} htmlFor="sch-name" required>
+                <Input id="sch-name" value={e.name} onChange={(x) => set({ name: x.target.value })} placeholder={pick("mis. Pembaruan harian · Semua kategori", "e.g. Daily refresh · All categories")} autoFocus />
               </Field>
               <Field label={pick("Frekuensi", "Frequency")} htmlFor="sch-freq">
                 <Select
@@ -218,7 +217,7 @@ export function SchedulesView() {
                   options={[{ value: "daily", label: pick("Setiap hari", "Every day") }, ...WEEKDAYS.map((d, i) => ({ value: String(i), label: pick(`Setiap ${d}`, `Every ${d}`) }))]}
                 />
               </Field>
-              <Field label={pick("Waktu", "Time")} htmlFor="sch-time" hint={pick("Format 24 jam, HH:MM. Sumber data selesai dimuat paling lambat pukul 05:00.", pick("24 jam, HH:MM. Sumber data selesai memuat pukul 05:00.", "24-hour, HH:MM. Data sources finish loading by 05:00."))}>
+              <Field label={pick("Waktu", "Time")} htmlFor="sch-time" hint={pick("Format 24 jam, HH:MM. Sumber data selesai dimuat paling lambat pukul 05:00.", "24-hour, HH:MM. Data sources finish loading by 05:00.")}>
                 <Input id="sch-time" type="time" value={e.time} onChange={(x) => set({ time: x.target.value })} />
               </Field>
               <Field label={pick("Kategori", "Categories")} htmlFor="sch-cats" hint={pick("Kosong berarti semua.", "Empty means all.")}>
@@ -227,8 +226,8 @@ export function SchedulesView() {
               <Field label={pick("Wilayah", "Regions")} htmlFor="sch-regions" hint={pick("Kosong berarti semua.", "Empty means all.")}>
                 <MultiSelect id="sch-regions" value={e.regions} onChange={(v) => set({ regions: v })} allLabel={pick("Semua wilayah", "All regions")} options={REGIONS.map((c) => ({ value: c, label: c }))} />
               </Field>
-              <Field label="Horizon" htmlFor="sch-h">
-                <Select id="sch-h" value={String(e.horizonDays)} onValueChange={(v) => set({ horizonDays: Number(v) })} options={[7, 14, 28, 30, 60, 90].map((d) => ({ value: String(d), label: `${d} days` }))} />
+              <Field label={pick("Periode", "Horizon")} htmlFor="sch-h">
+                <Select id="sch-h" value={String(e.horizonDays)} onValueChange={(v) => set({ horizonDays: Number(v) })} options={[7, 14, 28, 30, 60, 90].map((d) => ({ value: String(d), label: pick(`${d} hari`, `${d} days`) }))} />
               </Field>
               <Field label={pick("Model", "Model")} htmlFor="sch-model" hint={pick("“Bawaan ruang kerja” mengikuti perubahan model bawaan yang disetujui.", "“Workspace default” follows approved default-model changes.")}>
                 <Select
@@ -252,7 +251,7 @@ export function SchedulesView() {
             </div>
             {e.autoPublish && (
               <InlineAlert tone="warning" title={pick("Penerbitan otomatis menggantikan acuan perencanaan tanpa ditinjau orang.", "Automatic publication replaces the planning baseline without a person reviewing it.")} className="mt-3">
-                Overview, exceptions and new plans switch to the new run as soon as it completes. Every automatic publication is still recorded in the audit log.
+                {pick("Ringkasan, item tinjauan, dan rencana baru langsung memakai proses baru begitu selesai. Setiap penerbitan otomatis tetap tercatat di riwayat aktivitas.", "Overview, exceptions and new plans switch to the new run as soon as it completes. Every automatic publication is still recorded in the audit log.")}
               </InlineAlert>
             )}
           </DialogContent>
@@ -262,7 +261,7 @@ export function SchedulesView() {
       <TypedConfirmDialog
         open={!!deleting}
         onOpenChange={(o) => !o && setDeleting(null)}
-        title={`Delete schedule “${deleting?.name ?? ""}”?`}
+        title={pick(`Hapus jadwal “${deleting?.name ?? ""}”?`, `Delete schedule “${deleting?.name ?? ""}”?`)}
         resourceName={deleting?.name ?? ""}
         confirmLabel={pick("Hapus jadwal", "Delete schedule")}
         loading={remove.isPending}

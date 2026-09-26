@@ -3,6 +3,7 @@
 import { Check } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { pick } from "@/lib/i18n/core";
 
 /**
  * Wizard step list (workflow system, Master Prompt §30): progress, step state and
@@ -22,10 +23,10 @@ export function WizardSteps({
   onSelect: (index: number) => void;
 }) {
   return (
-    <nav aria-label="Progres">
+    <nav aria-label={pick("Progres", "Progress")}>
       {/* Mobile: compact counter */}
       <p className="mb-2 caption lg:hidden" aria-live="polite">
-        Langkah {current + 1} dari {steps.length}: <span className="font-semibold text-fg">{steps[current]?.label}</span>
+        {pick(`Langkah ${current + 1} dari ${steps.length}`, `Step ${current + 1} of ${steps.length}`)}: <span className="font-semibold text-fg">{steps[current]?.label}</span>
       </p>
       <div className="h-1 overflow-hidden rounded-full bg-muted lg:hidden" aria-hidden>
         <div className="h-full bg-primary transition-[width]" style={{ width: `${((current + 1) / steps.length) * 100}%` }} />
@@ -58,7 +59,7 @@ export function WizardSteps({
                 <span className="min-w-0 pt-0.5">
                   <span className={cn("block text-[0.8125rem] font-semibold", active ? "text-fg" : done ? "text-fg group-hover:text-primary" : "text-fg-tertiary")}>{s.label}</span>
                   {s.description && <span className="block text-xs text-fg-tertiary">{s.description}</span>}
-                  <span className="sr-only">{done ? "(completed)" : active ? "(current step)" : "(not started)"}</span>
+                  <span className="sr-only">{done ? "(completed)" : active ? pick("(langkah saat ini)", "(current step)") : pick("(belum dimulai)", "(not started)")}</span>
                 </span>
               </button>
             </li>

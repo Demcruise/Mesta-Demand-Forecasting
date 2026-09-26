@@ -55,16 +55,16 @@ export function RegistryView() {
   return (
     <PageContainer>
       <PageHeader
-        title={pick("Daftar Model", pick("Daftar model", "Model registry"))}
-        description={pick("Lihat model yang tersedia dan kinerjanya pada evaluasi terakhir.", pick("Versi model perkiraan, statusnya, dan performanya pada evaluasi terakhir.", "Forecasting model versions, their status and how they performed in the latest evaluation."))}
+        title={pick("Daftar Model", "Model registry")}
+        description={pick("Lihat model yang tersedia dan kinerjanya pada evaluasi terakhir.", "Forecasting model versions, their status and how they performed in the latest evaluation.")}
         actions={
           <Link href="/models/performance" className={buttonVariants({ variant: "secondary" })}>
-            <GitCompareArrows aria-hidden /> Compare performance
+            <GitCompareArrows aria-hidden /> {pick("Bandingkan performa", "Compare performance")}
           </Link>
         }
       />
-      <InlineAlert tone="info" title={pick("Angka diambil dari periode evaluasi terakhir tiap model.", pick("Metrik berasal dari periode evaluasi terakhir tiap model.", "Metrics are from each model's latest evaluation window."))}>
-        Compare models over the same window in Model performance or Backtesting before changing the default. The model lifecycle requires validation with analytics owners.
+      <InlineAlert tone="info" title={pick("Angka diambil dari periode evaluasi terakhir tiap model.", "Metrics are from each model's latest evaluation window.")}>
+        {pick("Bandingkan model pada periode yang sama di Performa Model atau Uji Model sebelum mengganti model bawaan. Siklus model perlu divalidasi dengan pemilik analitik.", "Compare models over the same window in Model performance or Backtesting before changing the default. The model lifecycle requires validation with analytics owners.")}
       </InlineAlert>
       <DataTable
         label={pick("Model perkiraan", "Forecasting models")}
@@ -77,7 +77,6 @@ export function RegistryView() {
         errorWhat={pick("Model tidak dapat dimuat.", "Models could not be loaded.")}
         onRowClick={(m) => router.push(`/models/${m.id}`)}
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
-        hideDensityToggle
         toolbarStart={
           <FilterBar
             state={state}

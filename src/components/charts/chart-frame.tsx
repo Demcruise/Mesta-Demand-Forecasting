@@ -5,6 +5,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Segmented } from "@/components/ui/controls";
 import { FreshnessIndicator } from "@/components/feedback/freshness";
+import { pick } from "@/lib/i18n/core";
 
 /**
  * ChartFrame (CHART-001): every quantitative chart states the question it answers,
@@ -52,22 +53,28 @@ export function ChartFrame({
           </h3>
           {question && <p className="mt-0.5 caption">{question}</p>}
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-tertiary">
-            <span>Unit: {unit}</span>
+            <span>
+              {pick("Satuan", "Unit")}: {unit}
+            </span>
             <span>{timeframe}</span>
-            {source && <span>Source: {source}</span>}
-            {asOf !== undefined && <FreshnessIndicator timestamp={asOf} label="Data as of" source={source} />}
+            {source && (
+              <span>
+                {pick("Sumber", "Source")}: {source}
+              </span>
+            )}
+            {asOf !== undefined && <FreshnessIndicator timestamp={asOf} label={pick("Data per", "Data as of")} source={source} />}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {actions}
           <Segmented
             size="sm"
-            aria-label="View as"
+            aria-label={pick("Tampilkan sebagai", "View as")}
             value={view}
             onValueChange={setView}
             options={[
-              { value: "chart", label: <span className="sr-only">Chart</span>, icon: <BarChart3 aria-hidden /> },
-              { value: "table", label: <span className="sr-only">Table</span>, icon: <Table2 aria-hidden /> },
+              { value: "chart", label: <span className="sr-only">{pick("Grafik", "Chart")}</span>, icon: <BarChart3 aria-hidden /> },
+              { value: "table", label: <span className="sr-only">{pick("Tabel", "Table")}</span>, icon: <Table2 aria-hidden /> },
             ]}
           />
         </div>
@@ -77,7 +84,7 @@ export function ChartFrame({
         {view === "chart" ? (
           <>
             {legend && <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">{legend}</div>}
-            <div role="img" aria-label={`${title}. ${typeof summary === "string" ? summary : "Switch to table view for exact values."}`}>
+            <div role="img" aria-label={`${title}. ${typeof summary === "string" ? summary : pick("Beralih ke tampilan tabel untuk nilai pasti.", "Switch to table view for exact values.")}`}>
               {chart}
             </div>
           </>

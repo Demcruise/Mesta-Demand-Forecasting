@@ -1,6 +1,7 @@
 import * as React from "react";
 import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { pick } from "@/lib/i18n/core";
 
 /** Shared control surface: one height, padding and focus treatment for every text control. */
 export const controlClass =
@@ -49,7 +50,7 @@ export function Field({ label, htmlFor, hint, error, required, optional, classNa
               *
             </span>
           )}
-          {optional && <span className="ml-1.5 font-medium text-fg-tertiary">Optional</span>}
+          {optional && <span className="ml-1.5 font-medium text-fg-tertiary">{pick("Opsional", "Optional")}</span>}
         </label>
         {aside}
       </div>

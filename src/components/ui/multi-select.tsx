@@ -5,6 +5,7 @@ import { Check, ChevronDown, X } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "./overlay";
+import { pick } from "@/lib/i18n/core";
 
 /**
  * Combobox for choosing several values from a searchable list (DS-004 Combobox).
@@ -16,7 +17,7 @@ export function MultiSelect({
   value,
   onChange,
   allLabel,
-  placeholder = "Search",
+  placeholder,
   "aria-describedby": describedBy,
 }: {
   id?: string;
@@ -43,9 +44,9 @@ export function MultiSelect({
         </PopoverTrigger>
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-64 p-0">
           <Command>
-            <Command.Input placeholder={placeholder} className="h-9 w-full border-b border-border bg-transparent px-3 text-sm outline-none placeholder:text-fg-tertiary" />
+            <Command.Input placeholder={placeholder ?? pick("Cari", "Search")} className="h-9 w-full border-b border-border bg-transparent px-3 text-sm outline-none placeholder:text-fg-tertiary" />
             <Command.List className="max-h-64 overflow-y-auto p-1">
-              <Command.Empty className="px-3 py-4 text-center caption">No matches.</Command.Empty>
+              <Command.Empty className="px-3 py-4 text-center caption">{pick("Tidak ada yang cocok.", "No matches.")}</Command.Empty>
               {options.map((o) => {
                 const on = value.includes(o.value);
                 return (
@@ -67,7 +68,7 @@ export function MultiSelect({
             {value.length > 0 && (
               <div className="border-t border-border p-1">
                 <button type="button" onClick={() => onChange([])} className="h-8 w-full rounded-sm px-2 text-left text-[0.8125rem] font-semibold text-fg-secondary hover:bg-hover">
-                  Reset to {allLabel.toLowerCase()}
+                  {pick(`Kembali ke ${allLabel.toLowerCase()}`, `Reset to ${allLabel.toLowerCase()}`)}
                 </button>
               </div>
             )}
@@ -79,7 +80,7 @@ export function MultiSelect({
           {value.map((v) => (
             <span key={v} className="inline-flex h-6 items-center gap-1 rounded-sm border border-border bg-subtle pl-2 pr-0.5 text-xs font-semibold text-fg-secondary">
               {options.find((o) => o.value === v)?.label ?? v}
-              <button type="button" onClick={() => onChange(value.filter((x) => x !== v))} className="inline-flex size-5 items-center justify-center rounded-xs text-fg-tertiary hover:bg-hover hover:text-fg" aria-label={`Remove ${options.find((o) => o.value === v)?.label ?? v}`}>
+              <button type="button" onClick={() => onChange(value.filter((x) => x !== v))} className="inline-flex size-5 items-center justify-center rounded-xs text-fg-tertiary hover:bg-hover hover:text-fg" aria-label={pick(`Hapus ${options.find((o) => o.value === v)?.label ?? v}`, `Remove ${options.find((o) => o.value === v)?.label ?? v}`)}>
                 <X className="size-3" aria-hidden />
               </button>
             </span>

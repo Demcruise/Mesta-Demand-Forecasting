@@ -25,7 +25,7 @@ import { pick, localized } from "@/lib/i18n";
 
 type SourceRow = DataSource & { openIssues: number };
 
-const SCHEDULES = localized([pick("Setiap jam", "Every hour"), pick("Setiap 4 jam", "Every 4 hours"), pick("Harian pukul 02:00", "Daily at 02:00"), pick("Harian pukul 04:30", "Daily at 04:30"), pick("Harian pukul 05:00", "Daily at 05:00"), "Manual"], ["Every hour", "Every 4 hours", "Daily at 02:00", "Daily at 04:30", "Daily at 05:00", "Manual"]);
+const SCHEDULES = localized(["Setiap jam", "Setiap 4 jam", "Harian pukul 02:00", "Harian pukul 04:30", "Harian pukul 05:00", "Manual"], ["Every hour", "Every 4 hours", "Daily at 02:00", "Daily at 04:30", "Daily at 05:00", "Manual"]);
 
 /**
  * PAGE-DATA-SOURCES and PAGE-INTEGRATIONS share this view. `mode="admin"` leads with
@@ -49,7 +49,7 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
           </span>
         ),
       },
-      { id: "type", header: "Type", meta: { width: "150px", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{row.original.type}</Tag> },
+      { id: "type", header: pick("Jenis", "Type"), meta: { width: "150px", hideBelow: "md" } satisfies ColumnMeta, cell: ({ row }) => <Tag>{row.original.type}</Tag> },
       { id: "status", header: "Status", meta: { width: "140px" } satisfies ColumnMeta, cell: ({ row }) => <StatusBadge status={row.original.status} size="sm" /> },
       { id: "sync", header: pick("Sinkron terakhir", "Last sync"), meta: { width: "150px", hideBelow: "lg" } satisfies ColumnMeta, cell: ({ row }) => <span className="text-xs tabular text-fg-secondary">{formatDateTime(row.original.lastSyncAt)}</span> },
       { id: "freshness", header: pick("Terakhir Diperbarui", "Freshness"), meta: { width: "190px", description: pick("Waktu sejak sinkronisasi terakhir yang berhasil.", "Time since the last successful sync.") } satisfies ColumnMeta, cell: ({ row }) => <FreshnessIndicator timestamp={row.original.lastSuccessAt} label={pick("Berhasil", "Success")} /> },
@@ -67,7 +67,7 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
             <span className="text-fg-tertiary">0</span>
           ),
       },
-      { id: "owner", header: "Owner", meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.owner} /> },
+      { id: "owner", header: pick("Penanggung jawab", "Owner"), meta: { width: "minmax(140px, 1fr)", hideBelow: "xl" } satisfies ColumnMeta, cell: ({ row }) => <UserIdentity userId={row.original.owner} /> },
     ],
     [],
   );
@@ -75,7 +75,7 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
   return (
     <PageContainer>
       <PageHeader
-        title={mode === "admin" ? pick("Integrasi", "Integrations") : pick("Sumber Data", pick("Sumber data", "Data sources"))}
+        title={mode === "admin" ? pick("Integrasi", "Integrations") : pick("Sumber Data", "Data sources")}
         description={
           mode === "admin"
             ? pick("Koneksi yang memasok data permintaan, produk, dan promosi ke perkiraan. Uji, sinkronkan, dan atur jadwalnya di sini.", "Connections that feed demand, product and promotion data into forecasting. Test, sync and schedule them here.")
@@ -83,8 +83,8 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
         }
       />
       {q.data?.some((s) => s.status === "failed") && (
-        <InlineAlert tone="warning" title={`${q.data.filter((s) => s.status === "failed").map((s) => s.name).join(", ")} failing.`}>
-          Forecasts continue with the last successful data. Open the source to see the error and recovery steps.
+        <InlineAlert tone="warning" title={pick(`${q.data.filter((s) => s.status === "failed").map((s) => s.name).join(", ")} gagal.`, `${q.data.filter((s) => s.status === "failed").map((s) => s.name).join(", ")} failing.`)}>
+          {pick("Perkiraan tetap memakai data terakhir yang berhasil. Buka sumbernya untuk melihat galat dan langkah pemulihan.", "Forecasts continue with the last successful data. Open the source to see the error and recovery steps.")}
         </InlineAlert>
       )}
       <DataTable
@@ -98,8 +98,7 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
         errorWhat={pick("Sumber data tidak dapat dimuat.", "Data sources could not be loaded.")}
         activeRowId={selectedId}
         onRowClick={(r) => state.setParam("id", r.id)}
-        hideDensityToggle
-        empty={<EmptyState icon={Plug} title={pick("Belum ada sumber data yang terhubung ke ruang kerja ini.", pick("Belum ada sumber data yang tersambung ke ruang kerja ini.", "No data sources are connected to this workspace."))} description={pick("Sambungkan sumber POS, ERP, atau gudang data untuk mulai memuat riwayat permintaan.", "Connect a POS, ERP or data warehouse source to start loading demand history.")} />}
+        empty={<EmptyState icon={Plug} title={pick("Belum ada sumber data yang terhubung ke ruang kerja ini.", "No data sources are connected to this workspace.")} description={pick("Sambungkan sumber POS, ERP, atau gudang data untuk mulai memuat riwayat permintaan.", "Connect a POS, ERP or data warehouse source to start loading demand history.")} />}
       />
       <SourceDrawer id={selectedId} onClose={() => state.setParam("id", null)} />
     </PageContainer>
@@ -116,15 +115,15 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
   const test = useApiMutation((c, _v: void) => testConnection(c, id as string), { failure: pick("Uji koneksi tidak dapat dijalankan.", "The connection test could not run."), onSuccess: (r) => setTestResult(r) });
   const sync = useApiMutation((c, _v: void) => syncNow(c, id as string), {
     invalidate,
-    success: (s) => (s.lastError && s.status === "failed" ? null : `${s.name} synced`),
+    success: (s) => (s.lastError && s.status === "failed" ? null : pick(`${s.name} tersinkron`, `${s.name} synced`)),
     failure: pick("Sinkronisasi tidak dimulai.", "Sync did not start."),
     onSuccess: (s) => {
-      if (s.status === "failed") setTestResult({ ok: false, message: `Sync failed: ${s.lastError ?? "unknown error"}` });
+      if (s.status === "failed") setTestResult({ ok: false, message: pick(`Sinkronisasi gagal: ${s.lastError ?? "galat tidak diketahui"}`, `Sync failed: ${s.lastError ?? "unknown error"}`) });
     },
   });
   const connect = useApiMutation((c, connected: boolean) => setSourceConnection(c, id as string, connected), {
     invalidate,
-    success: (s) => (s.status === "disconnected" ? `${s.name} disconnected` : `${s.name} connected`),
+    success: (s) => (s.status === "disconnected" ? pick(`${s.name} diputuskan`, `${s.name} disconnected`) : pick(`${s.name} tersambung`, `${s.name} connected`)),
     failure: pick("Koneksi tidak dapat diubah.", "The connection was not changed."),
     onSuccess: () => setConfirmDisconnect(false),
   });
@@ -144,18 +143,18 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
             d && manage ? (
               d.source.status === "disconnected" ? (
                 <Button variant="primary" loading={connect.isPending} onClick={() => connect.mutate(true)}>
-                  <PlugZap aria-hidden /> Connect
+                  <PlugZap aria-hidden /> {pick("Sambungkan", "Connect")}
                 </Button>
               ) : (
                 <>
                   <Button variant="danger-outline" onClick={() => setConfirmDisconnect(true)}>
-                    <Unplug aria-hidden /> Disconnect
+                    <Unplug aria-hidden /> {pick("Putuskan", "Disconnect")}
                   </Button>
                   <Button variant="secondary" loading={test.isPending} onClick={() => test.mutate()}>
-                    Test connection
+                    {pick("Uji koneksi", "Test connection")}
                   </Button>
                   <Button variant="primary" loading={sync.isPending} loadingText={pick("Menyinkronkan", "Syncing")} onClick={() => sync.mutate()}>
-                    <RefreshCw aria-hidden /> Sync now
+                    <RefreshCw aria-hidden /> {pick("Sinkronkan sekarang", "Sync now")}
                   </Button>
                 </>
               )
@@ -213,7 +212,7 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
                   <ul className="flex flex-col gap-2">
                     {d.issues.map((i) => (
                       <li key={i.id}>
-                        <Link href={`/demand-data/quality?id=${i.id}`} className="flex items-start gap-3 rounded-md border border-border p-3 hover:bg-hover">
+                        <Link href={`/demand-data/quality?id=${i.id}`} className="flex items-center gap-3 rounded-md border border-border p-3 hover:bg-hover">
                           <SeverityBadge severity={i.severity} size="sm" />
                           <span className="min-w-0 flex-1 body-sm">{i.title}</span>
                           <StatusBadge status={i.status} size="sm" />
@@ -239,10 +238,10 @@ function SourceDrawer({ id, onClose }: { id: string | null; onClose: () => void 
             footer={
               <>
                 <Button variant="ghost" onClick={() => setConfirmDisconnect(false)}>
-                  Tetap terhubung
+                  {pick("Tetap terhubung", "Stay connected")}
                 </Button>
                 <Button variant="danger" loading={connect.isPending} onClick={() => connect.mutate(false)}>
-                  Putuskan sumber
+                  {pick("Putuskan sumber", "Disconnect source")}
                 </Button>
               </>
             }

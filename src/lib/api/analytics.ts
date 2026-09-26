@@ -4,6 +4,7 @@ import { aggregateInterval } from "@/lib/mock/series";
 import { addDays, iso } from "@/lib/mock/time";
 import { ApiError, read, type ApiContext } from "./client";
 import { syncRuns } from "./forecasting";
+import { localizedRecord, pick } from "@/lib/i18n/core";
 
 /**
  * Forecast insights (INT-008). Read-only analysis of one completed run that answers
@@ -71,12 +72,10 @@ export type ForecastInsights = {
 };
 
 const LIFECYCLE_ORDER: Product["lifecycle"][] = ["new", "core", "seasonal", "end-of-life"];
-const LIFECYCLE_LABELS: Record<Product["lifecycle"], string> = {
-  new: "New listings",
-  core: "Core range",
-  seasonal: "Seasonal",
-  "end-of-life": "End of life",
-};
+const LIFECYCLE_LABELS: Record<Product["lifecycle"], string> = localizedRecord(
+  { new: "Produk baru", core: "Rangkaian inti", seasonal: "Musiman", "end-of-life": "Akhir masa" },
+  { new: "New listings", core: "Core range", seasonal: "Seasonal", "end-of-life": "End of life" },
+);
 
 function segment(rows: ForecastRow[], keyOf: (p: Product) => string, labelOf: (key: string) => string, products: Map<string, Product>): InsightSegment[] {
   const groups = new Map<string, ForecastRow[]>();
@@ -114,10 +113,10 @@ export function getForecastInsights(ctx: ApiContext, runId?: string | null) {
     const db = getDb(ctx.workspaceId);
     syncRuns(db);
     const run = runId ? db.runs.find((r) => r.id === runId) : baselineRun(db);
-    if (runId && !run) throw new ApiError(`Forecast run ${runId} was not found in this workspace.`, "not_found");
-    if (!run) throw new ApiError("No completed forecast run is available yet.", "not_found", "Create and complete a forecast run first.");
+    if (runId && !run) throw new ApiError(pick(`Proses perkiraan ${runId} tidak ditemukan di ruang kerja ini.`, `Forecast run ${runId} was not found in this workspace.`), "not_found");
+    if (!run) throw new ApiError(pick("Belum ada proses perkiraan yang selesai.", "No completed forecast run is available yet."), "not_found", pick("Buat dan selesaikan proses perkiraan terlebih dahulu.", "Create and complete a forecast run first."));
     if (run.status !== "completed" && run.status !== "published") {
-      throw new ApiError(`Run ${run.id} has no results yet.`, "conflict", "Insights are available once a run completes.");
+      throw new ApiError(pick(`Proses ${run.id} belum memiliki hasil.`, `Run ${run.id} has no results yet.`), "conflict", pick("Wawasan tersedia setelah proses selesai.", "Insights are available once a run completes."));
     }
 
     const { rows } = runResult(db, run);

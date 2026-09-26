@@ -82,7 +82,7 @@ export function seedModels(today: number, skuCount: number): ForecastModel[] {
       owner: "u_lina",
       dataset: pick("Permintaan harian · 1 tahun · per SKU-lokasi", "Daily demand · 1 year · per SKU-location"),
       features: ["Level", pick("Tren", "Trend"), pick("Musiman mingguan", "Weekly seasonality")],
-      limitations: [pick("Tidak memakai data promosi atau harga.", "Does not use promotions or price."), pick("Dipakai sebagai cadangan bila model global tidak tersedia.", pick("Dipakai sebagai cadangan saat model global tidak tersedia.", "Used as fallback when the global model is unavailable."))],
+      limitations: [pick("Tidak memakai data promosi atau harga.", "Does not use promotions or price."), pick("Dipakai sebagai cadangan bila model global tidak tersedia.", "Used as fallback when the global model is unavailable.")],
       metrics: metrics(0.262, 0.031, 0.74, 14.2),
       usage: { runs: 41, lastUsedAt: iso(today - 9 * DAY_MS) },
     },

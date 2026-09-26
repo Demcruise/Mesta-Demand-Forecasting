@@ -4,6 +4,7 @@ import * as React from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCompact, formatNumber, formatPercent, formatShortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { pick } from "@/lib/i18n/core";
 
 const AXIS = { fontSize: 11, fill: "var(--chart-axis)", fontFamily: "var(--font-sans)" };
 
@@ -69,7 +70,7 @@ export function PairedBars({
                   ))}
                   {payload.length === 2 && (payload[0]?.value as number) > 0 && (
                     <div className="mt-1 flex justify-between gap-6 border-t border-border-subtle pt-1">
-                      <span className="text-fg-secondary">Change</span>
+                      <span className="text-fg-secondary">{pick("Perubahan", "Change")}</span>
                       <span className="font-semibold tabular">{formatPercent(((payload[1]?.value as number) - (payload[0]?.value as number)) / (payload[0]?.value as number))}</span>
                     </div>
                   )}
@@ -145,7 +146,7 @@ export function MetricTrend({
             content={({ active, payload, label }) =>
               active && payload?.length ? (
                 <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs shadow-popover">
-                  <div className="mb-1 font-semibold">Week of {formatShortDate(label as string)}</div>
+                  <div className="mb-1 font-semibold">{pick(`Minggu ${formatShortDate(label as string)}`, `Week of ${formatShortDate(label as string)}`)}</div>
                   {payload.map((p) => {
                     const s = series.find((x) => x.key === p.dataKey);
                     return (

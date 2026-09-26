@@ -1,16 +1,16 @@
 "use client";
 
-import { AlertOctagon, AlertTriangle, ArrowRight, Info, Plus } from "lucide-react";
+import { AlertOctagon, AlertTriangle, ArrowRight, Info, Package, Plus, Scale, Target } from "lucide-react";
 import Link from "next/link";
 import { getOverview } from "@/lib/api/governance";
 import { useApiQuery } from "@/hooks/use-api";
 import { useSession } from "@/lib/session-context";
-import { formatDate, formatDateRange, formatDeltaPercent, formatNumber, formatPercent } from "@/lib/format";
+import { formatDate, formatDateRange, formatDeltaPercent, formatMetric, formatNumber, formatPercent } from "@/lib/format";
 import { addDays } from "@/lib/mock/time";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { MetaItem, PageContainer, PageHeader, PageSection, Panel } from "@/components/page/page";
-import { ForecastDelta, MetricCard, MetricStrip } from "@/components/forecasting/metrics";
+import { ForecastDelta, MetricCard, MetricDelta, MetricStrip } from "@/components/forecasting/metrics";
 import { ForecastChart } from "@/components/charts/forecast-chart";
 import { ChartDataTable, ChartFrame, LegendItem } from "@/components/charts/chart-frame";
 import { PairedBars } from "@/components/charts/small-charts";
@@ -69,7 +69,7 @@ export function OverviewView() {
             secondaryAction={
               can("forecast.run.create") ? (
                 <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "secondary" })}>
-                  <Plus aria-hidden /> Buat Perkiraan
+                  <Plus aria-hidden /> {pick("Buat Perkiraan", "Create forecast")}
                 </Link>
               ) : undefined
             }
@@ -80,6 +80,21 @@ export function OverviewView() {
   }
 
   const periodStart = new Date(base.completedAt ?? base.createdAt).setHours(0, 0, 0, 0);
+  // Micro trend from real series only: recent actuals, then the forecast (FE-METRIC-005).
+  const firstForecast = d.points.findIndex((p) => p.actual == null && p.forecast != null);
+  // Weekly totals keep the micro trend legible at 64px; forecast weeks start at the split.
+  const weekly: number[] = [];
+  d.points.forEach((p, i) => {
+    const w = Math.floor(i / 7);
+    weekly[w] = (weekly[w] ?? 0) + (p.actual ?? p.forecast ?? 0);
+  });
+  const trend = {
+    values: weekly.slice(0, Math.floor(d.points.length / 7)),
+    forecastFrom: firstForecast >= 0 ? Math.floor(firstForecast / 7) : undefined,
+  };
+  const accuracyDays = d.accuracyWindow
+    ? Math.round((new Date(d.accuracyWindow.end).getTime() - new Date(d.accuracyWindow.start).getTime()) / 86_400_000) + 1
+    : 0;
   const periodEnd = addDays(periodStart, base.horizonDays - 1);
   const s = d.summary;
 
@@ -91,18 +106,20 @@ export function OverviewView() {
         actions={
           can("forecast.run.create") ? (
             <Link href="/forecasting/runs/new" className={buttonVariants({ variant: "primary" })}>
-              <Plus aria-hidden /> Buat Perkiraan
+              <Plus aria-hidden /> {pick("Buat Perkiraan", "Create forecast")}
             </Link>
           ) : undefined
         }
         meta={
           <>
             <MetaItem>
-              Cakupan: {scopeLabel(base)} · {formatNumber(base.scope.skuCount)} SKU · {base.scope.locationCount} lokasi
+              {pick("Cakupan", "Scope")}: {scopeLabel(base)} · {formatNumber(base.scope.skuCount)} SKU · {base.scope.locationCount} {pick("lokasi", base.scope.locationCount === 1 ? "location" : "locations")}
             </MetaItem>
-            <MetaItem>Periode perkiraan: {formatDateRange(new Date(periodStart), new Date(periodEnd))} ({base.horizonDays} hari)</MetaItem>
             <MetaItem>
-              Acuan:{" "}
+              {pick("Periode perkiraan", "Forecast period")}: {formatDateRange(new Date(periodStart), new Date(periodEnd))} ({base.horizonDays} {pick("hari", "days")})
+            </MetaItem>
+            <MetaItem>
+              {pick("Acuan", "Baseline")}:{" "}
               <Link href={`/forecasting/runs/${base.id}`} className="mono-id text-primary hover:underline">
                 {base.id}
               </Link>
@@ -151,44 +168,70 @@ export function OverviewView() {
       </PageSection>
 
       {/* Forecast health */}
-      <PageSection title={pick("Kesehatan Perkiraan", "Forecast health")} description={pick(`Dari acuan terbit ${base.id}, periode ${base.horizonDays} hari.`, `From the published baseline ${base.id}, ${base.horizonDays}-day horizon.`)} id="health">
+      <PageSection title={pick("Kondisi Perkiraan", "Forecast health")} id="health">
         <MetricStrip>
           <MetricCard
-            label={pick(`Total Permintaan · ${base.horizonDays} hari ke depan`, `Forecasted demand · next ${base.horizonDays} days`)}
-            value={formatNumber(s.forecast)}
+            variant="compact"
+            icon={Package}
+            label={pick("Total Permintaan", "Forecasted demand")}
+            value={formatMetric(s.forecast)}
+            exactValue={`${formatNumber(s.forecast)} ${pick("unit", "units")}`}
             unit={pick("unit", "units")}
-            delta={<ForecastDelta percent={s.deltaPercent} size="sm" />}
-            context={pick(`Rentang 80% ${formatNumber(s.lower)} – ${formatNumber(s.upper)} · ${formatDeltaPercent(s.deltaPercent)} dibanding perkiraan sebelumnya`, `80% interval ${formatNumber(s.lower)} – ${formatNumber(s.upper)} · ${formatDeltaPercent(s.deltaPercent)} vs previous run`)}
+            delta={<MetricDelta value={s.deltaPercent} />}
+            comparison={pick("vs perkiraan sebelumnya", "vs previous run")}
+            trend={trend.values}
+            trendForecastFrom={trend.forecastFrom}
             href="/forecasting/explorer"
-            hrefLabel={pick("Buka Perkiraan Permintaan", "Open forecast explorer")}
-            tooltip={pick("Jumlah perkiraan harian untuk semua SKU dalam cakupan selama periode perkiraan. Rentangnya menggabungkan rentang tiap SKU.", "Sum of daily forecasts for all SKUs in scope over the horizon. The interval combines SKU-level intervals.")}
+            destination={pick("buka Perkiraan Permintaan", "opens Forecast Explorer")}
+            tooltip={pick(
+              `Jumlah perkiraan harian semua SKU dalam cakupan untuk ${base.horizonDays} hari ke depan. Rentang 80%: ${formatNumber(s.lower)}–${formatNumber(s.upper)} unit.`,
+              `Sum of daily forecasts for every SKU in scope over the next ${base.horizonDays} days. 80% range: ${formatNumber(s.lower)}–${formatNumber(s.upper)} units.`,
+            )}
           />
           <MetricCard
-            label={pick("Akurasi Perkiraan (WAPE)", "Forecast accuracy (WAPE)")}
+            variant="compact"
+            icon={Target}
+            label={pick("Akurasi Perkiraan", "Forecast accuracy")}
             value={d.accuracy ? formatPercent(d.accuracy.wape) : "—"}
-            context={
-              d.accuracyWindow
-                ? pick(`Uji model ${d.accuracyWindow.id}, ${formatDate(d.accuracyWindow.start)} – ${formatDate(d.accuracyWindow.end)}. Semakin kecil semakin baik.`, `Backtest ${d.accuracyWindow.id}, ${formatDate(d.accuracyWindow.start)} – ${formatDate(d.accuracyWindow.end)}. Lower is better.`)
-                : pick("Belum ada uji model untuk model ini.", "No backtest available for this model.")
-            }
+            unit="WAPE"
+            meta={d.accuracyWindow ? pick(`Uji model · ${accuracyDays} hari terakhir`, `Backtest · last ${accuracyDays} days`) : pick("Belum ada uji model", "No backtest yet")}
             href="/models/performance"
-            hrefLabel={pick("Lihat performa model", "View model performance")}
-            tooltip={pick("Weighted absolute percentage error: total selisih absolut dibagi total permintaan aktual.", "Weighted absolute percentage error: total absolute error divided by total actual demand.")}
+            destination={pick("buka performa model", "opens model performance")}
+            tooltip={pick(
+              "Weighted absolute percentage error: total selisih absolut dibagi total permintaan aktual. Semakin kecil semakin baik.",
+              "Weighted absolute percentage error: total absolute error divided by total actual demand. Lower is better.",
+            )}
           />
           <MetricCard
+            variant="compact"
+            icon={Scale}
             label={pick("Bias Perkiraan", "Forecast bias")}
             value={d.accuracy ? formatDeltaPercent(d.accuracy.bias) : "—"}
-            context={pick("Nilai positif berarti model cenderung memperkirakan terlalu tinggi. Target dalam ±3%.", "Positive means the model over-forecasts on average. Target within ±3%.")}
+            meta={
+              d.accuracy
+                ? Math.abs(d.accuracy.bias) < 0.0005
+                  ? pick("Tanpa bias", "No bias")
+                  : d.accuracy.bias > 0
+                    ? pick("Cenderung terlalu tinggi", "Tends to over-forecast")
+                    : pick("Cenderung terlalu rendah", "Tends to under-forecast")
+                : undefined
+            }
             href="/models/performance"
-            hrefLabel={pick("Lihat bias per kategori", "View bias by category")}
-            tooltip={pick("Rata-rata selisih bertanda dibagi rata-rata permintaan aktual selama periode uji model.", "Mean signed error divided by mean actual demand over the backtest window.")}
+            destination={pick("buka performa model", "opens model performance")}
+            tooltip={pick(
+              "Rata-rata selisih bertanda dibagi rata-rata permintaan aktual selama periode uji model. Target dalam ±3%.",
+              "Mean signed error divided by mean actual demand over the backtest window. Target within ±3%.",
+            )}
           />
           <MetricCard
+            variant="compact"
+            icon={AlertTriangle}
+            tone={d.exceptions.critical > 0 ? "warning" : "neutral"}
             label={pick("Perlu Ditinjau", "Open exceptions")}
             value={formatNumber(d.exceptions.open)}
-            context={pick(`${d.exceptions.critical} kritis · ${d.exceptions.warning} peringatan`, `${d.exceptions.critical} critical · ${d.exceptions.warning} warning`)}
+            meta={pick(`${formatNumber(d.exceptions.critical)} kritis · ${formatNumber(d.exceptions.warning)} peringatan`, `${formatNumber(d.exceptions.critical)} critical · ${formatNumber(d.exceptions.warning)} warning`)}
             href="/planning/exceptions?status=open,investigating,escalated"
-            hrefLabel={pick("Tinjau item", "Review exceptions")}
+            destination={pick("buka daftar yang perlu ditinjau", "opens the exception queue")}
           />
         </MetricStrip>
       </PageSection>
@@ -239,7 +282,7 @@ export function OverviewView() {
           flush
           actions={
             <Link href="/planning/exceptions" className="text-xs font-semibold text-primary hover:underline">
-              Semua item
+              {pick("Lihat semua", "View all")}
             </Link>
           }
         >
@@ -262,11 +305,11 @@ export function OverviewView() {
           )}
         </Panel>
         <Panel
-          title={pick("Proses Perkiraan Terbaru", "Recent Forecast Runs")}
+          title={pick("Proses Perkiraan Terbaru", "Recent forecast runs")}
           flush
           actions={
             <Link href="/forecasting/runs" className="text-xs font-semibold text-primary hover:underline">
-              Semua proses
+              {pick("Lihat semua", "View all")}
             </Link>
           }
         >
@@ -283,18 +326,22 @@ export function OverviewView() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Panel title={pick("Model yang digunakan", pick("Model sedang dipakai", "Model in use"))}>
+        <Panel title={pick("Model yang digunakan", "Model in use")}>
           <div className="flex flex-col gap-3">
             <ModelIdentity model={d.model} showStatus />
             <p className="caption">
-              Menghasilkan {base.id}. Terakhir dilatih {d.model ? formatDate(d.model.lastTrainedAt) : "—"}. {d.model?.limitations[0]}
+              {pick(
+                `Menghasilkan ${base.id}. Terakhir dilatih ${d.model ? formatDate(d.model.lastTrainedAt) : "—"}.`,
+                `Produced ${base.id}. Last trained ${d.model ? formatDate(d.model.lastTrainedAt) : "—"}.`,
+              )}{" "}
+              {d.model?.limitations[0]}
             </p>
             <div className="flex flex-wrap gap-2">
               <Link href={d.model ? `/models/${d.model.id}` : "/models"} className={buttonVariants({ size: "sm" })}>
-                Lihat detail model
+                {pick("Lihat model", "View model")}
               </Link>
               <Link href="/forecasting/lineage" className={buttonVariants({ size: "sm", variant: "ghost" })}>
-                Telusuri sumber keputusan
+                {pick("Lihat jejak perkiraan", "View forecast lineage")}
               </Link>
             </div>
           </div>
@@ -304,7 +351,7 @@ export function OverviewView() {
           actions={
             can("audit.view") ? (
               <Link href="/administration/audit" className="text-xs font-semibold text-primary hover:underline">
-                Riwayat Aktivitas
+                {pick("Riwayat Aktivitas", "Audit log")}
               </Link>
             ) : undefined
           }

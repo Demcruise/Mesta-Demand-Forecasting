@@ -28,14 +28,14 @@ export function useRunActions(baselineId?: string | null) {
 
   const cancel = useApiMutation((ctx, v: { id: string; reason: string }) => cancelRun(ctx, v.id, v.reason), {
     invalidate: RUN_KEYS,
-    success: (r) => `Cancelled ${r.id}`,
+    success: (r) => pick(`${r.id} dibatalkan`, `Cancelled ${r.id}`),
     successDescription: pick("Tidak ada hasil yang disimpan. Anda dapat menjalankan ulang nanti.", "No results were written. You can retry the run later."),
     failure: pick("Proses tidak dapat dibatalkan.", "The run was not cancelled."),
     onSuccess: () => setConfirm(null),
   });
   const retry = useApiMutation((ctx, id: string) => retryRun(ctx, id), {
     invalidate: RUN_KEYS,
-    success: (r) => `Retrying ${r.id}`,
+    success: (r) => pick(`Menjalankan ulang ${r.id}`, `Retrying ${r.id}`),
     successDescription: pick("Proses masuk antrean dan akan segera dimulai.", "The run is queued and will start shortly."),
     failure: pick("Proses tidak dapat dijalankan ulang.", "The run could not be retried."),
     onSuccess: (r) => {
@@ -45,14 +45,14 @@ export function useRunActions(baselineId?: string | null) {
   });
   const publish = useApiMutation((ctx, v: { id: string; reason: string }) => publishRun(ctx, v.id, v.reason), {
     invalidate: RUN_KEYS,
-    success: (r) => `Published ${r.id}`,
+    success: (r) => pick(`${r.id} diterbitkan`, `Published ${r.id}`),
     successDescription: pick("Proses ini kini menjadi acuan perencanaan ruang kerja.", "It is now the planning baseline for this workspace."),
     failure: pick("Proses tidak dapat diterbitkan.", "The run was not published."),
     onSuccess: () => setConfirm(null),
   });
   const archive = useApiMutation((ctx, id: string) => archiveRun(ctx, id), {
     invalidate: RUN_KEYS,
-    success: (r) => `Archived ${r.id}`,
+    success: (r) => pick(`${r.id} diarsipkan`, `Archived ${r.id}`),
     failure: pick("Proses tidak dapat diarsipkan.", "The run was not archived."),
     onSuccess: () => setConfirm(null),
   });
@@ -82,17 +82,17 @@ export function useRunActions(baselineId?: string | null) {
               </Button>
               {confirm.kind === "cancel" && (
                 <Button variant="danger" loading={cancel.isPending} onClick={() => cancel.mutate({ id: confirm.run.id, reason })}>
-                  Cancel forecast run
+                  {pick("Batalkan proses perkiraan", "Cancel forecast run")}
                 </Button>
               )}
               {confirm.kind === "publish" && (
                 <Button variant="primary" loading={publish.isPending} disabled={reason.trim().length < 5} onClick={() => publish.mutate({ id: confirm.run.id, reason })}>
-                  Publish as baseline
+                  {pick("Terbitkan sebagai acuan", "Publish as baseline")}
                 </Button>
               )}
               {confirm.kind === "archive" && (
                 <Button variant="primary" loading={archive.isPending} onClick={() => archive.mutate(confirm.run.id)}>
-                  Archive run
+                  {pick("Arsipkan proses", "Archive run")}
                 </Button>
               )}
             </>
@@ -102,7 +102,7 @@ export function useRunActions(baselineId?: string | null) {
             rows={[
               { label: pick("Proses", "Run"), value: `${confirm.run.name} (${confirm.run.id})` },
               { label: pick("Cakupan", "Scope"), value: pick(`${scopeLabel(confirm.run)} · ${formatNumber(confirm.run.scope.skuCount)} SKU`, `${scopeLabel(confirm.run)} · ${formatNumber(confirm.run.scope.skuCount)} SKUs`) },
-              { label: pick("Rentang", "Horizon"), value: pick(`${confirm.run.horizonDays} hari · model ${confirm.run.modelVersion}`, pick(`${confirm.run.horizonDays} hari · model ${confirm.run.modelVersion}`, pick(`${confirm.run.horizonDays} hari · model ${confirm.run.modelVersion}`, `${confirm.run.horizonDays} days · model ${confirm.run.modelVersion}`))) },
+              { label: pick("Rentang", "Horizon"), value: pick(`${confirm.run.horizonDays} hari · model ${confirm.run.modelVersion}`, `${confirm.run.horizonDays} days · model ${confirm.run.modelVersion}`) },
               ...(confirm.kind === "publish"
                 ? [
                     { label: pick("Menggantikan", "Replaces"), value: baselineId && baselineId !== confirm.run.id ? baselineId : pick("Belum ada acuan", "No current baseline") },
@@ -153,33 +153,33 @@ export function RunActionMenu({ run, actions, baselineId }: { run: ForecastRun; 
         </DropdownMenuItem>
         {hasResults && (
           <DropdownMenuItem icon={<Eye />} onSelect={() => router.push(`/forecasting/explorer?run=${run.id}`)}>
-            Lihat hasil
+            {pick("Lihat hasil", "View results")}
           </DropdownMenuItem>
         )}
         {can("forecast.run.create") && (
           <DropdownMenuItem icon={<Copy />} onSelect={() => router.push(`/forecasting/runs/new?from=${run.id}`)}>
-            Duplikat pengaturan
+            {pick("Duplikat pengaturan", "Duplicate configuration")}
           </DropdownMenuItem>
         )}
         {(run.status === "failed" || run.status === "cancelled") && can("forecast.run.create") && (
           <DropdownMenuItem icon={<RotateCcw />} onSelect={() => actions.retry.mutate(run.id)}>
-            Jalankan ulang
+            {pick("Jalankan ulang", "Retry")}
           </DropdownMenuItem>
         )}
         {run.status === "completed" && can("forecast.run.publish") && (
           <DropdownMenuItem icon={<Send />} onSelect={() => actions.open("publish", run)}>
-            Terbitkan sebagai acuan
+            {pick("Terbitkan sebagai acuan", "Publish as baseline")}
           </DropdownMenuItem>
         )}
         {(active || (can("forecast.run.archive") && run.status !== "archived" && run.id !== baselineId)) && <DropdownMenuSeparator />}
         {active && can("forecast.run.cancel") && (
           <DropdownMenuItem icon={<Ban />} destructive onSelect={() => actions.open("cancel", run)}>
-            Batalkan proses
+            {pick("Batalkan proses", "Cancel run")}
           </DropdownMenuItem>
         )}
         {!active && run.status !== "archived" && run.id !== baselineId && can("forecast.run.archive") && (
           <DropdownMenuItem icon={<Archive />} onSelect={() => actions.open("archive", run)}>
-            Arsipkan
+            {pick("Arsipkan", "Archive")}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

@@ -3,7 +3,10 @@ import { audit, getDb, nextId } from "@/lib/mock/db";
 import { iso } from "@/lib/mock/time";
 import { ApiError, read, write, type ApiContext } from "./client";
 import { syncRuns } from "./forecasting";
-import { pick } from "@/lib/i18n/core";
+import { getActiveLocale, getTranslations, pick } from "@/lib/i18n/core";
+import type { StatusKey } from "@/types/domain";
+
+const STATUS_TEXT = (s: string) => getTranslations(getActiveLocale()).statuses[s as StatusKey]?.label ?? s;
 
 /**
  * ONBOARDING-001: Welcome → Workspace → Data source → Data readiness → First forecast.
@@ -37,8 +40,8 @@ export function getOnboarding(ctx: ApiContext) {
     const steps: OnboardingStep[] = [
       {
         key: "workspace",
-        title: "Confirm workspace details",
-        description: "Check the workspace name, environment and region everyone will see.",
+        title: pick("Konfirmasi detail ruang kerja", "Confirm workspace details"),
+        description: pick("Periksa nama ruang kerja, lingkungan, dan wilayah yang dilihat semua orang.", "Check the workspace name, environment and region everyone will see."),
         done: db.onboarding.workspaceConfirmed,
         optional: false,
         permission: "settings.workspace",
@@ -46,48 +49,48 @@ export function getOnboarding(ctx: ApiContext) {
       },
       {
         key: "source",
-        title: "Connect a demand data source",
-        description: "Forecasts need daily demand from POS or ERP. The product master is already loaded from the data warehouse.",
+        title: pick("Sambungkan sumber data permintaan", "Connect a demand data source"),
+        description: pick("Perkiraan butuh permintaan harian dari POS atau ERP. Data induk produk sudah dimuat dari gudang data.", "Forecasts need daily demand from POS or ERP. The product master is already loaded from the data warehouse."),
         done: demand.length > 0,
         optional: false,
         permission: "integration.manage",
-        detail: demand.length ? `Connected: ${demand.map((s) => s.name).join(", ")}` : null,
+        detail: demand.length ? pick(`Tersambung: ${demand.map((s) => s.name).join(", ")}`, `Connected: ${demand.map((s) => s.name).join(", ")}`) : null,
       },
       {
         key: "readiness",
-        title: "Check data readiness",
-        description: "Run the data quality checks and resolve anything blocking before the first forecast.",
+        title: pick("Periksa kesiapan data", "Check data readiness"),
+        description: pick("Jalankan pemeriksaan kualitas data dan selesaikan yang menghambat sebelum perkiraan pertama.", "Run the data quality checks and resolve anything blocking before the first forecast."),
         done: db.onboarding.readinessChecked && blocking.length === 0 && demand.length > 0,
         optional: false,
         permission: "data.manage",
-        detail: db.onboarding.readinessChecked ? (blocking.length ? `${blocking.length} blocking issue${blocking.length === 1 ? "" : "s"} to resolve` : "No blocking issues") : null,
+        detail: db.onboarding.readinessChecked ? (blocking.length ? pick(`${blocking.length} masalah menghambat perlu diselesaikan`, `${blocking.length} blocking issue${blocking.length === 1 ? "" : "s"} to resolve`) : pick("Tidak ada masalah yang menghambat", "No blocking issues")) : null,
       },
       {
         key: "forecast",
-        title: "Run the first forecast",
+        title: pick("Jalankan perkiraan pertama", "Run the first forecast"),
         description: pick("Buat proses perkiraan untuk seluruh katalog dengan model bawaan.", "Create a forecast run for the whole catalogue with the default model."),
         done: !!anyRun,
         optional: false,
         permission: "forecast.run.create",
-        detail: anyRun ? `${anyRun.id} ${anyRun.status}` : activeRun ? `${activeRun.id} is ${activeRun.status}` : null,
+        detail: anyRun ? `${anyRun.id} · ${STATUS_TEXT(anyRun.status)}` : activeRun ? pick(`${activeRun.id} berstatus ${STATUS_TEXT(activeRun.status)}`, `${activeRun.id} is ${STATUS_TEXT(activeRun.status)}`) : null,
       },
       {
         key: "publish",
-        title: "Publish a planning baseline",
-        description: "Review the results and publish the run so overview, exceptions and plans use it.",
+        title: pick("Terbitkan acuan perencanaan", "Publish a planning baseline"),
+        description: pick("Tinjau hasilnya lalu terbitkan proses agar Ringkasan, item tinjauan, dan rencana memakainya.", "Review the results and publish the run so overview, exceptions and plans use it."),
         done: !!published,
         optional: false,
         permission: "forecast.run.publish",
-        detail: published ? `${published.id} is the baseline` : null,
+        detail: published ? pick(`${published.id} menjadi acuan`, `${published.id} is the baseline`) : null,
       },
       {
         key: "team",
-        title: "Invite your team",
-        description: "Add planners and a manager to review exceptions and approve changes.",
+        title: pick("Undang tim Anda", "Invite your team"),
+        description: pick("Tambahkan perencana dan manajer untuk meninjau item dan menyetujui perubahan.", "Add planners and a manager to review exceptions and approve changes."),
         done: members >= 3,
         optional: true,
         permission: "users.manage",
-        detail: `${members} member${members === 1 ? "" : "s"}`,
+        detail: pick(`${members} anggota`, `${members} member${members === 1 ? "" : "s"}`),
       },
     ];
     const required = steps.filter((s) => !s.optional);
@@ -116,7 +119,7 @@ export function runReadinessChecks(ctx: ApiContext) {
   return write(ctx, "data.manage", () => {
     const db = getDb(ctx.workspaceId);
     const demand = db.sources.filter((s) => (s.type === "POS" || s.type === "ERP") && s.status !== "disconnected");
-    if (demand.length === 0) throw new ApiError("Connect a demand source before running data checks.", "conflict");
+    if (demand.length === 0) throw new ApiError(pick("Sambungkan sumber permintaan sebelum menjalankan pemeriksaan data.", "Connect a demand source before running data checks."), "conflict");
     db.onboarding.readinessChecked = true;
     if (!db.dqIssues.some((i) => i.id === "dq_onb_1")) {
       db.dqIssues.push({
@@ -124,19 +127,19 @@ export function runReadinessChecks(ctx: ApiContext) {
         type: "missing_dimensions",
         severity: "warning",
         sourceId: demand[0]?.id ?? "src_pos",
-        title: "7 SKUs have no category mapping",
-        description: "7 SKUs in the demand history are not assigned to a category in the product master.",
+        title: pick("7 SKU belum punya pemetaan kategori", "7 SKUs have no category mapping"),
+        description: pick("7 SKU di riwayat permintaan belum masuk kategori di data induk produk.", "7 SKUs in the demand history are not assigned to a category in the product master."),
         affectedSkus: 7,
         affectedLocations: db.locations.length,
         detectedAt: iso(Date.now()),
         status: "open",
         ownerId: null,
-        forecastImpact: "These SKUs are forecast but excluded from category totals until mapped.",
-        recommendedAction: "Map the SKUs to categories in the product master.",
+        forecastImpact: pick("SKU ini tetap diperkirakan tetapi tidak dihitung di total kategori sampai dipetakan.", "These SKUs are forecast but excluded from category totals until mapped."),
+        recommendedAction: pick("Petakan SKU ke kategori di data induk produk.", "Map the SKUs to categories in the product master."),
         sampleProductIds: db.products.slice(0, 7).map((p) => p.id),
       });
     }
-    audit(db, { actorId: ctx.userId, action: "update_exception", entityType: "data_source", entityId: "dq_onb_1", entityLabel: "Initial data checks", previousState: null, newState: "checked", reason: "Onboarding readiness check", source: "web" });
+    audit(db, { actorId: ctx.userId, action: "update_exception", entityType: "data_source", entityId: "dq_onb_1", entityLabel: pick("Pemeriksaan data awal", "Initial data checks"), previousState: null, newState: "checked", reason: pick("Pemeriksaan kesiapan persiapan", "Onboarding readiness check"), source: "web" });
     return { blocking: 0, warnings: 1, checkedAt: iso(Date.now()), id: nextId(db, "chk") };
   });
 }

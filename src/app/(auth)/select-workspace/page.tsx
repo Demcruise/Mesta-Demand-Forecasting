@@ -76,7 +76,7 @@ function SelectWorkspace() {
                     {w.status !== "active" && <Tag tone="warning">{w.status === "degraded" ? pick("Menurun", "Degraded") : pick("Pemeliharaan", "Maintenance")}</Tag>}
                   </span>
                   <span className="caption">
-                    {w.region} · Peran Anda: {ROLE_LABELS[session.role]}
+                    {w.region} · {pick("Peran Anda", "Your role")}: {ROLE_LABELS[session.role]}
                   </span>
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-fg-tertiary" aria-hidden />

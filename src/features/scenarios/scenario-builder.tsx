@@ -101,7 +101,7 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
   const simulate = useApiMutation((c, id: string) => simulateSavedScenario(c, id), { invalidate: [["scenarios"], ["scenario"]], failure: pick("Skenario tersimpan, tetapi simulasi tidak berjalan.", "The scenario was saved but the simulation did not run.") });
   const save = useApiMutation((c, _v: void) => saveScenario(c, initial?.id ?? null, { name, description, baselineRunId, assumptions }), {
     invalidate: [["scenarios"], ["scenario"]],
-    success: (s) => `Saved “${s.name}”`,
+    success: (s) => pick(`“${s.name}” tersimpan`, `Saved “${s.name}”`),
     successDescription: () => (preview && !stale ? pick("Hasil simulasi tersimpan bersama skenario.", "Simulation results were saved with the scenario.") : pick("Jalankan simulasi dari halaman skenario untuk melihat dampaknya.", "Run the simulation from the scenario page to see its impact.")),
     failure: pick("Skenario tidak dapat disimpan.", "The scenario was not saved."),
     onSuccess: async (s) => {
@@ -113,104 +113,112 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
 
   if (!can("scenario.create")) return <PermissionNotice permission="scenario.create" />;
 
-  return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(22rem,2fr)]">
-      <div className="flex min-w-0 flex-col gap-6">
-        <PageSection title={pick("1. Acuan dan nama", "1. Baseline and name")} description={pick("Skenario menerapkan asumsi di atas proses perkiraan yang sudah diterbitkan.", "Scenarios apply assumptions on top of a published forecast run.")}>
-          <Panel>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={pick("Proses perkiraan acuan", "Baseline forecast run")} htmlFor="scn-base" required hint={pick("Hanya proses yang sudah diterbitkan yang dapat menjadi acuan.", "Only published runs can be a baseline.")}>
-                <Select
-                  id="scn-base"
-                  value={baselineRunId || undefined}
-                  onValueChange={setBaselineRunId}
-                  placeholder={baselines.isPending ? pick("Memuat proses…", "Loading runs…") : pick("Pilih proses", "Select a run")}
-                  options={(baselines.data ?? []).map((r, i) => ({ value: r.id, label: `${r.id}${i === 0 ? " · current baseline" : ""}`, description: `${r.name} · ${formatDateTime(r.publishedAt)}` }))}
-                />
-              </Field>
-              <Field label={pick("Nama skenario", "Scenario name")} htmlFor="scn-name" required error={showErrors ? errors.name : null}>
-                <Input id="scn-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Year-end holiday uplift" maxLength={80} aria-invalid={showErrors && !!errors.name} />
-              </Field>
-              <Field className="sm:col-span-2" label={pick("Deskripsi", "Description")} htmlFor="scn-desc" optional>
-                <Textarea id="scn-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={pick("Pertanyaan apa yang ingin dijawab skenario ini?", "What question does this scenario answer?")} />
-              </Field>
-            </div>
-          </Panel>
-        </PageSection>
+  const unitLabel = (a: Assumption) => (a.unit === "pp" ? "%" : a.unit);
 
-        <PageSection
-          title="2. Assumptions"
-          description={pick("Setiap asumsi mengubah satu pendorong untuk satu cakupan. Pendorong dan efeknya masih placeholder sampai dikonfirmasi dengan tim domain.", "Each assumption changes one driver for one scope. Drivers and their effects are placeholders until confirmed with the domain team.")}
-          actions={
-            <Button size="sm" variant="secondary" onClick={() => setAssumptions((p) => [...p, newAssumption()])} disabled={assumptions.length >= 12}>
-              <Plus aria-hidden /> Add assumption
-            </Button>
-          }
-        >
-          {showErrors && errors.assumptions && <InlineAlert tone="critical" title={errors.assumptions} />}
-          <ul className="flex flex-col gap-3">
-            {assumptions.map((a, i) => {
-              const effect = assumptionEffect(a);
-              const rowErr = showErrors ? errors.rows[i] : undefined;
-              return (
-                <li key={a.id} className="rounded-lg border border-border bg-surface p-4">
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <span className="metadata">Assumption {i + 1}</span>
+  // PAGE-SCENARIO-001: one main column — Step 1 → Step 2 → Step 3 — so every step
+  // gets the full content width and the actions sit where the review ends.
+  return (
+    <div className="flex w-full max-w-[70rem] flex-col gap-6">
+      <PageSection title={pick("1. Acuan dan Nama", "1. Baseline and name")} description={pick("Skenario menerapkan asumsi di atas proses perkiraan yang sudah diterbitkan.", "Scenarios apply assumptions on top of a published forecast run.")}>
+        <Panel>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label={pick("Proses perkiraan acuan", "Baseline forecast run")} htmlFor="scn-base" required hint={pick("Hanya proses yang sudah diterbitkan yang dapat menjadi acuan.", "Only published runs can be a baseline.")}>
+              <Select
+                id="scn-base"
+                value={baselineRunId || undefined}
+                onValueChange={setBaselineRunId}
+                placeholder={baselines.isPending ? pick("Memuat proses…", "Loading runs…") : pick("Pilih proses", "Select a run")}
+                options={(baselines.data ?? []).map((r, i) => ({ value: r.id, label: `${r.id}${i === 0 ? pick(" · acuan saat ini", " · current baseline") : ""}`, description: `${r.name} · ${formatDateTime(r.publishedAt)}` }))}
+              />
+            </Field>
+            <Field label={pick("Nama skenario", "Scenario name")} htmlFor="scn-name" required error={showErrors ? errors.name : null}>
+              <Input id="scn-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={pick("mis. Kenaikan libur akhir tahun", "e.g. Year-end holiday uplift")} maxLength={80} aria-invalid={showErrors && !!errors.name} />
+            </Field>
+            <Field className="md:col-span-2" label={pick("Deskripsi", "Description")} htmlFor="scn-desc" optional>
+              <Textarea id="scn-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={pick("Pertanyaan apa yang ingin dijawab skenario ini?", "What question does this scenario answer?")} />
+            </Field>
+          </div>
+        </Panel>
+      </PageSection>
+
+      <PageSection
+        title={pick("2. Asumsi", "2. Assumptions")}
+        description={pick("Setiap asumsi mengubah satu pendorong untuk satu cakupan.", "Each assumption changes one driver for one scope.")}
+        actions={
+          <Button size="sm" variant="secondary" onClick={() => setAssumptions((p) => [...p, newAssumption()])} disabled={assumptions.length >= 12}>
+            <Plus aria-hidden /> {pick("Tambah asumsi", "Add assumption")}
+          </Button>
+        }
+      >
+        {showErrors && errors.assumptions && <InlineAlert tone="critical" title={errors.assumptions} />}
+        <ul className="flex flex-col gap-3">
+          {assumptions.map((a, i) => {
+            const effect = assumptionEffect(a);
+            const rowErr = showErrors ? errors.rows[i] : undefined;
+            const change = a.value - a.baselineValue;
+            return (
+              <li key={a.id} className="rounded-lg border border-border bg-surface p-4" aria-label={pick(`Asumsi ${i + 1}`, `Assumption ${i + 1}`)}>
+                {/* Desktop: Driver · Scope · Baseline · Change · Result · Reason · Action on one row. Mobile: stacked. */}
+                <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)_5.5rem_6rem_6.5rem_minmax(0,1.8fr)_2rem]">
+                  <Field label={pick("Pendorong", "Driver")} htmlFor={`${a.id}-driver`}>
+                    <Select id={`${a.id}-driver`} value={a.driver} onValueChange={(v) => update(a.id, { driver: v as ScenarioDriver })} options={DRIVERS.map((d) => ({ value: d, label: DRIVER_LABELS[d] }))} />
+                  </Field>
+                  <Field label={pick("Cakupan", "Scope")} htmlFor={`${a.id}-scope`}>
+                    <Select
+                      id={`${a.id}-scope`}
+                      value={a.scope}
+                      onValueChange={(v) => update(a.id, { scope: v })}
+                      options={SCOPES.filter((s) => (a.driver === "regional" ? s.startsWith(REGION_SCOPE_PREFIX) : true)).map((s) => ({ value: s, label: s }))}
+                    />
+                  </Field>
+                  <Field label={pick("Acuan", "Baseline")} htmlFor={`${a.id}-base`}>
+                    <Input id={`${a.id}-base`} value={`${a.baselineValue}${unitLabel(a)}`} readOnly disabled aria-readonly />
+                  </Field>
+                  <Field label={pick(`Nilai baru (${unitLabel(a)})`, `New (${unitLabel(a)})`)} htmlFor={`${a.id}-val`}>
+                    <Input id={`${a.id}-val`} type="number" step="0.5" value={a.value} onChange={(e) => update(a.id, { value: Number(e.target.value) })} aria-invalid={!!rowErr?.value} aria-describedby={rowErr?.value ? `${a.id}-val-error` : undefined} />
+                  </Field>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="label">{pick("Efek permintaan", "Demand effect")}</span>
+                    <span className={cn("flex h-[var(--control-h-md)] items-center rounded-md border border-border bg-subtle px-3 text-sm font-semibold tabular", deltaToneClass(effect))}>{formatDeltaPercent(effect)}</span>
+                  </div>
+                  <Field className="sm:col-span-2 xl:col-span-1" label={pick("Sumber atau alasan", "Source or rationale")} htmlFor={`${a.id}-why`} required error={rowErr?.rationale}>
+                    <Input id={`${a.id}-why`} value={a.rationale} onChange={(e) => update(a.id, { rationale: e.target.value })} placeholder={pick("mis. Pemberitahuan pemasok: harga naik 8%", "e.g. Supplier notice: +8% list price")} aria-invalid={!!rowErr?.rationale} />
+                  </Field>
+                  <div className="flex items-end sm:col-span-2 xl:col-span-1 xl:h-full xl:pb-0.5 xl:pt-6">
                     <Tooltip content={pick("Hapus asumsi", "Remove assumption")}>
-                      <Button size="icon-sm" variant="ghost" aria-label={`Remove assumption ${i + 1}`} onClick={() => setAssumptions((p) => p.filter((x) => x.id !== a.id))}>
+                      <Button size="icon-sm" variant="ghost" className="ml-auto" aria-label={pick(`Hapus asumsi ${i + 1}`, `Remove assumption ${i + 1}`)} onClick={() => setAssumptions((p) => p.filter((x) => x.id !== a.id))}>
                         <Trash2 aria-hidden />
                       </Button>
                     </Tooltip>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.4fr)_6rem_6rem_7rem]">
-                    <Field label={pick("Pendorong", "Driver")} htmlFor={`${a.id}-driver`} hint={DRIVER_HELP[a.driver]}>
-                      <Select id={`${a.id}-driver`} value={a.driver} onValueChange={(v) => update(a.id, { driver: v as ScenarioDriver })} options={DRIVERS.map((d) => ({ value: d, label: DRIVER_LABELS[d] }))} />
-                    </Field>
-                    <Field label="Scope" htmlFor={`${a.id}-scope`}>
-                      <Select
-                        id={`${a.id}-scope`}
-                        value={a.scope}
-                        onValueChange={(v) => update(a.id, { scope: v })}
-                        options={SCOPES.filter((s) => (a.driver === "regional" ? s.startsWith(REGION_SCOPE_PREFIX) : true)).map((s) => ({ value: s, label: s }))}
-                      />
-                    </Field>
-                    <Field label={pick("Acuan", "Baseline")} htmlFor={`${a.id}-base`}>
-                      <Input id={`${a.id}-base`} value={`${a.baselineValue}${a.unit === "pp" ? "%" : a.unit}`} readOnly disabled aria-readonly />
-                    </Field>
-                    <Field label={`New (${a.unit === "pp" ? "%" : a.unit})`} htmlFor={`${a.id}-val`}>
-                      <Input id={`${a.id}-val`} type="number" step="0.5" value={a.value} onChange={(e) => update(a.id, { value: Number(e.target.value) })} aria-invalid={!!rowErr?.value} aria-describedby={rowErr?.value ? `${a.id}-val-error` : undefined} />
-                    </Field>
-                    <div className="flex flex-col gap-1.5">
-                      <span className="label">{pick("Efek permintaan", "Demand effect")}</span>
-                      <span className={cn("flex h-[var(--control-h-md)] items-center rounded-md border border-border bg-subtle px-3 text-sm font-semibold tabular", deltaToneClass(effect))}>{formatDeltaPercent(effect)}</span>
-                    </div>
-                  </div>
-                  {rowErr?.value && <p id={`${a.id}-val-error`} className="mt-1.5 text-xs font-medium text-critical-fg" role="alert">{rowErr.value}</p>}
-                  <Field className="mt-3" label={pick("Sumber atau alasan", "Source or rationale")} htmlFor={`${a.id}-why`} required error={rowErr?.rationale}>
-                    <Input id={`${a.id}-why`} value={a.rationale} onChange={(e) => update(a.id, { rationale: e.target.value })} placeholder="e.g. Supplier notice: +8% list price from next month" aria-invalid={!!rowErr?.rationale} />
-                  </Field>
-                  <p className="mt-2 caption">
-                    Delta: {a.value - a.baselineValue >= 0 ? "+" : "−"}
-                    {Math.abs(a.value - a.baselineValue)}
-                    {a.unit === "pp" ? " percentage points" : a.unit === "%" ? "%" : ` ${a.unit}`} on {a.scope}.
+                </div>
+                {rowErr?.value && (
+                  <p id={`${a.id}-val-error`} className="mt-1.5 text-xs font-medium text-critical-fg" role="alert">
+                    {rowErr.value}
                   </p>
-                </li>
-              );
-            })}
-          </ul>
-        </PageSection>
-      </div>
+                )}
+                <p className="mt-2 caption">
+                  {DRIVER_HELP[a.driver]}{" "}
+                  <span className="text-fg-tertiary">
+                    {pick("Perubahan", "Change")}: {change >= 0 ? "+" : "−"}
+                    {Math.abs(change)}
+                    {a.unit === "pp" ? pick(" poin persentase", " percentage points") : a.unit === "%" ? "%" : ` ${a.unit}`} · {a.scope}
+                  </span>
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </PageSection>
 
-      <aside className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-[calc(var(--topbar-h)+1.5rem)] xl:self-start">
+      <PageSection title={pick("3. Simulasikan dan Tinjau Dampak", "3. Simulate and review impact")} description={pick("Simulasi menerapkan asumsi pada acuan. Jalankan lagi setelah mengubah asumsi.", "Simulation applies the assumptions to the baseline. Run it again after changing assumptions.")}>
         <Panel
-          title="3. Simulate and review impact"
-          description={pick("Simulasi menerapkan asumsi pada acuan. Jalankan lagi setelah mengubah asumsi.", "Simulation applies the assumptions to the baseline. Run it again after changing assumptions.")}
           footer={
             <>
-              <span className="caption">{pluralize(assumptions.length, "assumption")}</span>
-              <div className="flex gap-2">
+              <span className="caption">{pick(`${assumptions.length} asumsi`, pluralize(assumptions.length, "assumption"))}</span>
+              <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" onClick={runPreview} loading={previewing} loadingText={pick("Menyimulasikan", "Simulating")}>
-                  <Play aria-hidden /> Run simulation
+                  <Play aria-hidden /> {pick("Jalankan Simulasi", "Run simulation")}
                 </Button>
                 <Button
                   variant="primary"
@@ -221,23 +229,41 @@ export function ScenarioBuilder({ initial }: { initial: Scenario | null }) {
                     if (!invalid && baselineRunId) save.mutate();
                   }}
                 >
-                  <Save aria-hidden /> Save scenario
+                  <Save aria-hidden /> {pick("Simpan Skenario", "Save scenario")}
                 </Button>
               </div>
             </>
           }
         >
-          {previewError && <InlineAlert tone="critical" title={pick("Simulasi gagal.", "Simulation failed.")} className="mb-3">{previewError}</InlineAlert>}
-          {stale && <InlineAlert tone="warning" title={pick("Asumsi berubah sejak simulasi terakhir.", "Assumptions changed since the last simulation.")} className="mb-3">{pick("Jalankan simulasi lagi untuk memperbarui dampaknya.", "Run the simulation again to update the impact.")}</InlineAlert>}
-          {preview ? (
-            <ImpactPreview result={preview.result} compact />
-          ) : (
-            <p className="body-sm text-fg-secondary">No simulation yet. Run it to see the change in total demand and by category before saving.</p>
+          {previewError && (
+            <InlineAlert tone="critical" title={pick("Simulasi gagal.", "Simulation failed.")} className="mb-3">
+              {previewError}
+            </InlineAlert>
           )}
-          {showErrors && invalid && <p className="mt-3 text-xs font-semibold text-critical-fg">Fix the highlighted fields before saving.</p>}
-          {preview && !stale && <p className="mt-3 caption">Baseline {baselineRunId} · simulated {formatDateTime(preview.result.simulatedAt)} · total {formatNumber(preview.result.scenarioUnits)} units.</p>}
+          {stale && (
+            <InlineAlert tone="warning" title={pick("Asumsi berubah sejak simulasi terakhir.", "Assumptions changed since the last simulation.")} className="mb-3">
+              {pick("Jalankan simulasi lagi untuk memperbarui dampaknya.", "Run the simulation again to update the impact.")}
+            </InlineAlert>
+          )}
+          {preview ? (
+            <ImpactPreview result={preview.result} />
+          ) : (
+            <div className="flex flex-col items-start gap-1 py-2">
+              <p className="body-sm font-semibold text-fg">{pick("Belum ada simulasi.", "No simulation yet.")}</p>
+              <p className="body-sm text-fg-secondary">{pick("Jalankan simulasi untuk melihat dampaknya sebelum menyimpan.", "Run the simulation to see the impact before saving.")}</p>
+            </div>
+          )}
+          {showErrors && invalid && <p className="mt-3 text-xs font-semibold text-critical-fg">{pick("Perbaiki kolom yang ditandai sebelum menyimpan.", "Fix the highlighted fields before saving.")}</p>}
+          {preview && !stale && (
+            <p className="mt-3 caption">
+              {pick(
+                `Acuan ${baselineRunId} · disimulasikan ${formatDateTime(preview.result.simulatedAt)} · total ${formatNumber(preview.result.scenarioUnits)} unit.`,
+                `Baseline ${baselineRunId} · simulated ${formatDateTime(preview.result.simulatedAt)} · total ${formatNumber(preview.result.scenarioUnits)} units.`,
+              )}
+            </p>
+          )}
         </Panel>
-      </aside>
+      </PageSection>
     </div>
   );
 }

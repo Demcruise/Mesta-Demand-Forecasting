@@ -2,7 +2,7 @@ import type { ApiKey, ForecastSchedule, NotificationCategory, NotificationRules,
 import type { WorkspaceDb } from "./db";
 import { createRng } from "./random";
 import { addDays, DAY_MS, HOUR_MS, iso, MINUTE_MS } from "./time";
-import { pick } from "@/lib/i18n/core";
+import { pick, localized } from "@/lib/i18n/core";
 
 export type PlatformState = {
   schedules: ForecastSchedule[];
@@ -91,7 +91,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
     ],
     apiKeys: [
       { id: "key_1", name: pick("Sistem pengisian ulang (baca perkiraan)", "Replenishment system (read forecasts)"), prefix: "mdf_live_7Kq2", scopes: ["forecasts:read", "plans:read"], createdBy: "u_budi", createdAt: iso(now - 90 * DAY_MS), expiresAt: iso(now + 275 * DAY_MS), lastUsedAt: iso(now - 12 * MINUTE_MS), status: "active" },
-      { id: "key_2", name: pick("Pemuatan gudang data", pick("Pemuat gudang data", "Data warehouse loader")), prefix: "mdf_live_P9xa", scopes: ["demand:write"], createdBy: "u_lina", createdAt: iso(now - 200 * DAY_MS), expiresAt: iso(now + 20 * DAY_MS), lastUsedAt: iso(now - 9 * HOUR_MS), status: "active" },
+      { id: "key_2", name: pick("Pemuatan gudang data", "Data warehouse loader"), prefix: "mdf_live_P9xa", scopes: ["demand:write"], createdBy: "u_lina", createdAt: iso(now - 200 * DAY_MS), expiresAt: iso(now + 20 * DAY_MS), lastUsedAt: iso(now - 9 * HOUR_MS), status: "active" },
       { id: "key_3", name: pick("Ekspor BI lama", "Old BI export"), prefix: "mdf_live_m1Tz", scopes: ["forecasts:read", "audit:read"], createdBy: "u_budi", createdAt: iso(now - 400 * DAY_MS), expiresAt: iso(now - 35 * DAY_MS), lastUsedAt: iso(now - 40 * DAY_MS), status: "expired" },
     ],
     webhooks: [
@@ -125,7 +125,7 @@ export function seedPlatform(db: WorkspaceDb, now: number, fresh: boolean): Plat
   };
 }
 
-export const WEEKDAYS = [pick("Minggu", "Sunday"), pick("Senin", "Monday"), pick("Selasa", "Tuesday"), pick("Rabu", "Wednesday"), pick("Kamis", "Thursday"), pick("Jumat", "Friday"), pick("Sabtu", "Saturday")];
+export const WEEKDAYS = localized(["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]);
 
 /** Next execution time for a schedule, in local time. */
 export function nextRunAt(s: Pick<ForecastSchedule, "cadence" | "time" | "enabled">, now = Date.now()): string | null {

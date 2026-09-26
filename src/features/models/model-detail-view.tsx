@@ -69,7 +69,7 @@ export function MetricTable({ metrics }: { metrics: ModelMetrics }) {
 export function ModelDetailView({ modelId }: { modelId: string }) {
   const { can } = useSession();
   const q = useApiQuery(["model", modelId], (c) => getModel(c, modelId));
-  useBreadcrumbLeaf(q.data ? pick(`${q.data.model.name} ${q.data.model.version}`, pick(`${q.data.model.name} ${q.data.model.version}`, `${q.data.model.name} ${q.data.model.version}`)) : null);
+  useBreadcrumbLeaf(q.data ? pick(`${q.data.model.name} ${q.data.model.version}`, `${q.data.model.name} ${q.data.model.version}`) : null);
   const [dialog, setDialog] = React.useState<null | "default" | "archive">(null);
   const [rationale, setRationale] = React.useState("");
   const promote = useApiMutation((c, v: string) => requestDefaultModel(c, modelId, v), {
@@ -79,7 +79,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
     failure: pick("Permintaan tidak dapat dibuat.", "The request was not created."),
     onSuccess: () => setDialog(null),
   });
-  const archive = useApiMutation((c, _v: void) => archiveModel(c, modelId), { invalidate: [["model"], ["models"]], success: pick("Model diarsipkan", "Model archived"), failure: pick("Model tidak dapat diarsipkan.", pick("Model tidak diarsipkan.", "The model was not archived.")), onSuccess: () => setDialog(null) });
+  const archive = useApiMutation((c, _v: void) => archiveModel(c, modelId), { invalidate: [["model"], ["models"]], success: pick("Model diarsipkan", "Model archived"), failure: pick("Model tidak dapat diarsipkan.", "The model was not archived."), onSuccess: () => setDialog(null) });
 
   if (q.isPending) return <PageContainer><PageSkeleton /></PageContainer>;
   if (q.isError) {
@@ -87,7 +87,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
       <PageContainer>
         <PageHeader title={pick("Model", "Model")} />
         <Panel>
-          <ErrorState what={pick("Model ini tidak dapat dimuat.", "This model could not be loaded.")} error={q.error} onRetry={() => q.refetch()} recovery={<Link href="/models" className={buttonVariants({ variant: "secondary" })}>{pick("Kembali ke Daftar Model", pick("Kembali ke daftar model", "Back to model registry"))}</Link>} />
+          <ErrorState what={pick("Model ini tidak dapat dimuat.", "This model could not be loaded.")} error={q.error} onRetry={() => q.refetch()} recovery={<Link href="/models" className={buttonVariants({ variant: "secondary" })}>{pick("Kembali ke Daftar Model", "Back to model registry")}</Link>} />
         </Panel>
       </PageContainer>
     );
@@ -105,9 +105,9 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
           <>
             <StatusBadge status={m.status} />
             {m.isDefault && <Tag tone="primary">{pick("Model bawaan", "Default model")}</Tag>}
-            <MetaItem>Terakhir dilatih {formatDateTime(m.lastTrainedAt)}</MetaItem>
+            <MetaItem>{pick("Terakhir dilatih", "Last trained")} {formatDateTime(m.lastTrainedAt)}</MetaItem>
             <MetaItem>
-              Penanggung jawab <UserIdentity userId={m.owner} className="ml-1" />
+              {pick("Penanggung jawab", "Owner")} <UserIdentity userId={m.owner} className="ml-1" />
             </MetaItem>
           </>
         }
@@ -115,17 +115,17 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
           <>
             {can("backtest.run") && (
               <Link href={`/models/backtesting?model=${m.id}`} className={buttonVariants({ variant: "secondary" })}>
-                <FlaskConical aria-hidden /> Jalankan Uji Model
+                <FlaskConical aria-hidden /> {pick("Jalankan Uji Model", "Run backtest")}
               </Link>
             )}
             {can("model.manage") && !m.isDefault && m.status !== "archived" && (
               <Button variant="secondary" onClick={() => setDialog("archive")}>
-                <Archive aria-hidden /> Arsipkan
+                <Archive aria-hidden /> {pick("Arsipkan", "Archive")}
               </Button>
             )}
             {can("model.manage") && !m.isDefault && m.status !== "archived" && (
               <Button variant="primary" onClick={() => { setRationale(""); setDialog("default"); }} disabled={!!pendingApproval}>
-                <Star aria-hidden /> Ajukan sebagai bawaan
+                <Star aria-hidden /> {pick("Ajukan sebagai bawaan", "Propose as default")}
               </Button>
             )}
           </>
@@ -133,7 +133,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
       />
       {pendingApproval && (
         <InlineAlert tone="info" title={pick("Permintaan menjadikan model ini bawaan sedang menunggu persetujuan.", "A request to make this model the default is waiting for approval.")} action={<Link href={`/planning/approvals?id=${pendingApproval.id}`} className={buttonVariants({ size: "sm" })}>{pick("Lihat permintaan", "View request")}</Link>}>
-          Diajukan {formatDateTime(pendingApproval.requestedAt)}.
+          {pick(`Diajukan ${formatDateTime(pendingApproval.requestedAt)}.`, `Submitted ${formatDateTime(pendingApproval.requestedAt)}.`)}
         </InlineAlert>
       )}
 
@@ -141,7 +141,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
         <Panel title={pick("Performa", "Performance")} description={pick(`Evaluasi terakhir ${formatDateRange(m.metrics.evaluationStart, m.metrics.evaluationEnd)} · ${m.metrics.population}`, `Latest evaluation ${formatDateRange(m.metrics.evaluationStart, m.metrics.evaluationEnd)} · ${m.metrics.population}`)}>
           <MetricTable metrics={m.metrics} />
         </Panel>
-        <Panel title={pick("Detail versi", pick("Metadata versi", "Version metadata"))}>
+        <Panel title={pick("Detail versi", "Version metadata")}>
           <DescriptionList
             items={[
               { label: pick("Versi", "Version"), value: m.version },
@@ -165,7 +165,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
       {latest ? (
         <ForecastChart
           title={pick(`Uji model ${latest.id}: perkiraan vs aktual`, `Backtest ${latest.id}: forecast vs actual`)}
-          question={pick("Seberapa dekat perkiraan model ini mengikuti permintaan aktual sebelumnya?", pick("Seberapa dekat perkiraan model ini mengikuti permintaan aktual di masa lalu?", "How closely did this model's forecasts track actual demand in the past?"))}
+          question={pick("Seberapa dekat perkiraan model ini mengikuti permintaan aktual sebelumnya?", "How closely did this model's forecasts track actual demand in the past?")}
           points={latest.points}
           unit={pick("unit per hari", "units per day")}
           source={pick(`Uji model ${latest.id}`, `Backtest ${latest.id}`)}
@@ -190,7 +190,7 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
         </Panel>
         <Panel title={pick("Penggunaan", "Usage")} description={pick(`${formatNumber(m.usage.runs)} proses perkiraan · terakhir dipakai ${formatDate(m.usage.lastUsedAt)}`, `${formatNumber(m.usage.runs)} forecast runs · last used ${formatDate(m.usage.lastUsedAt)}`)} flush>
           {runs.length === 0 ? (
-            <p className="px-4 py-6 caption">{pick("Belum ada proses di ruang kerja ini yang memakai model ini.", pick("Tidak ada proses di ruang kerja ini yang memakai model ini.", "No runs in this workspace used this model."))}</p>
+            <p className="px-4 py-6 caption">{pick("Belum ada proses di ruang kerja ini yang memakai model ini.", "No runs in this workspace used this model.")}</p>
           ) : (
             <ul>
               {runs.map((r) => (
@@ -204,27 +204,27 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
         </Panel>
       </div>
       <Panel title={pick("Riwayat", "Audit")}>
-        <AuditTimeline events={audit} emptyText={pick("Belum ada perubahan tercatat pada model ini.", pick("Tidak ada perubahan tercatat untuk model ini.", "No audited changes to this model."))} />
+        <AuditTimeline events={audit} emptyText={pick("Belum ada perubahan tercatat pada model ini.", "No audited changes to this model.")} />
       </Panel>
 
       <Dialog open={dialog === "default"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent
-          title={pick(`Ajukan ${m.name} ${m.version} sebagai model bawaan?`, pick(`Ajukan ${m.name} ${m.version} sebagai model bawaan?`, pick(`Ajukan ${m.name} ${m.version} sebagai model bawaan?`, `Request ${m.name} ${m.version} as the default model?`)))}
-          description={pick("Promosi model selalu melalui persetujuan Manajer.", pick("Promosi model selalu lewat persetujuan Manajer.", "Model promotion always goes through Manager approval."))}
+          title={pick(`Ajukan ${m.name} ${m.version} sebagai model bawaan?`, `Request ${m.name} ${m.version} as the default model?`)}
+          description={pick("Promosi model selalu melalui persetujuan Manajer.", "Model promotion always goes through Manager approval.")}
           footer={
             <>
               <Button variant="ghost" onClick={() => setDialog(null)}>
-                Batal
+                {pick("Batal", "Cancel")}
               </Button>
               <Button variant="primary" disabled={rationale.trim().length < 10} loading={promote.isPending} onClick={() => promote.mutate(rationale)}>
-                Kirim untuk persetujuan
+                {pick("Kirim untuk persetujuan", "Submit for approval")}
               </Button>
             </>
           }
         >
           <ConsequenceSummary
             rows={[
-              { label: pick("Yang berubah", "What changes"), value: pick("Proses perkiraan baru memakai model ini kecuali memilih model lain.", pick("Proses perkiraan baru memakai model ini kecuali dipilih lain.", "New forecast runs use this model unless another is chosen.")) },
+              { label: pick("Yang berubah", "What changes"), value: pick("Proses perkiraan baru memakai model ini kecuali memilih model lain.", "New forecast runs use this model unless another is chosen.") },
               { label: pick("Yang tidak berubah", "What does not change"), value: pick("Proses yang sudah ada, acuan saat ini, dan rencana yang terbuka.", "Existing runs, the current baseline and open plans.") },
               { label: pick("Bukti terlampir", "Evidence attached"), value: backtests.length ? backtests.map((b) => b.id).join(", ") : pick("Belum ada uji model. Jalankan dulu.", "No backtests. Run one first.") },
               { label: pick("Persetujuan", "Approval"), value: pick("Manajer", "Manager") },
@@ -242,10 +242,10 @@ export function ModelDetailView({ modelId }: { modelId: string }) {
           footer={
             <>
               <Button variant="ghost" onClick={() => setDialog(null)}>
-                Batal
+                {pick("Batal", "Cancel")}
               </Button>
               <Button variant="primary" loading={archive.isPending} onClick={() => archive.mutate()}>
-                Arsipkan model
+                {pick("Arsipkan model", "Archive model")}
               </Button>
             </>
           }

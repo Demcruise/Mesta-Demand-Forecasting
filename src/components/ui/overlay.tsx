@@ -4,6 +4,7 @@ import { Dialog as D, DropdownMenu as DM, Popover as P, Tooltip as T } from "rad
 import { X } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { pick } from "@/lib/i18n/core";
 
 /* ── Tooltip ───────────────────────────────────────────────────────── */
 
@@ -118,21 +119,30 @@ export function DropdownMenuSeparator() {
   return <DM.Separator className="-mx-1 my-1 h-px bg-border" />;
 }
 
+/**
+ * Checkbox menu item (COLUMNS-CHECK-001). Radix puts `data-state` on the item, not on
+ * the box, so the box reads it through `group-data-*`: checked = primary fill + light
+ * check, unchecked = white box with border, disabled = muted. Row hover only tints the
+ * row, so it never washes out the checked box; focus uses the row highlight + ring.
+ */
 export const DropdownMenuCheckboxItem = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<typeof DM.CheckboxItem>>(
   function DropdownMenuCheckboxItem({ className, children, ...props }, ref) {
     return (
       <DM.CheckboxItem
         ref={ref}
         className={cn(
-          "relative flex h-8 cursor-pointer select-none items-center gap-2 rounded-sm pl-8 pr-2 text-sm outline-none data-[disabled]:cursor-not-allowed data-[highlighted]:bg-hover data-[disabled]:text-fg-disabled",
+          "group relative flex h-9 cursor-pointer select-none items-center gap-2 rounded-sm pl-8 pr-2 text-sm outline-none data-[disabled]:cursor-not-allowed data-[highlighted]:bg-hover data-[disabled]:text-fg-disabled focus-visible:ring-2 focus-visible:ring-focus/40",
           className,
         )}
         {...props}
       >
-        <span className="absolute left-2 flex size-4 items-center justify-center rounded-xs border border-border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary">
+        <span
+          aria-hidden
+          className="absolute left-2 flex size-4 items-center justify-center rounded-xs border border-border-strong bg-surface transition-colors group-data-[state=checked]:border-primary group-data-[state=checked]:bg-primary group-data-[state=indeterminate]:border-primary group-data-[state=indeterminate]:bg-primary group-data-[disabled]:border-border group-data-[disabled]:bg-muted group-data-[disabled]:group-data-[state=checked]:bg-fg-disabled"
+        >
           <DM.ItemIndicator>
             <svg viewBox="0 0 16 16" className="size-3 text-primary-fg" aria-hidden>
-              <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </DM.ItemIndicator>
         </span>
@@ -202,7 +212,7 @@ export function DialogContent({ title, description, size = "md", footer, hideClo
             )}
           </div>
           {!hideClose && (
-            <D.Close className="-mr-1.5 -mt-1 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-fg-tertiary hover:bg-hover hover:text-fg" aria-label="Close dialog">
+            <D.Close className="-mr-1.5 -mt-1 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-fg-tertiary hover:bg-hover hover:text-fg" aria-label={pick("Tutup dialog", "Close dialog")}>
               <X className="size-4" aria-hidden />
             </D.Close>
           )}
@@ -252,12 +262,12 @@ export function DrawerContent({ title, description, size = "md", footer, headerA
             {description ? (
               <D.Description className="mt-0.5 body-sm text-fg-secondary">{description}</D.Description>
             ) : (
-              <D.Description className="sr-only">Details</D.Description>
+              <D.Description className="sr-only">{pick("Detail", "Details")}</D.Description>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-1">
             {headerActions}
-            <D.Close className="inline-flex size-8 items-center justify-center rounded-md text-fg-tertiary hover:bg-hover hover:text-fg" aria-label="Close panel">
+            <D.Close className="inline-flex size-8 items-center justify-center rounded-md text-fg-tertiary hover:bg-hover hover:text-fg" aria-label={pick("Tutup panel", "Close panel")}>
               <X className="size-4" aria-hidden />
             </D.Close>
           </div>

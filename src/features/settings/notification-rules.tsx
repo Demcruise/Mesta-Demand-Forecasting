@@ -13,22 +13,38 @@ import { Panel } from "@/components/page/page";
 import { ErrorState, TableSkeleton } from "@/components/feedback/states";
 import { pick, localized } from "@/lib/i18n";
 
-const ROWS: { key: NotificationCategory; label: string; description: string; locked?: boolean }[] = [
-  { key: "approval_requested", label: pick("Perlu persetujuan", "Approval requested"), description: pick("Ada permintaan yang menunggu keputusan Anda. Selalu tampil di aplikasi.", "A request needs your decision. Always shown in the app."), locked: true },
-  { key: "approval_completed", label: pick("Persetujuan selesai", "Approval completed"), description: pick("Permintaan yang Anda ajukan atau ikuti sudah diputuskan.", "A request you made or follow was decided.") },
-  { key: "forecast_completed", label: pick("Perkiraan selesai", "Forecast completed"), description: pick("Sebuah proses selesai diproses.", "A run finished processing.") },
-  { key: "forecast_failed", label: pick("Perkiraan gagal", "Forecast failed"), description: pick("Sebuah proses berhenti karena kesalahan.", "A run stopped with an error.") },
-  { key: "exception_opened", label: pick("Perlu ditinjau", "Exception opened"), description: pick("Item baru di atas tingkat minimum Anda.", "New exceptions above your minimum severity.") },
-  { key: "data_quality", label: pick("Masalah kualitas data", "Data quality issue"), description: pick("Ada pemeriksaan data yang gagal atau memberi peringatan.", pick("Pemeriksaan data penghambat atau peringatan gagal.", "A blocking or warning data check failed.")) },
-  { key: "data_freshness", label: pick("Data belum diperbarui", pick("Kebaruan data", "Data freshness")), description: pick("Ada sumber data yang terlambat atau gagal.", "A source is delayed or failing.") },
-  { key: "scenario_completed", label: pick("Skenario disimulasikan", "Scenario simulated"), description: pick("Simulasi skenario selesai.", "A scenario simulation finished.") },
-  { key: "model_issue", label: pick("Masalah model", "Model issue"), description: pick("Ada penyimpangan atau penurunan performa pada model produksi.", pick("Penyimpangan atau penurunan performa pada model produksi.", "Drift or degradation on a production model.")) },
-];
+const ROWS: { key: NotificationCategory; label: string; description: string; locked?: boolean }[] = localized([
+  { key: "approval_requested", label: "Perlu persetujuan", description: "Ada permintaan yang menunggu keputusan Anda. Selalu tampil di aplikasi.", locked: true },
+  { key: "approval_completed", label: "Persetujuan selesai", description: "Permintaan yang Anda ajukan atau ikuti sudah diputuskan." },
+  { key: "forecast_completed", label: "Perkiraan selesai", description: "Sebuah proses selesai diproses." },
+  { key: "forecast_failed", label: "Perkiraan gagal", description: "Sebuah proses berhenti karena kesalahan." },
+  { key: "exception_opened", label: "Perlu ditinjau", description: "Item baru di atas tingkat minimum Anda." },
+  { key: "data_quality", label: "Masalah kualitas data", description: "Ada pemeriksaan data yang gagal atau memberi peringatan." },
+  { key: "data_freshness", label: "Data belum diperbarui", description: "Ada sumber data yang terlambat atau gagal." },
+  { key: "scenario_completed", label: "Skenario disimulasikan", description: "Simulasi skenario selesai." },
+  { key: "model_issue", label: "Masalah model", description: "Ada penyimpangan atau penurunan performa pada model produksi." },
+], [
+  { key: "approval_requested", label: "Approval requested", description: "A request needs your decision. Always shown in the app.", locked: true },
+  { key: "approval_completed", label: "Approval completed", description: "A request you made or follow was decided." },
+  { key: "forecast_completed", label: "Forecast completed", description: "A run finished processing." },
+  { key: "forecast_failed", label: "Forecast failed", description: "A run stopped with an error." },
+  { key: "exception_opened", label: "Exception opened", description: "New exceptions above your minimum severity." },
+  { key: "data_quality", label: "Data quality issue", description: "A blocking or warning data check failed." },
+  { key: "data_freshness", label: "Data freshness", description: "A source is delayed or failing." },
+  { key: "scenario_completed", label: "Scenario simulated", description: "A scenario simulation finished." },
+  { key: "model_issue", label: "Model issue", description: "Drift or degradation on a production model." },
+]);
 
-const CHANNELS: { key: NotificationChannel; label: string }[] = [
-  { key: "in_app", label: "In app" },
-  { key: "email", label: "Email" },
-];
+const CHANNELS: { key: NotificationChannel; label: string }[] = localized(
+  [
+    { key: "in_app", label: "Di aplikasi" },
+    { key: "email", label: "Email" },
+  ],
+  [
+    { key: "in_app", label: "In app" },
+    { key: "email", label: "Email" },
+  ],
+);
 
 /** PLAT-006: per-user delivery rules — channel per event, severity floor, quiet hours and digest. */
 export function NotificationRulesSection() {
@@ -41,7 +57,7 @@ export function NotificationRulesSection() {
   const save = localized(useApiMutation((c, v: NotificationRules) => updateNotificationRules(c, v), {
     invalidate: [["notification-rules"], ["notifications"]],
     success: "Aturan notifikasi tersimpan",
-    failure: pick("Aturan notifikasi tidak tersimpan.", "Notification rules were not saved."),
+    failure: "Aturan notifikasi tidak tersimpan.",
   }), useApiMutation((c, v: NotificationRules) => updateNotificationRules(c, v), {
     invalidate: [["notification-rules"], ["notifications"]],
     success: "Notification rules saved",
@@ -61,16 +77,16 @@ export function NotificationRulesSection() {
   return (
     <Panel
       title={pick("Notifikasi", "Notifications")}
-      description={`Where and when Mesta notifies you (${session.email}). These rules apply only to you.`}
+      description={pick(`Di mana dan kapan Mesta memberi tahu Anda (${session.email}). Aturan ini hanya berlaku untuk Anda.`, `Where and when Mesta notifies you (${session.email}). These rules apply only to you.`)}
       footer={
         <>
           <span className="caption">{dirty ? pick("Perubahan belum disimpan", "Unsaved changes") : pick("Tidak ada perubahan belum disimpan", "No unsaved changes")}</span>
           <div className="flex gap-2">
             <Button variant="ghost" disabled={!dirty} onClick={() => setDraft(structuredClone(q.data))}>
-              Discard changes
+              {pick("Buang perubahan", "Discard changes")}
             </Button>
             <Button variant="primary" disabled={!dirty} loading={save.isPending} onClick={() => save.mutate(draft)}>
-              Save rules
+              {pick("Simpan aturan", "Save rules")}
             </Button>
           </div>
         </>
@@ -82,7 +98,7 @@ export function NotificationRulesSection() {
           <thead className="bg-subtle">
             <tr>
               <th scope="col" className="border-b border-border px-3 py-2 text-left text-xs font-semibold text-fg-secondary">
-                Event
+                {pick("Kejadian", "Event")}
               </th>
               {CHANNELS.map((c) => (
                 <th key={c.key} scope="col" className="w-24 border-b border-border px-3 py-2 text-center text-xs font-semibold text-fg-secondary">
@@ -103,7 +119,7 @@ export function NotificationRulesSection() {
                   return (
                     <td key={c.key} className="px-3 py-2.5 text-center">
                       <Checkbox
-                        aria-label={`${r.label} by ${c.label.toLowerCase()}`}
+                        aria-label={pick(`${r.label} lewat ${c.label.toLowerCase()}`, `${r.label} by ${c.label.toLowerCase()}`)}
                         checked={locked || (draft.channels[r.key] ?? []).includes(c.key)}
                         disabled={locked}
                         onCheckedChange={(v) => toggle(r.key, c.key, v === true)}
@@ -146,10 +162,10 @@ export function NotificationRulesSection() {
         <SwitchField id="nr-quiet" label={pick("Jam tenang", "Quiet hours")} description={pick("Tahan email notifikasi selama jam ini. Proses yang gagal dan permintaan persetujuan tetap masuk ke aplikasi.", "Hold email notifications during these hours. Failed runs and approval requests still arrive in the app.")} checked={draft.quietHours.enabled} onCheckedChange={(v) => setDraft({ ...draft, quietHours: { ...draft.quietHours, enabled: v } })} />
         {draft.quietHours.enabled && (
           <div className="grid max-w-sm grid-cols-2 gap-3 pb-2">
-            <Field label="From" htmlFor="nr-from">
+            <Field label={pick("Dari", "From")} htmlFor="nr-from">
               <Input id="nr-from" type="time" value={draft.quietHours.start} onChange={(e) => setDraft({ ...draft, quietHours: { ...draft.quietHours, start: e.target.value } })} />
             </Field>
-            <Field label="Until" htmlFor="nr-to">
+            <Field label={pick("Sampai", "Until")} htmlFor="nr-to">
               <Input id="nr-to" type="time" value={draft.quietHours.end} onChange={(e) => setDraft({ ...draft, quietHours: { ...draft.quietHours, end: e.target.value } })} />
             </Field>
           </div>

@@ -1,9 +1,12 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
+"use client";
+
+import { ArrowDownRight, ArrowRight, ArrowUpRight, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
-import { formatDeltaNumber, formatDeltaPercent, formatNumber } from "@/lib/format";
+import { formatDeltaCompact, formatDeltaNumber, formatDeltaPercent, formatDeltaPoints, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/overlay";
+import { Sparkline } from "@/components/charts/small-charts";
 import { pick } from "@/lib/i18n/core";
 
 /**
@@ -64,10 +67,158 @@ export function ForecastDelta({
 }
 
 /**
- * MetricCard: label → value → context line. Every KPI shows unit, period and a
- * comparison baseline, and links to the surface where the user can act on it.
+ * MetricDelta: short signed comparison for compact metric cards (FE-METRIC-004).
+ * Arrow + sign + value, coloured by sign only — a change is not judged good or bad.
  */
-export function MetricCard({
+export function MetricDelta({ value, kind = "percent", className }: { value: number | null | undefined; kind?: "percent" | "points" | "compact" | "number"; className?: string }) {
+  if (value == null || Number.isNaN(value)) return null;
+  const flat = kind === "percent" || kind === "points" ? Math.abs(value) < 0.0005 : Math.round(value) === 0;
+  const Icon = flat ? ArrowRight : value > 0 ? ArrowUpRight : ArrowDownRight;
+  const text = kind === "percent" ? formatDeltaPercent(value) : kind === "points" ? formatDeltaPoints(value) : kind === "compact" ? formatDeltaCompact(value) : formatDeltaNumber(value);
+  const tone = flat ? "text-fg-tertiary" : value > 0 ? "text-success-fg" : "text-critical-fg";
+  return (
+    <span className={cn("inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-semibold tabular", tone, className)}>
+      <Icon className="size-3.5" aria-hidden />
+      <span className="sr-only">{flat ? pick("Tidak berubah", "Unchanged") : value > 0 ? pick("Naik", "Up") : pick("Turun", "Down")} </span>
+      {text}
+    </span>
+  );
+}
+
+type MetricCardProps = {
+  label: string;
+  value: React.ReactNode;
+  unit?: string;
+  delta?: React.ReactNode;
+  href?: string;
+  /** Header tooltip: definitions and calculation detail, never the primary meaning. */
+  tooltip?: React.ReactNode;
+  className?: string;
+} & (
+  | {
+      /**
+       * detailed (default): label → value → context → footnote → link. For detail
+       * pages where the card is the only place the explanation lives.
+       */
+      variant?: "detailed";
+      context?: React.ReactNode;
+      footnote?: React.ReactNode;
+      hrefLabel?: string;
+    }
+  | {
+      /**
+       * compact (FE-METRIC-001): icon + label → one dominant value → one short
+       * comparison row → optional real micro trend. Whole card is the link.
+       */
+      variant: "compact";
+      icon?: LucideIcon;
+      /** Exact value for tooltip and assistive tech when `value` is abbreviated. */
+      exactValue?: string;
+      /** Short comparison baseline shown after the delta, e.g. "vs previous run". */
+      comparison?: React.ReactNode;
+      /** One short supporting line when there is no delta (e.g. "29 critical · 58 warning"). */
+      meta?: React.ReactNode;
+      /** Micro trend from real history only (FE-METRIC-005). Omitted when there is none. */
+      trend?: number[];
+      trendForecastFrom?: number;
+      /** Where the card leads, announced to assistive tech (FE §156). */
+      destination?: string;
+      tone?: "neutral" | "critical" | "warning";
+    }
+);
+
+/**
+ * MetricCard. Two variants of one component so every KPI surface shares one anatomy:
+ * `compact` for scan-first four-card strips, `detailed` where the card carries context.
+ */
+export function MetricCard(props: MetricCardProps) {
+  if (props.variant === "compact") return <CompactMetricCard {...props} />;
+  return <DetailedMetricCard {...props} />;
+}
+
+function CompactMetricCard({
+  label,
+  value,
+  unit,
+  delta,
+  href,
+  tooltip,
+  className,
+  icon: Icon,
+  exactValue,
+  comparison,
+  meta,
+  trend,
+  trendForecastFrom,
+  destination,
+  tone = "neutral",
+}: Extract<MetricCardProps, { variant: "compact" }>) {
+  const descId = React.useId();
+  const labelEl = (
+    <span className={cn("min-w-0 truncate text-[0.8125rem] font-semibold text-fg-secondary", tooltip && "underline decoration-border-strong decoration-dotted underline-offset-4")}>{label}</span>
+  );
+  const body = (
+    <>
+      <div className="flex min-w-0 items-center gap-2">
+        {Icon && (
+          <Icon
+            className={cn("size-4 shrink-0", tone === "critical" ? "text-critical" : tone === "warning" ? "text-warning" : "text-fg-tertiary")}
+            aria-hidden
+          />
+        )}
+        {tooltip ? (
+          <Tooltip content={tooltip}>
+            {href ? labelEl : <span tabIndex={0} className="min-w-0 truncate rounded-xs focus-visible:outline-2 focus-visible:outline-focus">{labelEl}</span>}
+          </Tooltip>
+        ) : (
+          labelEl
+        )}
+        {href && <ArrowUpRight className="ml-auto size-4 shrink-0 text-fg-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />}
+      </div>
+      <div className="mt-4 flex min-w-0 items-end justify-between gap-3">
+        <div className="flex min-w-0 items-baseline gap-1.5">
+          <span className="numeric-xl truncate text-fg" title={exactValue}>
+            {value}
+          </span>
+          {unit && <span className="shrink-0 body-sm text-fg-tertiary">{unit}</span>}
+          {exactValue && <span className="sr-only">({exactValue})</span>}
+        </div>
+        {trend && trend.length > 1 && (
+          <span className="mb-1 hidden shrink-0 sm:block">
+            <Sparkline values={trend} forecastFrom={trendForecastFrom} width={64} height={24} />
+          </span>
+        )}
+      </div>
+      <div className="mt-auto flex min-w-0 items-center gap-1.5 pt-3">
+        {delta}
+        {comparison && <span className="truncate caption text-fg-tertiary">{comparison}</span>}
+        {!delta && !comparison && meta && <span className="truncate caption">{meta}</span>}
+      </div>
+      {(delta || comparison) && meta && <div className="mt-1 truncate caption">{meta}</div>}
+      {href && destination && <span className="sr-only">, {destination}</span>}
+      {href && tooltip && typeof tooltip === "string" && (
+        <span id={descId} className="sr-only">
+          {tooltip}
+        </span>
+      )}
+    </>
+  );
+  const cls = cn("group flex h-full min-h-44 min-w-0 flex-col rounded-lg border border-border bg-surface p-5", className);
+  if (href) {
+    return (
+      <Link
+        href={href}
+        aria-describedby={tooltip && typeof tooltip === "string" ? descId : undefined}
+        className={cn(cls, "transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus")}
+      >
+        {body}
+      </Link>
+    );
+  }
+  return <div className={cls}>{body}</div>;
+}
+
+function DetailedMetricCard({
   label,
   value,
   unit,
@@ -78,18 +229,7 @@ export function MetricCard({
   hrefLabel,
   tooltip,
   className,
-}: {
-  label: string;
-  value: React.ReactNode;
-  unit?: string;
-  context?: React.ReactNode;
-  delta?: React.ReactNode;
-  footnote?: React.ReactNode;
-  href?: string;
-  hrefLabel?: string;
-  tooltip?: React.ReactNode;
-  className?: string;
-}) {
+}: Extract<MetricCardProps, { variant?: "detailed" }>) {
   const body = (
     <>
       <div className="flex items-center justify-between gap-2">
@@ -140,8 +280,8 @@ export function ForecastInterval({
   upper,
   forecast,
   comparison,
-  comparisonLabel = "Previous run",
-  unit = "units",
+  comparisonLabel: comparisonLabelProp,
+  unit: unitProp,
   coverage = 0.8,
   override,
   className,
@@ -156,6 +296,8 @@ export function ForecastInterval({
   override?: number | null;
   className?: string;
 }) {
+  const comparisonLabel = comparisonLabelProp ?? pick("Perkiraan sebelumnya", "Previous run");
+  const unit = unitProp ?? pick("unit", "units");
   const values = [lower, upper, forecast, comparison ?? forecast, override ?? forecast];
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -164,28 +306,28 @@ export function ForecastInterval({
   const hi = max + pad;
   const pos = (v: number) => `${((v - lo) / (hi - lo)) * 100}%`;
   return (
-    <figure className={cn("flex flex-col gap-2", className)} aria-label={`Forecast ${formatNumber(forecast)} ${unit}; ${Math.round(coverage * 100)}% prediction interval ${formatNumber(lower)} to ${formatNumber(upper)} ${unit}${comparison != null ? `; ${comparisonLabel.toLowerCase()} ${formatNumber(comparison)} ${unit}` : ""}`}>
+    <figure className={cn("flex flex-col gap-2", className)} aria-label={pick(`Perkiraan ${formatNumber(forecast)} ${unit}; rentang ${Math.round(coverage * 100)}% ${formatNumber(lower)} sampai ${formatNumber(upper)} ${unit}${comparison != null ? `; ${comparisonLabel.toLowerCase()} ${formatNumber(comparison)} ${unit}` : ""}`, `Forecast ${formatNumber(forecast)} ${unit}; ${Math.round(coverage * 100)}% prediction interval ${formatNumber(lower)} to ${formatNumber(upper)} ${unit}${comparison != null ? `; ${comparisonLabel.toLowerCase()} ${formatNumber(comparison)} ${unit}` : ""}`)}>
       <div className="relative mx-6 h-[4.5rem]" aria-hidden>
         {/* axis */}
         <div className="absolute inset-x-0 top-7 h-px bg-border" />
         {/* interval band */}
         <div className="absolute top-5 h-4 rounded-xs border bg-[var(--chart-interval)]" style={{ left: pos(lower), width: `calc(${pos(upper)} - ${pos(lower)})`, borderColor: "color-mix(in srgb, var(--chart-forecast) 45%, transparent)" }} />
         {/* bounds */}
-        <Marker at={pos(lower)} label="Lower" value={formatNumber(lower)} align="below" tone="muted" />
-        <Marker at={pos(upper)} label="Upper" value={formatNumber(upper)} align="below" tone="muted" />
+        <Marker at={pos(lower)} label={pick("Bawah", "Lower")} value={formatNumber(lower)} align="below" tone="muted" />
+        <Marker at={pos(upper)} label={pick("Atas", "Upper")} value={formatNumber(upper)} align="below" tone="muted" />
         {/* forecast */}
-        <Marker at={pos(forecast)} label="Forecast" value={formatNumber(forecast)} align="above" tone="forecast" />
+        <Marker at={pos(forecast)} label={pick("Perkiraan", "Forecast")} value={formatNumber(forecast)} align="above" tone="forecast" />
         {comparison != null && <Marker at={pos(comparison)} label={comparisonLabel} value="" align="tick" tone="previous" />}
-        {override != null && <Marker at={pos(override)} label="Override" value="" align="tick" tone="override" />}
+        {override != null && <Marker at={pos(override)} label={pick("Ubah manual", "Override")} value="" align="tick" tone="override" />}
       </div>
       <figcaption className="flex flex-wrap gap-x-4 gap-y-1 caption">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-2.5 w-4 rounded-xs border" style={{ background: "var(--chart-interval)", borderColor: "color-mix(in srgb, var(--chart-forecast) 45%, transparent)" }} />
-          {Math.round(coverage * 100)}% prediction interval
+          {pick(`Rentang perkiraan ${Math.round(coverage * 100)}%`, `${Math.round(coverage * 100)}% prediction interval`)}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-3 w-0.5" style={{ background: "var(--chart-forecast)" }} />
-          Forecast
+          {pick("Perkiraan", "Forecast")}
         </span>
         {comparison != null && (
           <span className="inline-flex items-center gap-1.5">
@@ -196,7 +338,7 @@ export function ForecastInterval({
         {override != null && (
           <span className="inline-flex items-center gap-1.5">
             <span className="inline-block h-3 w-0.5" style={{ background: "var(--chart-scenario)" }} />
-            Override: {formatNumber(override)}
+            {pick("Ubah manual", "Override")}: {formatNumber(override)}
           </span>
         )}
       </figcaption>

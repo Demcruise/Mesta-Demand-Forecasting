@@ -1,12 +1,12 @@
 "use client";
 
-import { FlaskConical, Globe, LogOut, Monitor, Moon, Rows3, Settings, Sun, UserRound } from "lucide-react";
+import { FlaskConical, Globe, LogOut, Monitor, Moon, Settings, Sun, UserRound } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { demoControls, loadDemoControls, saveDemoControls, type DemoControls } from "@/lib/api/client";
 import { useSession } from "@/lib/session-context";
-import { usePreferences, type Density, type ThemePreference } from "@/lib/preferences";
+import { usePreferences, type ThemePreference } from "@/lib/preferences";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
@@ -26,7 +26,7 @@ import { pick } from "@/lib/i18n";
 
 export function UserMenu() {
   const { session, workspace, signOut } = useSession();
-  const { theme, density, locale, setPreference } = usePreferences();
+  const { theme, locale, setPreference } = usePreferences();
   const queryClient = useQueryClient();
   const router = useRouter();
   const isId = locale === "id";
@@ -44,7 +44,7 @@ export function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-md p-1 hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus" aria-label={`Account menu for ${session.name}`}>
+      <DropdownMenuTrigger className="flex items-center gap-2 rounded-md p-1 hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus" aria-label={isId ? `Menu akun ${session.name}` : `Account menu for ${session.name}`}>
         <Avatar name={session.name} />
         <span className="hidden min-w-0 flex-col text-left leading-tight xl:flex">
           <span className="max-w-36 truncate text-[0.8125rem] font-semibold text-fg">{session.name}</span>
@@ -90,15 +90,6 @@ export function UserMenu() {
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="system">
             <Monitor className="size-4 text-fg-tertiary" aria-hidden /> {isId ? "Ikuti sistem" : "Match system"}
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        <DropdownMenuLabel>{isId ? "Kerapatan tabel" : "Table density"}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={density} onValueChange={(v) => setPreference("density", v as Density)}>
-          <DropdownMenuRadioItem value="comfortable">
-            <Rows3 className="size-4 text-fg-tertiary" aria-hidden /> {isId ? "Nyaman" : "Comfortable"}
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="compact">
-            <Rows3 className="size-4 text-fg-tertiary" aria-hidden /> {isId ? "Padat" : "Compact"}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />

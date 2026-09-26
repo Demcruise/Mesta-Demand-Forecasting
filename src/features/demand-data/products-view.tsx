@@ -22,12 +22,17 @@ import { Tag } from "@/components/feedback/status";
 import { DateCell, ProductIdentity } from "@/components/entities/identity";
 import { pick, localized } from "@/lib/i18n";
 
-const LIFECYCLE: Record<Product["lifecycle"], { label: string; tone: "info" | "neutral" | "warning" | "primary" }> = {
-  new: { label: pick("Baru", "New"), tone: "info" },
-  core: { label: pick("Inti", "Core"), tone: "neutral" },
-  seasonal: { label: pick("Musiman", "Seasonal"), tone: "primary" },
-  "end-of-life": { label: pick("Akhir masa", "End of life"), tone: "warning" },
-};
+const LIFECYCLE: Record<Product["lifecycle"], { label: string; tone: "info" | "neutral" | "warning" | "primary" }> = localized({
+  new: { label: "Baru", tone: "info" },
+  core: { label: "Inti", tone: "neutral" },
+  seasonal: { label: "Musiman", tone: "primary" },
+  "end-of-life": { label: "Akhir masa", tone: "warning" },
+}, {
+  new: { label: "New", tone: "info" },
+  core: { label: "Core", tone: "neutral" },
+  seasonal: { label: "Seasonal", tone: "primary" },
+  "end-of-life": { label: "End of life", tone: "warning" },
+});
 
 /** Product master used for forecasting (from the enterprise data warehouse). */
 export function ProductsView() {
@@ -96,7 +101,7 @@ export function ProductsView() {
         description={pick("Master produk yang dipakai untuk perkiraan: hierarki, satuan, dan siklus produk. Hanya baca di sini; dikelola di gudang data.", "The product master used for forecasting: hierarchy, units and lifecycle. Read-only here; maintained in the data warehouse.")}
         meta={
           <>
-            <span className="text-xs font-medium text-fg-secondary">{q.data ? pick(`${formatNumber(q.data.total)} produk`, pick(`${formatNumber(q.data.total)} produk`, pick(`${formatNumber(q.data.total)} produk`, `${formatNumber(q.data.total)} products`))) : pick("Memuat…", "Loading…")}</span>
+            <span className="text-xs font-medium text-fg-secondary">{q.data ? pick(`${formatNumber(q.data.total)} produk`, `${formatNumber(q.data.total)} products`) : pick("Memuat…", "Loading…")}</span>
             <FreshnessIndicator timestamp={q.data?.asOf} label={pick("Master produk tersinkron", "Product master synced")} source={pick("Gudang data perusahaan", "Enterprise data warehouse")} />
           </>
         }
@@ -122,7 +127,7 @@ export function ProductsView() {
             facets={[
               { key: "category", label: pick("Kategori", "Category"), primary: true, options: CATEGORIES.map((c) => ({ value: c, label: c })) },
               { key: "lifecycle", label: pick("Siklus produk", "Lifecycle"), primary: true, options: Object.entries(LIFECYCLE).map(([value, v]) => ({ value, label: v.label })) },
-              { key: "brand", label: "Brand", options: facets.brands.map((b) => ({ value: b, label: b })) },
+              { key: "brand", label: pick("Merek", "Brand"), options: facets.brands.map((b) => ({ value: b, label: b })) },
             ]}
           />
         }
@@ -133,7 +138,7 @@ export function ProductsView() {
             description={pick("Periksa ejaan SKU atau hapus filter.", "Check the spelling of the SKU or clear filters.")}
             action={
               <Button variant="secondary" onClick={state.clearFilters}>
-                Clear filters
+                {pick("Hapus filter", "Clear filters")}
               </Button>
             }
           />

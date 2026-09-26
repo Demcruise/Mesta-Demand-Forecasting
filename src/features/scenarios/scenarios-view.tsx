@@ -33,7 +33,7 @@ export function ScenariosView() {
 
   const duplicate = useApiMutation((c, id: string) => duplicateScenario(c, id), {
     invalidate: [["scenarios"]],
-    success: (s) => `Created “${s.name}”`,
+    success: (s) => pick(`“${s.name}” dibuat`, `Created “${s.name}”`),
     failure: pick("Skenario tidak dapat diduplikat.", "The scenario was not duplicated."),
     onSuccess: (s) => router.push(`/scenarios/${s.id}?edit=1`),
   });
@@ -70,29 +70,29 @@ export function ScenariosView() {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" aria-label={`Actions for ${s.name}`} onClick={(e) => e.stopPropagation()}>
+                <Button size="icon-sm" variant="ghost" aria-label={pick(`Aksi untuk ${s.name}`, `Actions for ${s.name}`)} onClick={(e) => e.stopPropagation()}>
                   <MoreHorizontal aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem icon={<Eye />} onSelect={() => router.push(`/scenarios/${s.id}`)}>
-                  Open
+                  {pick("Buka", "Open")}
                 </DropdownMenuItem>
                 {s.result && (
                   <DropdownMenuItem icon={<GitCompareArrows />} onSelect={() => router.push(`/scenarios/compare?ids=${s.id}`)}>
-                    Compare with baseline
+                    {pick("Bandingkan dengan acuan", "Compare with baseline")}
                   </DropdownMenuItem>
                 )}
                 {can("scenario.create") && (
                   <DropdownMenuItem icon={<Copy />} onSelect={() => duplicate.mutate(s.id)}>
-                    Duplicate
+                    {pick("Duplikat", "Duplicate")}
                   </DropdownMenuItem>
                 )}
                 {can("scenario.create") && s.status !== "archived" && s.status !== "in_review" && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem icon={<Archive />} onSelect={() => archive.mutate(s.id)}>
-                      Archive
+                      {pick("Arsipkan", "Archive")}
                     </DropdownMenuItem>
                   </>
                 )}
@@ -113,11 +113,11 @@ export function ScenariosView() {
         actions={
           <>
             <Link href="/scenarios/compare" className={buttonVariants({ variant: "secondary" })}>
-              <GitCompareArrows aria-hidden /> Bandingkan Skenario
+              <GitCompareArrows aria-hidden /> {pick("Bandingkan Skenario", "Compare scenarios")}
             </Link>
             {can("scenario.create") && (
               <Link href="/scenarios/new" className={buttonVariants({ variant: "primary" })}>
-                <Plus aria-hidden /> Buat Skenario
+                <Plus aria-hidden /> {pick("Buat Skenario", "Create scenario")}
               </Link>
             )}
           </>
@@ -140,17 +140,16 @@ export function ScenariosView() {
             <span className="body-sm font-semibold">{selectedIds.length} dipilih</span>
             <div className="flex gap-2">
               <Link href={`/scenarios/compare?ids=${selectedIds.join(",")}`} className={buttonVariants({ size: "sm", variant: "primary" })}>
-                <GitCompareArrows aria-hidden /> Bandingkan yang dipilih
+                <GitCompareArrows aria-hidden /> {pick("Bandingkan yang dipilih", "Compare selected")}
               </Link>
               <Button size="sm" variant="ghost" onClick={() => setSelection({})}>
-                Hapus pilihan
+                {pick("Hapus pilihan", "Clear selection")}
               </Button>
             </div>
           </div>
         }
         sort={{ key: state.query.sort, dir: state.query.dir, onChange: state.setSort }}
         pagination={{ page: q.data?.page ?? 1, pageSize: state.query.pageSize ?? 25, total: q.data?.total ?? 0, onPageChange: state.setPage }}
-        hideDensityToggle
         toolbarStart={
           <FilterBar
             state={state}
