@@ -1,8 +1,8 @@
-import type { ApiKey, ApiScope, ForecastSchedule, NotificationRules, SavedView, Webhook, WebhookEvent } from "@/types/domain";
+import type { ApiKey, ApiScope, ForecastSchedule, ListQuery, NotificationRules, SavedView, Webhook, WebhookEvent } from "@/types/domain";
 import { audit, getDb, nextId } from "@/lib/mock/db";
-import { defaultNotificationRules, nextRunAt } from "@/lib/mock/platform";
+import { defaultNotificationRules, nextRunAt, WEEKDAYS } from "@/lib/mock/platform";
 import { addDays, iso, isoDate } from "@/lib/mock/time";
-import { authorize, ApiError, read, write, type ApiContext } from "./client";
+import { applyAll, authorize, ApiError, read, write, type ApiContext } from "./client";
 import { createRun, syncRuns } from "./forecasting";
 import { localized, pick } from "@/lib/i18n/core";
 
@@ -10,15 +10,22 @@ import { localized, pick } from "@/lib/i18n/core";
 
 export type ScheduleRow = ForecastSchedule & { nextRunAt: string | null; lastRunStatus: string | null };
 
-export function listSchedules(ctx: ApiContext) {
+export function listSchedules(ctx: ApiContext, query: ListQuery) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
     syncRuns(db);
-    return db.platform.schedules.map<ScheduleRow>((s) => ({
+    const rows = db.platform.schedules.map<ScheduleRow>((s) => ({
       ...s,
       nextRunAt: nextRunAt(s),
       lastRunStatus: s.lastRunId ? (db.runs.find((r) => r.id === s.lastRunId)?.status ?? null) : null,
     }));
+    // v7 §13: search the schedule concepts the user can see — name, categories, cadence
+    // and publication mode. The view has no pagination, so every match is returned.
+    const items = applyAll(rows, { sort: "name", dir: "asc", ...query }, {
+      search: (s) => `${s.name} ${s.categories.join(" ")} ${s.cadence.type} ${s.cadence.type === "weekly" ? WEEKDAYS[s.cadence.weekday] ?? "" : ""} ${s.autoPublish ? "auto publish" : "manual review"}`,
+      sorters: { name: (s) => s.name, nextRunAt: (s) => s.nextRunAt, horizonDays: (s) => s.horizonDays },
+    });
+    return { items, total: items.length, asOf: null };
   });
 }
 

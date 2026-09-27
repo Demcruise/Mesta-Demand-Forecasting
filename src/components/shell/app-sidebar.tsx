@@ -12,16 +12,8 @@ import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/overlay";
 import { isActive, NAV, type NavItem } from "./nav-config";
 import { WorkspaceSwitcher } from "./workspace-switcher";
+import { MestaMark, MestaWordmark } from "@/components/brand/logo";
 import { pick } from "@/lib/i18n";
-
-export function MestaMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden>
-      <rect width="32" height="32" rx="7" fill="var(--primary)" />
-      <path d="M8 22V10.5l8 7 8-7V22" fill="none" stroke="var(--primary-fg)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 /**
  * AppSidebar: stable width (248 / 56 collapsed); labels never change the content
@@ -41,10 +33,11 @@ export function AppSidebar({ onNavigate, mobile }: { onNavigate?: () => void; mo
     <nav aria-label={pick("Utama", "Main")} className={cn("flex h-full flex-col bg-sidebar", !mobile && "border-r border-border")}>
       <div className={cn("flex h-[var(--topbar-h)] shrink-0 items-center border-b border-border", collapsed ? "justify-center px-2" : "gap-2.5 px-4")}>
         <Link href="/overview" className="flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-focus" onClick={onNavigate}>
-          <MestaMark className="size-7 shrink-0" />
-          {!collapsed && (
-            <span className="flex min-w-0 flex-col leading-tight">
-              <span className="truncate text-sm font-bold text-fg">Mesta</span>
+          {collapsed ? (
+            <MestaMark className="h-7" />
+          ) : (
+            <span className="flex min-w-0 flex-col gap-1">
+              <MestaWordmark className="h-[1.375rem]" />
               <span className="truncate text-[0.6875rem] font-semibold text-fg-tertiary">Demand Forecasting</span>
             </span>
           )}

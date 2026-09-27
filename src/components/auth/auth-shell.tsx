@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MestaMark } from "@/components/shell/app-sidebar";
+import { MestaWordmark } from "@/components/brand/logo";
 import { pick } from "@/lib/i18n/core";
 
 /** AuthShell: enterprise sign-in frame. No marketing hero, no signup. */
@@ -7,12 +7,9 @@ export function AuthShell({ children, footer }: { children: React.ReactNode; foo
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
       <header className="flex h-16 items-center px-6">
-        <span className="flex items-center gap-2.5">
-          <MestaMark className="size-7" />
-          <span className="flex flex-col leading-tight">
-            <span className="text-sm font-bold text-fg">Mesta</span>
-            <span className="text-[0.6875rem] font-semibold text-fg-tertiary">Demand Forecasting</span>
-          </span>
+        <span className="flex flex-col gap-1">
+          <MestaWordmark className="h-6" />
+          <span className="text-[0.6875rem] font-semibold text-fg-tertiary">Demand Forecasting</span>
         </span>
       </header>
       <main className="flex flex-1 items-start justify-center px-4 pb-16 pt-[8vh]">

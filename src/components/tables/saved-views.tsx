@@ -11,7 +11,8 @@ import { actorName } from "@/lib/mock/directory";
 import { Button } from "@/components/ui/button";
 import { CheckboxField } from "@/components/ui/controls";
 import { Field, Input } from "@/components/ui/field";
-import { Dialog, DialogContent, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/overlay";
+import { Dialog, DialogContent, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Tooltip } from "@/components/ui/overlay";
+import { cn } from "@/lib/utils";
 import { pick } from "@/lib/i18n/core";
 
 /** Params that describe list state; drawer selection (`id`, `event`) is not saved. */
@@ -58,12 +59,20 @@ export function SavedViewsMenu({ surface }: { surface: SavedView["surface"] }) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="secondary" aria-label={active ? pick(`Tampilan tersimpan: ${active.name}`, `Saved view: ${active.name}`) : pick("Tampilan tersimpan", "Saved views")}>
-            <Bookmark aria-hidden />
-            <span className="hidden max-w-36 truncate sm:inline">{active ? active.name : pick("Tampilan", "Views")}</span>
-          </Button>
-        </DropdownMenuTrigger>
+        {/* v7 EXPLORER-004: icon-only. The applied view's name moves to the tooltip and the
+            accessible name, and an active view is signalled by the subtle fill (§ACTION-004). */}
+        <Tooltip content={active ? pick(`Tampilan tersimpan: ${active.name}`, `Saved view: ${active.name}`) : pick("Tampilan tersimpan", "Saved views")}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon-sm"
+              variant="secondary"
+              className={cn(active && "border-primary/40 bg-primary-subtle text-primary-subtle-fg")}
+              aria-label={active ? pick(`Tampilan tersimpan: ${active.name}`, `Saved view: ${active.name}`) : pick("Tampilan tersimpan", "Saved views")}
+            >
+              <Bookmark aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+        </Tooltip>
         <DropdownMenuContent className="w-72" align="end">
           {mine.length > 0 && <DropdownMenuLabel>{pick("Tampilan saya", "My views")}</DropdownMenuLabel>}
           {mine.map(item)}

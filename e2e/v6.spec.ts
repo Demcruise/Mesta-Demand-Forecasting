@@ -4,7 +4,7 @@ import { setPreferences, signIn, USERS } from "./support/session";
 /**
  * Backlog v6 (METRIC-ALIGN, EXPLORER-TREND, HIST-TOOLBAR, AUDIT-TOOLBAR).
  *
- * The requirements are geometric — equal card heights, a centred value, a toolbar that
+ * The requirements are geometric — equal card heights, a left-axis value, a toolbar that
  * fits one row — so the assertions measure the rendered layout rather than class names.
  * That way a future refactor can change the CSS and still be held to the visual contract.
  */
@@ -40,6 +40,8 @@ type Card = {
   groupLeftGap: number;
   groupRightGap: number;
   labelLeftGap: number;
+  labelHeight: number;
+  labelTruncated: boolean;
   supportLeftGap: number;
   fontSize: number;
   sparklines: number;
@@ -68,6 +70,8 @@ async function readCards(page: import("@playwright/test").Page): Promise<Card[]>
           groupLeftGap: Math.round(gb.left - box.left),
           groupRightGap: Math.round(box.right - gb.right),
           labelLeftGap: label ? Math.round(label.getBoundingClientRect().left - box.left) : 0,
+          labelHeight: label ? Math.round(label.getBoundingClientRect().height) : 0,
+          labelTruncated: label ? label.scrollWidth > label.clientWidth : false,
           supportLeftGap: support ? Math.round(support.getBoundingClientRect().left - box.left) : 0,
           fontSize: Number.parseFloat(getComputedStyle(value).fontSize),
           sparklines: card.querySelectorAll("svg[width='64']").length,
@@ -79,7 +83,7 @@ async function readCards(page: import("@playwright/test").Page): Promise<Card[]>
 test.describe("v6 · KPI cards", () => {
   for (const [name, path] of KPI_PAGES) {
     for (const width of [1440, 1280, 390]) {
-      test(`${name} @${width}: centred value, equal heights, no clipping`, async ({ page }) => {
+      test(`${name} @${width}: left-axis value, equal heights, no clipping`, async ({ page }) => {
         await signIn(page, USERS.admin, undefined, "en");
         await page.setViewportSize({ width, height: 900 });
         await page.goto(path);
@@ -104,12 +108,12 @@ test.describe("v6 · KPI cards", () => {
         }
         // §17/§30/§43/§67: equal heights across the strip.
         for (const c of cards) expect(Math.abs(c.height - cards[0]!.height)).toBeLessThanOrEqual(1);
-        // §METRIC-ALIGN-001/§60: only the value group is centred; label and support hug the
-        // left edge, well inside the midpoint a centred block would start from.
+        // v7 CARD-002/003: the value sits on the card's left content axis — the same axis
+        // as the supporting copy — and is only centred vertically. A centred value would
+        // start well inside the padding box, so the padding bound catches a regression.
         for (const c of cards) {
-          expect(Math.abs(c.groupLeftGap - c.groupRightGap), "value group centred").toBeLessThanOrEqual(2);
-          expect(c.labelLeftGap, "label keeps the left axis").toBeLessThan(c.width / 2 - 20);
-          expect(c.supportLeftGap, "support keeps the left axis").toBeLessThan(c.width / 2 - 20);
+          expect(c.groupLeftGap, "value on the left content axis").toBeLessThanOrEqual(21);
+          expect(Math.abs(c.groupLeftGap - c.supportLeftGap), "value and support share the axis").toBeLessThanOrEqual(2);
         }
       });
     }
@@ -136,7 +140,7 @@ test.describe("v6 · KPI cards", () => {
     for (const c of cards) {
       expect(c.valueOverflow).toBeLessThanOrEqual(0);
       expect(Math.abs(c.height - cards[0]!.height)).toBeLessThanOrEqual(1);
-      expect(Math.abs(c.groupLeftGap - c.groupRightGap)).toBeLessThanOrEqual(2);
+      expect(c.groupLeftGap, "value on the left content axis").toBeLessThanOrEqual(21);
     }
   });
 });
@@ -172,25 +176,41 @@ test.describe("v6 · toolbars", () => {
     }
   }
 
-  test("explorer @1280 wraps between groups, never a single control (§80)", async ({ page }) => {
+  test("explorer fits one row at desktop widths and wraps between groups when narrow (§80)", async ({ page }) => {
     await signIn(page, USERS.admin, undefined, "en");
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto("/forecasting/explorer");
-    await page.waitForTimeout(1200);
-    const info = await page.evaluate(() => {
-      const bar = document.querySelector("input[type=search]")!.closest("div.border-b") as HTMLElement;
-      const [left, right] = Array.from(bar.children) as HTMLElement[];
-      return {
-        overflow: bar.scrollWidth - bar.clientWidth,
-        leftTop: Math.round(left!.getBoundingClientRect().top),
-        rightTop: Math.round(right!.getBoundingClientRect().top),
-        rightChildren: Array.from(right!.children).length,
-      };
-    });
-    expect(info.overflow).toBeLessThanOrEqual(0);
-    // The action group moves to the second row as a unit; the filter group is never squeezed.
-    expect(info.rightTop).toBeGreaterThan(info.leftTop);
-    expect(info.rightChildren).toBeGreaterThanOrEqual(3);
+    const read = async (width: number) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/forecasting/explorer");
+      await page.waitForTimeout(1500);
+      return page.evaluate(() => {
+        const bar = document.querySelector("input[type=search]")!.closest("div.border-b") as HTMLElement;
+        const [left, right] = Array.from(bar.children) as HTMLElement[];
+        const tops = new Set<number>();
+        bar.querySelectorAll("input[type=search], button").forEach((c) => tops.add(Math.round((c as HTMLElement).getBoundingClientRect().top)));
+        return {
+          rows: tops.size,
+          overflow: bar.scrollWidth - bar.clientWidth,
+          leftTop: Math.round(left!.getBoundingClientRect().top),
+          rightTop: Math.round(right!.getBoundingClientRect().top),
+          rightChildren: Array.from(right!.children).length,
+        };
+      });
+    };
+
+    // v7 §EXPLORER-007: icon-only actions keep the whole toolbar on one row at 1440 and 1280.
+    for (const width of [1440, 1280]) {
+      const info = await read(width);
+      expect(info.rows, `one row at ${width}`).toBe(1);
+      expect(info.overflow, `no overflow at ${width}`).toBeLessThanOrEqual(0);
+      expect(info.rightTop).toBe(info.leftTop);
+    }
+
+    // When the viewport forces a wrap, the action group moves as one unit — never a single
+    // stranded control (§TABLE-TOOLBAR-004).
+    const narrow = await read(1024);
+    expect(narrow.overflow).toBeLessThanOrEqual(0);
+    expect(narrow.rightTop).toBeGreaterThan(narrow.leftTop);
+    expect(narrow.rightChildren).toBeGreaterThanOrEqual(3);
   });
 
   test("explorer has no Trend column (§19)", async ({ page }) => {

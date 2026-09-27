@@ -4,7 +4,7 @@ import { actorName } from "@/lib/mock/directory";
 import { expectedAt, HISTORY_DAYS } from "@/lib/mock/series";
 import { createRng, hashString } from "@/lib/mock/random";
 import { DAY_MS, iso, isoDate, MINUTE_MS } from "@/lib/mock/time";
-import { applyList, ApiError, read, write, type ApiContext, type ListSpec } from "./client";
+import { applyAll, applyList, ApiError, read, write, type ApiContext, type ListSpec } from "./client";
 import { pick } from "@/lib/i18n/core";
 
 /* ── Products ──────────────────────────────────────────────────────── */
@@ -125,13 +125,28 @@ export function listDemand(
 
 /* ── Data sources ──────────────────────────────────────────────────── */
 
-export function listSources(ctx: ApiContext) {
+export function listSources(ctx: ApiContext, query: ListQuery) {
   return read(() => {
     const db = getDb(ctx.workspaceId);
-    return db.sources.map((s) => ({
+    const rows = db.sources.map((s) => ({
       ...s,
       openIssues: db.dqIssues.filter((i) => i.sourceId === s.id && i.status !== "resolved" && i.status !== "dismissed").length,
     }));
+    // v7 §14: search over what the user can see, plus the status filter. The view has no
+    // pagination yet, so the whole matching set is returned rather than a first page.
+    const items = applyAll(rows, { sort: "name", dir: "asc", ...query }, {
+      search: (s) => `${s.name} ${s.type} ${s.owner} ${s.description}`,
+      sorters: {
+        name: (s) => s.name,
+        status: (s) => s.status,
+        type: (s) => s.type,
+        lastSyncAt: (s) => s.lastSyncAt,
+        records: (s) => s.records,
+        openIssues: (s) => s.openIssues,
+      },
+      filters: { status: (s, v) => v.includes(s.status) },
+    });
+    return { items, total: items.length, asOf: null };
   });
 }
 

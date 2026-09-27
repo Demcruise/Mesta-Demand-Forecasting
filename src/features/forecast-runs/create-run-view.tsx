@@ -68,7 +68,7 @@ export function CreateRunView() {
 
   const scope = useApiQuery(["scope-preview", input.regions, input.categories], (c) => previewScope(c, input), { keepPrevious: true });
   const models = useApiQuery(["model-options"], listModelOptions);
-  const sources = useApiQuery(["sources"], listSources, { enabled: step === 1 });
+  const sources = useApiQuery(["sources"], (c) => listSources(c, {}), { enabled: step === 1 });
   const dq = useApiQuery(["dq", "missing"], (c) => listDataQuality(c, { filters: { type: ["missing_records"], status: ["open", "investigating"] } }), { enabled: step === 1 });
   const validation = useApiQuery(["run-validation", input], (c) => validateRun(c, input), { enabled: step >= 4 });
 
@@ -229,7 +229,7 @@ export function CreateRunView() {
               <Stat label={pick("Data tersedia sampai", "Data available through")} value={formatDate(input.historicalEnd)} />
               <div className="min-w-0">
                 <p className="caption">{pick("Terakhir diperbarui", "Data freshness")}</p>
-                <FreshnessIndicator variant="cell" timestamp={sources.data?.find((x) => x.id === "src_pos")?.lastSuccessAt} label={pick("POS diperbarui", "POS updated")} source={pick("Transaksi POS", "POS transactions")} />
+                <FreshnessIndicator variant="cell" timestamp={sources.data?.items.find((x) => x.id === "src_pos")?.lastSuccessAt} label={pick("POS diperbarui", "POS updated")} source={pick("Transaksi POS", "POS transactions")} />
               </div>
               <Stat
                 label={pick("Periode yang kosong", "Missing periods")}

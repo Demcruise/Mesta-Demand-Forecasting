@@ -104,7 +104,8 @@ type MetricCardProps = {
       context?: React.ReactNode;
       footnote?: React.ReactNode;
       hrefLabel?: string;
-      /** §99/§111: the value zone is centred here too, so every KPI strip matches. */
+      /** v7 §41: the detailed card keeps the left axis; the fixed zone only stops the
+          support copy from moving the value. */
       valueAlign?: "left" | "center";
     }
   | {
@@ -127,8 +128,9 @@ type MetricCardProps = {
       destination?: string;
       tone?: "neutral" | "critical" | "warning";
       /**
-       * METRIC-ALIGN-001/§85: the large value is centred in its own zone by default;
-       * the header and supporting line keep the card's normal left axis.
+       * v7 CARD-002/003: the value is vertically centred in its zone but stays on the
+       * card's left content axis, in line with the headline and the supporting copy.
+       * `center` remains available for surfaces that deliberately want it.
        */
       valueAlign?: "left" | "center";
       /** §28: long values (e.g. a range) may drop one step rather than clip. */
@@ -161,17 +163,20 @@ function CompactMetricCard({
   trendForecastFrom,
   destination,
   tone = "neutral",
-  valueAlign = "center",
+  valueAlign = "left",
   valueSize = "default",
 }: Extract<MetricCardProps, { variant: "compact" }>) {
   const descId = React.useId();
   const centered = valueAlign === "center";
+  // CARD-009: the full headline stays reachable through the shared tooltip even when the
+  // one-line label is truncated; a definition tooltip takes precedence when there is one.
+  const labelTooltip = tooltip ?? label;
   const labelEl = (
-    <span className={cn("line-clamp-2 min-w-0 text-[0.8125rem] font-semibold text-fg-secondary", tooltip && "underline decoration-border-strong decoration-dotted underline-offset-4")}>{label}</span>
+    <span className={cn("min-w-0 truncate text-[0.8125rem] font-semibold text-fg-secondary", tooltip && "underline decoration-border-strong decoration-dotted underline-offset-4")}>{label}</span>
   );
   const body = (
     <>
-      {/* Header keeps a fixed height (§44) so a two-line label never moves the value. */}
+      {/* Header keeps a fixed height (CARD-006) so the value never moves. */}
       <div className="flex min-h-10 min-w-0 items-center gap-2">
         {Icon && (
           <Icon
@@ -179,18 +184,14 @@ function CompactMetricCard({
             aria-hidden
           />
         )}
-        {tooltip ? (
-          <Tooltip content={tooltip}>
-            {href ? labelEl : <span tabIndex={0} className="min-w-0 rounded-xs focus-visible:outline-2 focus-visible:outline-focus">{labelEl}</span>}
-          </Tooltip>
-        ) : (
-          labelEl
-        )}
+        <Tooltip content={labelTooltip}>
+          {href ? labelEl : <span tabIndex={0} className="min-w-0 rounded-xs focus-visible:outline-2 focus-visible:outline-focus">{labelEl}</span>}
+        </Tooltip>
         {/* §90: the affordance sits in the header corner, never beside the number. */}
         {href && <ArrowUpRight className="ml-auto size-4 shrink-0 text-fg-tertiary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />}
       </div>
-      {/* Value zone (METRIC-ALIGN-004): fixed height, value centred, no truncation. */}
-      <div className={cn("mt-5 flex min-h-[72px] min-w-0 flex-col justify-center", centered && "items-center text-center")}>
+      {/* Value zone (CARD-003): vertically centred, left aligned, never truncated. */}
+      <div className={cn("mt-5 flex min-h-[64px] min-w-0 flex-col justify-center", centered && "items-center text-center")}>
         <span className={cn("flex min-w-0 flex-wrap items-baseline gap-x-1.5", centered && "justify-center")}>
           <span className={cn(valueSize === "compact" ? "numeric-lg" : "numeric-xl", "text-fg")} title={exactValue}>
             {value}
@@ -245,7 +246,7 @@ function DetailedMetricCard({
   hrefLabel,
   tooltip,
   className,
-  valueAlign = "center",
+  valueAlign = "left",
 }: Extract<MetricCardProps, { variant?: "detailed" }>) {
   const centered = valueAlign === "center";
   const body = (
@@ -258,11 +259,13 @@ function DetailedMetricCard({
             </span>
           </Tooltip>
         ) : (
-          <span className="caption font-semibold">{label}</span>
+          <Tooltip content={label}>
+            <span tabIndex={0} className="caption font-semibold">{label}</span>
+          </Tooltip>
         )}
         {delta}
       </div>
-      {/* Value zone: same fixed height and centring as the compact variant (§99). */}
+      {/* Value zone: fixed height so support copy never moves the value (§RUNDETAIL-004). */}
       <div className={cn("mt-1 flex min-h-[64px] min-w-0 flex-col justify-center", centered && "items-center text-center")}>
         <span className={cn("flex min-w-0 flex-wrap items-baseline gap-x-1.5", centered && "justify-center")}>
           <span className="numeric-lg text-fg">{value}</span>

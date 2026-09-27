@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Plug, PlugZap, RefreshCw, Unplug } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
-import type { DataSource } from "@/types/domain";
+import type { DataSource, StatusKey } from "@/types/domain";
 import { getSource, listSources, setSourceConnection, syncNow, testConnection, updateSourceSchedule } from "@/lib/api/data";
 import { useApiMutation, useApiQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
@@ -15,7 +15,8 @@ import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, Drawer, DrawerContent } from "@/components/ui/overlay";
 import { DescriptionList, PageContainer, PageHeader } from "@/components/page/page";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
-import { SeverityBadge, StatusBadge, Tag } from "@/components/feedback/status";
+import { FilterBar } from "@/components/tables/filter-bar";
+import { STATUS, SeverityBadge, StatusBadge, Tag } from "@/components/feedback/status";
 import { DetailSkeleton, EmptyState, ErrorState, InlineAlert, PermissionNotice } from "@/components/feedback/states";
 import { FreshnessIndicator } from "@/components/feedback/freshness";
 import { UserIdentity } from "@/components/entities/identity";
@@ -27,14 +28,18 @@ type SourceRow = DataSource & { openIssues: number };
 
 const SCHEDULES = localized(["Setiap jam", "Setiap 4 jam", "Harian pukul 02:00", "Harian pukul 04:30", "Harian pukul 05:00", "Manual"], ["Every hour", "Every 4 hours", "Daily at 02:00", "Daily at 04:30", "Daily at 05:00", "Manual"]);
 
+/** v7 §SOURCES-005: the real domain statuses, including the in-flight sync state. */
+const SOURCE_STATUSES: StatusKey[] = ["connected", "syncing", "warning", "failed", "disconnected"];
+
 /**
  * PAGE-DATA-SOURCES and PAGE-INTEGRATIONS share this view. `mode="admin"` leads with
  * connection management; `mode="data"` leads with freshness and issues.
  */
 export function SourcesView({ mode }: { mode: "data" | "admin" }) {
-  const state = useListState({ filterKeys: [] });
+  const state = useListState({ filterKeys: ["status"] });
   const selectedId = state.getParam("id");
-  const q = useApiQuery(["sources"], listSources);
+  const q = useApiQuery(["sources", state.query], (c) => listSources(c, state.query));
+  const rows = q.data?.items ?? [];
 
   const columns = React.useMemo<ColumnDef<SourceRow, unknown>[]>(
     () => [
@@ -82,15 +87,15 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
             : pick("Dari mana data permintaan berasal, seberapa baru, dan sumber mana yang bermasalah.", "Where demand data comes from, how fresh it is, and which sources have problems.")
         }
       />
-      {q.data?.some((s) => s.status === "failed") && (
-        <InlineAlert tone="warning" title={pick(`${q.data.filter((s) => s.status === "failed").map((s) => s.name).join(", ")} gagal.`, `${q.data.filter((s) => s.status === "failed").map((s) => s.name).join(", ")} failing.`)}>
+      {rows.some((s) => s.status === "failed") && (
+        <InlineAlert tone="warning" title={pick(`${rows.filter((s) => s.status === "failed").map((s) => s.name).join(", ")} gagal.`, `${rows.filter((s) => s.status === "failed").map((s) => s.name).join(", ")} failing.`)}>
           {pick("Perkiraan tetap memakai data terakhir yang berhasil. Buka sumbernya untuk melihat galat dan langkah pemulihan.", "Forecasts continue with the last successful data. Open the source to see the error and recovery steps.")}
         </InlineAlert>
       )}
       <DataTable
-        label={pick("Sumber data", "Data sources")}
+        label={mode === "admin" ? pick("Integrasi", "Integrations") : pick("Sumber data", "Data sources")}
         columns={columns}
-        data={q.data}
+        data={rows}
         getRowId={(r) => r.id}
         isLoading={q.isPending}
         error={q.error}
@@ -98,7 +103,25 @@ export function SourcesView({ mode }: { mode: "data" | "admin" }) {
         errorWhat={pick("Sumber data tidak dapat dimuat.", "Data sources could not be loaded.")}
         activeRowId={selectedId}
         onRowClick={(r) => state.setParam("id", r.id)}
-        empty={<EmptyState icon={Plug} title={pick("Belum ada sumber data yang terhubung ke ruang kerja ini.", "No data sources are connected to this workspace.")} description={pick("Sambungkan sumber POS, ERP, atau gudang data untuk mulai memuat riwayat permintaan.", "Connect a POS, ERP or data warehouse source to start loading demand history.")} />}
+        toolbarStart={
+          <FilterBar
+            state={state}
+            searchPlaceholder={mode === "admin" ? pick("Cari integrasi", "Search integrations") : pick("Cari sumber data", "Search data sources")}
+            facets={[{ key: "status", label: pick("Status", "Status"), primary: true, options: SOURCE_STATUSES.map((s) => ({ value: s, label: STATUS[s].label })) }]}
+          />
+        }
+        empty={
+          state.activeFilterCount > 0 ? (
+            <EmptyState
+              icon={Plug}
+              title={pick("Tidak ada sumber data yang cocok dengan filter.", "No data sources match the current filters.")}
+              description={pick("Periksa ejaan atau hapus filter status.", "Check the spelling or clear the status filter.")}
+              action={<Button variant="secondary" onClick={state.clearFilters}>{pick("Hapus filter", "Clear filters")}</Button>}
+            />
+          ) : (
+            <EmptyState icon={Plug} title={pick("Belum ada sumber data yang terhubung ke ruang kerja ini.", "No data sources are connected to this workspace.")} description={pick("Sambungkan sumber POS, ERP, atau gudang data untuk mulai memuat riwayat permintaan.", "Connect a POS, ERP or data warehouse source to start loading demand history.")} />
+          )
+        }
       />
       <SourceDrawer id={selectedId} onClose={() => state.setParam("id", null)} />
     </PageContainer>

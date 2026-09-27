@@ -273,3 +273,52 @@ Status of the [Frontend Backlog v6](Mesta_Demand_Forecasting_Frontend_Backlog_v6
 - `e2e/visual.spec.ts`: 32 baselines regenerated for the new card rhythm and toolbar widths (light, dark, en, id, 1440/1280/1024/768/390).
 - `e2e/accessibility.spec.ts`: axe WCAG A/AA unchanged and green on 15 surfaces.
 - `npm run test`: 51 unit tests green; `tsc --noEmit` clean; production build clean.
+
+# Frontend backlog v7 — card alignment correction, action icons, search & filters
+
+Status of the [Frontend Backlog v7](Mesta_Demand_Forecasting_Frontend_Backlog_v7_Card_Alignment_Action_Icons_Search_Filters.md).
+
+## Cards (CARD-001…010, §12, §51)
+
+| Item | Corrected behaviour | Notes |
+|---|---|---|
+| Value alignment | Left axis | v6 centred the value horizontally; v7 §ISSUE-001 reverses that. The value zone is `justify-center` (vertical) with `align-items: flex-start`, so the number, headline and supporting copy share one left content axis. `valueAlign="center"` remains available but nothing uses it. |
+| Headline | One line | The two-line clamp from v6 is gone: `white-space: nowrap` + ellipsis (CARD-007), with the full label always reachable — the shared tooltip carries the label whenever the card has no definition tooltip (CARD-009), and the accessible name contains the full text regardless of truncation (§21). |
+| Fixed zones | Header 40px · value 64px · support 24px | CARD-006, so a link or a longer support line never moves the number (§RUNDETAIL-004). Cards now measure ~194px, inside the recommended 180–192px band. |
+| Detailed variant | Left axis, fixed value zone | §41: the detailed card keeps its existing alignment; the fixed zone only stops the support copy from moving the value. |
+
+## Overview
+
+| Item | Status | Notes |
+|---|---|---|
+| First card sparkline | Done | Removed in v6 and retained; the `Sparkline` component itself is untouched. |
+
+## Forecast Explorer
+
+| Item | Status | Notes |
+|---|---|---|
+| Trend column | Done | Removed from the column definition only; the domain data keeps `trend`. |
+| Saved views | Done | Icon-only bookmark (`size="icon-sm"`), `aria-label` + tooltip carry "Saved views" / the applied view's name, and an active view is signalled by the primary-subtle fill (§ACTION-004). |
+| Export | Done | Icon-only download; the row count and filter note moved into the tooltip and the accessible name (§EXPLORER-005). |
+| Columns | Done | Keeps its visible label — a configuration action (§EXPLORER-006). |
+| Toolbar | Done | Icon-only actions shrank the action group from ~600px to 380px, so the Explorer toolbar now fits **one row at 1440 and 1280** (previously it wrapped at 1280); at 1024 the action group wraps as one unit. |
+
+## New table controls (§13–§15)
+
+| Surface | Status | Notes |
+|---|---|---|
+| Forecast Schedules | Done | `FilterBar` search ("Search schedules" / "Cari jadwal") over name, categories, cadence and publication mode, plus a filtered empty state. |
+| Data Sources | Done | Search ("Search data sources") + Status facet over the real domain statuses — connected, syncing, warning, failed, disconnected (§SOURCES-005). |
+| Integrations | Done | Same shared view and controls; only the placeholder differs ("Search integrations"). |
+| Filtering | Done | `listSources` and `listSchedules` now take a `ListQuery` and filter through the shared `applyAll`/`applyList` helpers, so search + status combine in the API layer and stay deep-linkable in the URL. |
+
+## Brand
+
+The real Mesta artwork replaced the placeholder mark: `public/brand/mesta-logo-{black,white}.png` and `mesta-mark-{black,white}.png`, rendered by `src/components/brand/logo.tsx` with the ink variant swapped by the `dark` class (no JavaScript). The sidebar and auth shell show the wordmark with the "Demand Forecasting" caption; the collapsed sidebar shows the mark. `src/app/icon.png` and `apple-icon.png` are generated from the mark on the primary navy tile.
+
+## Verification
+
+- `e2e/v7.spec.ts` (32 tests): single-line headline, left-axis value and support, no clipped value and equal heights on six KPI surfaces at 1440/1280/1024/390; icon-only saved views and export with accessible names and tooltips; Columns still labelled; schedules search filters and shows a filtered empty state; data sources combines search + status (5 → 1 → no match → 1 → 5); integrations shares the controls.
+- `e2e/v6.spec.ts`: card assertions updated to the corrected left-axis contract, and the Explorer toolbar test now asserts one row at 1440/1280 plus a group-level wrap at 1024.
+- `e2e/visual.spec.ts`: 32 baselines regenerated for the corrected card rhythm and the new logo.
+- `tsc --noEmit` clean · 51 unit tests · production build clean · **266 Playwright tests green** (axe WCAG A/AA on 15 surfaces included).

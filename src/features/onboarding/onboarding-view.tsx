@@ -127,7 +127,7 @@ function StepAction({ step, nextRunId }: { step: OnboardingStep; nextRunId: stri
     successDescription: (r) => (r.warnings ? pick(`${r.warnings} peringatan untuk ditinjau di Kualitas Data. Tidak menghambat perkiraan.`, `${r.warnings} warning to review in Data quality. It does not block forecasting.`) : undefined),
     failure: pick("Pemeriksaan data tidak berjalan.", "Data checks did not run."),
   });
-  const sources = useApiQuery(["sources"], listSources, { enabled: step.key === "source" });
+  const sources = useApiQuery(["sources"], (c) => listSources(c, {}), { enabled: step.key === "source" });
   const connect = useApiMutation((c, id: string) => setSourceConnection(c, id, true), {
     invalidate: INVALIDATE,
     success: (s) => pick(`${s.name} tersambung`, `${s.name} connected`),
@@ -150,7 +150,7 @@ function StepAction({ step, nextRunId }: { step: OnboardingStep; nextRunId: stri
     case "source":
       return (
         <ul className="flex flex-col gap-2">
-          {(sources.data ?? [])
+          {(sources.data?.items ?? [])
             .filter((s) => s.type === "POS" || s.type === "ERP")
             .map((s) => (
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2">

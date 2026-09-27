@@ -8,6 +8,7 @@ import type { ForecastSchedule } from "@/types/domain";
 import { listModelOptions } from "@/lib/api/models";
 import { deleteSchedule, listSchedules, runScheduleNow, saveSchedule, setScheduleEnabled, type ScheduleInput, type ScheduleRow } from "@/lib/api/platform";
 import { useApiMutation, useApiQuery } from "@/hooks/use-api";
+import { useListState } from "@/hooks/use-list-state";
 import { useSession } from "@/lib/session-context";
 import { CATEGORIES, REGIONS } from "@/lib/mock/catalog";
 import { WEEKDAYS } from "@/lib/mock/platform";
@@ -21,6 +22,7 @@ import { SwitchField } from "@/components/ui/controls";
 import { Dialog, DialogContent, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/overlay";
 import { PageContainer, PageHeader } from "@/components/page/page";
 import { DataTable, type ColumnMeta } from "@/components/tables/data-table";
+import { FilterBar } from "@/components/tables/filter-bar";
 import { StatusBadge, Tag } from "@/components/feedback/status";
 import { EmptyState, InlineAlert, PermissionNotice } from "@/components/feedback/states";
 import { UserIdentity } from "@/components/entities/identity";
@@ -38,7 +40,8 @@ export function SchedulesView() {
   const router = useRouter();
   const { can } = useSession();
   const manage = can("forecast.run.create");
-  const q = useApiQuery(["schedules"], listSchedules, { refetchInterval: 30_000 });
+  const state = useListState({ filterKeys: [] });
+  const q = useApiQuery(["schedules", state.query], (c) => listSchedules(c, state.query), { refetchInterval: 30_000 });
   const models = useApiQuery(["model-options"], listModelOptions);
   const [editing, setEditing] = React.useState<{ id: string | null; input: ScheduleInput } | null>(null);
   const [deleting, setDeleting] = React.useState<ScheduleRow | null>(null);
@@ -172,19 +175,31 @@ export function SchedulesView() {
       <DataTable
         label={pick("Jadwal perkiraan", "Forecast schedules")}
         columns={columns}
-        data={q.data}
+        data={q.data?.items}
         getRowId={(s) => s.id}
         isLoading={q.isPending}
         error={q.error}
         onRetry={() => q.refetch()}
         errorWhat={pick("Jadwal tidak dapat dimuat.", "Schedules could not be loaded.")}
+        toolbarStart={
+          <FilterBar state={state} facets={[]} searchPlaceholder={pick("Cari jadwal", "Search schedules")} />
+        }
         empty={
-          <EmptyState
-            icon={CalendarClock}
-            title={pick("Belum ada jadwal perkiraan di ruang kerja ini.", "No forecast schedules in this workspace.")}
-            description={pick("Jadwalkan penyegaran harian agar acuan perencanaan tetap terbaru tanpa proses manual.", "Schedule a daily refresh so the planning baseline stays current without manual runs.")}
-            action={manage ? <Button variant="primary" onClick={() => setEditing({ id: null, input: { ...EMPTY } })}>{pick("Buat jadwal", "Create schedule")}</Button> : undefined}
-          />
+          state.activeFilterCount > 0 ? (
+            <EmptyState
+              icon={CalendarClock}
+              title={pick("Tidak ada jadwal yang cocok dengan pencarian.", "No schedules match the current search.")}
+              description={pick("Periksa ejaan atau hapus pencarian.", "Check the spelling or clear the search.")}
+              action={<Button variant="secondary" onClick={state.clearFilters}>{pick("Hapus pencarian", "Clear search")}</Button>}
+            />
+          ) : (
+            <EmptyState
+              icon={CalendarClock}
+              title={pick("Belum ada jadwal perkiraan di ruang kerja ini.", "No forecast schedules in this workspace.")}
+              description={pick("Jadwalkan penyegaran harian agar acuan perencanaan tetap terbaru tanpa proses manual.", "Schedule a daily refresh so the planning baseline stays current without manual runs.")}
+              action={manage ? <Button variant="primary" onClick={() => setEditing({ id: null, input: { ...EMPTY } })}>{pick("Buat jadwal", "Create schedule")}</Button> : undefined}
+            />
+          )
         }
       />
 
